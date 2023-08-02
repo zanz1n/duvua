@@ -1,2 +1,2 @@
 [workspace]
-members = ["duvua-framework"]
+members = ["duvua-framework", "duvua-repository"]
