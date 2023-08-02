@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS "welcome";
+DROP TABLE IF EXISTS "guilds";
+DROP TYPE IF EXISTS "WelcomeType";
