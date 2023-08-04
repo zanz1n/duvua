@@ -9,8 +9,8 @@ CREATE TABLE "members" (
     "userId" BIGINT NOT NULL
 );
 
-CREATE UNIQUE INDEX "member_guildId_idx" ON "members"("guildId");
-CREATE UNIQUE INDEX "member_userId_idx" ON "members"("userId");
+CREATE INDEX "member_guildId_idx" ON "members"("guildId");
+CREATE INDEX "member_userId_idx" ON "members"("userId");
 
 ALTER TABLE "members"
 ADD CONSTRAINT "member_guildId_fkey" FOREIGN KEY ("guildId") REFERENCES "guilds"("id")
