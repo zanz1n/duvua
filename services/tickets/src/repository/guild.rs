@@ -14,21 +14,24 @@ pub struct Guild {
     pub id: i64,
     pub enable_tickets: bool,
     pub allow_multiple: bool,
+    pub channel_category: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateGuildData {
     pub enable_tickets: Option<bool>,
     pub allow_multiple: Option<bool>,
+    pub channel_category: Option<Option<u64>>,
 }
 
 impl Guild {
     #[inline]
-    pub fn new(id: u64) -> Self {
+    pub fn default(id: u64) -> Self {
         Self {
             id: id as i64,
             enable_tickets: false,
             allow_multiple: false,
+            channel_category: None,
         }
     }
 }
@@ -92,7 +95,7 @@ impl GuildRepository for GuildService {
     }
 
     async fn create(&self, id: u64) -> Result<Guild, BotError> {
-        let guild = Guild::new(id);
+        let guild = Guild::default(id);
 
         self.col.insert_one(&guild, None).await.or_else(|e| {
             Err(match e.kind.deref() {
@@ -136,6 +139,7 @@ impl GuildRepository for GuildService {
             let guild = Guild {
                 allow_multiple: data.allow_multiple.unwrap_or(false),
                 enable_tickets: data.enable_tickets.unwrap_or(false),
+                channel_category: data.channel_category.unwrap_or(None),
                 id: id as i64,
             };
 
