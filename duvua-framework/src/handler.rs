@@ -1,10 +1,11 @@
 use crate::errors::BotError;
 use async_trait::async_trait;
+use serde_json::Value;
 use serenity::{
-    builder::CreateApplicationCommand,
+    builder::{CreateApplicationCommand, CreateApplicationCommands},
     http::Http,
     model::prelude::{
-        application_command::ApplicationCommandInteraction, command::Command,
+        application_command::ApplicationCommandInteraction,
         message_component::MessageComponentInteraction, Interaction, Ready,
     },
     prelude::{Context, EventHandler},
@@ -78,26 +79,35 @@ impl Handler {
         self
     }
 
-    pub async fn post_commands(&self, http: impl AsRef<Http>) {
-        let mut i = 0;
+    pub fn get_application_commands_data(&self) -> Vec<CreateApplicationCommand> {
+        let mut array: Vec<CreateApplicationCommand> = Vec::new();
 
-        let result = Command::set_global_application_commands(http, |cmds| {
-            for (_, v) in self.mp.iter() {
-                i += 1;
-                let info = v.get_data();
+        for (_, v) in self.mp.iter() {
+            let data = v.get_data();
 
-                if info.accepts_application_command {
-                    cmds.add_application_command(info.command_data.clone().unwrap());
-                }
+            if data.accepts_application_command {
+                array.push(data.command_data.clone().unwrap())
             }
+        }
 
-            cmds
-        })
-        .await;
+        array
+    }
+
+    pub async fn post_commands(&self, http: impl AsRef<Http>) {
+        let commands_data = self.get_application_commands_data();
+        let init_len = commands_data.len();
+
+        let mut create_application_commands = CreateApplicationCommands::default();
+        create_application_commands.set_application_commands(commands_data);
+
+        let result = http
+            .as_ref()
+            .create_global_application_commands(&Value::from(create_application_commands.0))
+            .await;
 
         match result {
             Ok(v) => {
-                log::info!(target: "handler", "Posted {}/{i} commands", v.len());
+                log::info!(target: "handler", "Posted {}/{init_len} commands", v.len());
             }
             Err(e) => {
                 log::error!(target: "handler", "Failed to post application commands: {e}");
