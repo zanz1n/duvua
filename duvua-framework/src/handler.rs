@@ -155,7 +155,10 @@ impl EventHandler for Handler {
                             }
                         };
 
-                        log::info!(target: "handler", "Command handler executed in {}ms", (Instant::now() - start).as_millis())
+                        log::info!(target: "handler",
+                            "Command handler executed in {}ms",
+                            (Instant::now() - start).as_millis()
+                        )
                     }
                 }
             }
@@ -172,10 +175,16 @@ impl EventHandler for Handler {
 
                         match cmd.handle_component(&ctx, &i).await {
                             Ok(_) => {
-                                log::info!(target: "handler", "Component handler executed, took {}ms", (Instant::now() - start).as_millis())
+                                log::info!(target: "handler",
+                                    "Component handler executed, took {}ms",
+                                    (Instant::now() - start).as_millis()
+                                )
                             }
                             Err(e) => {
-                                log::info!(target: "handler", "Component handler executed in {}ms with a error {e}", (Instant::now() - start).as_millis())
+                                log::info!(target: "handler",
+                                    "Component handler executed in {}ms with a error {e}",
+                                    (Instant::now() - start).as_millis()
+                                )
                             }
                         }
                     }
