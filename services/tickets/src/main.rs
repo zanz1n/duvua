@@ -1,12 +1,20 @@
+mod commands;
 mod repository;
 
+use crate::{
+    commands::ticket::TicketCommand,
+    repository::{
+        guild::{GuildRepository, GuildService},
+        ticket::{TicketRepository, TicketService},
+    },
+};
 use duvua_framework::{
     env::{env_param, ProcessEnv},
     handler::Handler,
 };
 use mongodb::{bson::doc, options::ClientOptions, Client as MongoDbClient};
 use serenity::{prelude::GatewayIntents, Client};
-use std::{error::Error, time::Instant};
+use std::{error::Error, sync::Arc, time::Instant};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -36,7 +44,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
         (Instant::now() - start).as_millis()
     );
 
-    let handler = Handler::new(true);
+    let db = client.database("duvua-tickets");
+
+    let guild_repo: Arc<dyn GuildRepository> = Arc::new(GuildService::new(db.collection("guilds")));
+    let ticket_repo: Arc<dyn TicketRepository> =
+        Arc::new(TicketService::new(db.collection("tickets")));
+
+    let mut handler = Handler::new(true);
+
+    handler.add_handler(TicketCommand::new(ticket_repo.clone(), guild_repo.clone()));
 
     let intents = GatewayIntents::empty();
     let mut client = Client::builder(discord_token, intents)
