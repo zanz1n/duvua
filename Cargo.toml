@@ -1,2 +1,7 @@
 [workspace]
-members = ["duvua-framework", "duvua-repository", "services/chimera"]
+members = [
+    "duvua-framework",
+    "duvua-repository",
+    "services/chimera",
+    "services/tickets",
+]
