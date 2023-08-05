@@ -51,7 +51,7 @@ impl BotError {
             Self::UserAlreadyExists => "O usuário já existe",
             Self::TicketNotFound => "Não foi possível achar nenhum ticket",
             Self::CommandIssuedOutOfGuild => "Esse comando só pode ser usado dentro de um servidor",
-            Self::GuildNotPermitTickets => "Ticket não estão habilidatos nesse servidor",
+            Self::GuildNotPermitTickets => "Tickets não estão habilidatos nesse servidor",
             Self::OnlyOneTicketAllowed => "O servidor só permite a criação de um ticket por membro",
             e => {
                 log::error!(target: "framework_errors", "Unhandled command error: {}", e.to_string());
