@@ -6,7 +6,8 @@ use serenity::{
     http::Http,
     json::ToNumber,
     model::prelude::{
-        application_command::ApplicationCommandInteraction, AttachmentType, InteractionResponseType,
+        application_command::ApplicationCommandInteraction,
+        message_component::MessageComponentInteraction, AttachmentType, InteractionResponseType,
     },
 };
 use std::collections::HashMap;
@@ -38,7 +39,7 @@ impl<'a> InteractionResponse<'a> {
     pub async fn respond_message_component(
         &mut self,
         http: impl AsRef<Http>,
-        data: &ApplicationCommandInteraction,
+        data: &MessageComponentInteraction,
     ) -> Result<(), BotError> {
         self.to_owned().respond(http, data.id.0, &data.token).await
     }
