@@ -24,6 +24,10 @@ pub enum BotError {
     TicketGuildNotFound,
     #[error("Guild already exists")]
     TicketGuildAlreadyExists,
+    #[error("Invalid mongodb objectId")]
+    InvalidMongoDbObjectId,
+    #[error("Ticket could not be found")]
+    TicketNotFound,
 }
 
 impl BotError {
