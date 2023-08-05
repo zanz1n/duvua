@@ -18,6 +18,12 @@ pub enum BotError {
     Query,
     #[error("User already exists")]
     UserAlreadyExists,
+    #[error("Mongo db error")]
+    MongoDbError,
+    #[error("Guild could not be found")]
+    TicketGuildNotFound,
+    #[error("Guild already exists")]
+    TicketGuildAlreadyExists,
 }
 
 impl BotError {
