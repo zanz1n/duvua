@@ -47,6 +47,7 @@ pub trait CommandHandler: Send + Sync {
 pub struct Handler {
     mp: HashMap<String, Box<dyn CommandHandler>>,
     post_cmds_on_ready: bool,
+    component_handler: Option<Box<dyn CommandHandler>>,
 }
 
 impl Handler {
@@ -54,7 +55,13 @@ impl Handler {
         Self {
             mp: HashMap::new(),
             post_cmds_on_ready,
+            component_handler: None,
         }
+    }
+
+    pub fn set_component_handler<H: CommandHandler + 'static>(&mut self, handler: H) -> &mut Self {
+        self.component_handler = Some(Box::new(handler));
+        self
     }
 
     pub fn add_handler<H: CommandHandler + 'static>(&mut self, handler: H) -> &mut Self {
@@ -153,6 +160,10 @@ impl EventHandler for Handler {
                 }
             }
             Interaction::MessageComponent(i) => {
+                if let Some(component_handler) = self.component_handler.as_ref() {
+                    _ = component_handler.handle_component(&ctx, &i).await;
+                    return;
+                }
                 if let Some(cmd) = self.mp.get(&i.data.custom_id) {
                     let data = cmd.get_data();
 
