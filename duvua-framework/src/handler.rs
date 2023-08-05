@@ -1,11 +1,47 @@
-use crate::models::CommandHandler;
+use crate::errors::BotError;
 use async_trait::async_trait;
 use serenity::{
+    builder::CreateApplicationCommand,
     http::Http,
-    model::prelude::{command::Command, Interaction, Ready},
+    model::prelude::{
+        application_command::ApplicationCommandInteraction, command::Command,
+        message_component::MessageComponentInteraction, Interaction, Ready,
+    },
     prelude::{Context, EventHandler},
 };
 use std::{collections::HashMap, time::Instant};
+
+#[derive(Debug, Clone, Default)]
+pub struct CommandHandlerData {
+    pub accepts_message_component: bool,
+    pub accepts_application_command: bool,
+    pub needs_defer: bool,
+    pub command_data: Option<CreateApplicationCommand>,
+    pub custom_id: Option<String>,
+}
+
+#[async_trait]
+pub trait CommandHandler: Send + Sync {
+    async fn handle_command(
+        &self,
+        _ctx: &Context,
+        _interaction: &ApplicationCommandInteraction,
+    ) -> Result<(), BotError> {
+        Ok(())
+    }
+
+    async fn handle_component(
+        &self,
+        _ctx: &Context,
+        _interaction: &MessageComponentInteraction,
+    ) -> Result<(), BotError> {
+        Ok(())
+    }
+
+    fn get_data(&self) -> &'static CommandHandlerData {
+        todo!()
+    }
+}
 
 pub struct Handler {
     mp: HashMap<String, Box<dyn CommandHandler>>,
@@ -118,7 +154,7 @@ impl EventHandler for Handler {
                                 log::info!(target: "handler", "Component handler executed, took {}ms", (Instant::now() - start).as_millis())
                             }
                             Err(e) => {
-                                log::info!(target: "handler", "Command executed in {}ms with a error {e}", (Instant::now() - start).as_millis())
+                                log::info!(target: "handler", "Component handler executed in {}ms with a error {e}", (Instant::now() - start).as_millis())
                             }
                         }
                     }
