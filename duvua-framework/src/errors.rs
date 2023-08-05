@@ -28,11 +28,37 @@ pub enum BotError {
     InvalidMongoDbObjectId,
     #[error("Ticket could not be found")]
     TicketNotFound,
+    #[error("This command can only be issued inside a guild")]
+    CommandIssuedOutOfGuild,
+    #[error("Guild not permit tickets")]
+    GuildNotPermitTickets,
+    #[error("This guild only allows one ticket per member")]
+    OnlyOneTicketAllowed,
+    #[error("Option not '{0}' provided")]
+    OptionNotProvided(&'static str),
+    #[error("Something went wrong")]
+    SomethingWentWrong,
 }
 
 impl BotError {
-    pub fn get_message(&self) -> &'static str {
-        ""
+    pub fn get_message(&self) -> String {
+        if let Self::OptionNotProvided(s) = self {
+            return format!("Opção '{s}' não foi fornecida");
+        }
+
+        match self {
+            Self::UserNotFound => "Não foi possível encontrar o usuário",
+            Self::UserAlreadyExists => "O usuário já existe",
+            Self::TicketNotFound => "Não foi possível achar nenhum ticket",
+            Self::CommandIssuedOutOfGuild => "Esse comando só pode ser usado dentro de um servidor",
+            Self::GuildNotPermitTickets => "Ticket não estão habilidatos nesse servidor",
+            Self::OnlyOneTicketAllowed => "O servidor só permite a criação de um ticket por membro",
+            e => {
+                log::error!(target: "framework_errors", "Unhandled command error: {}", e.to_string());
+                "🤖 Algo deu errado!"
+            }
+        }
+        .to_owned()
     }
 
     #[inline]
