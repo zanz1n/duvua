@@ -34,6 +34,7 @@ impl Ticket {
 
 #[derive(Debug, Clone)]
 pub struct CreateTicketData {
+    pub id: ObjectId,
     pub channel_id: i64,
     pub user_id: i64,
     pub guild_id: i64,
@@ -43,6 +44,7 @@ impl CreateTicketData {
     #[inline]
     pub fn from_snowflakes(channel_id: u64, user_id: u64, guild_id: u64) -> Self {
         Self {
+            id: ObjectId::new(),
             channel_id: channel_id as i64,
             user_id: user_id as i64,
             guild_id: guild_id as i64,
