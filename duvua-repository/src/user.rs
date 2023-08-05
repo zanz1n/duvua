@@ -13,17 +13,17 @@ pub struct User {
 }
 
 #[async_trait]
-pub trait UserRepository {
+pub trait UserRepository: Sync + Send {
     async fn create(&self, id: i64) -> Result<(), BotError>;
     async fn get_by_id(&self, id: i64) -> Result<User, BotError>;
 }
 
 pub struct UserService {
-    db: &'static Pool<Postgres>,
+    db: Pool<Postgres>,
 }
 
 impl UserService {
-    pub fn new(db: &'static Pool<Postgres>) -> Self {
+    pub fn new(db: Pool<Postgres>) -> Self {
         Self { db }
     }
 }
@@ -33,7 +33,7 @@ impl UserRepository for UserService {
     async fn create(&self, id: i64) -> Result<(), BotError> {
         sqlx::query("INSERT INTO \"users\" (\"id\") VALUES ($1);")
             .bind(id)
-            .execute(self.db)
+            .execute(&self.db)
             .await
             .or_else(|e| {
                 log::debug!("{e}");
@@ -49,7 +49,7 @@ impl UserRepository for UserService {
     async fn get_by_id(&self, id: i64) -> Result<User, BotError> {
         let result = sqlx::query("SELECT * FROM \"users\" WHERE \"id\" = $1")
             .bind(id)
-            .fetch_one(self.db)
+            .fetch_one(&self.db)
             .await
             .or_else(|e| {
                 Err(match e {
