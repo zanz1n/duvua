@@ -122,7 +122,7 @@ impl Handler {
         }
     }
 
-    async fn on_application_command(&self, ctx: Context, i: ApplicationCommandInteraction) {
+    pub async fn on_application_command(&self, ctx: Context, i: ApplicationCommandInteraction) {
         if let Some(cmd) = self.mp.get(&i.data.name) {
             let data = cmd.get_data();
 
@@ -148,7 +148,7 @@ impl Handler {
         }
     }
 
-    async fn on_message_compoent(&self, ctx: Context, i: MessageComponentInteraction) {
+    pub async fn on_message_component(&self, ctx: Context, i: MessageComponentInteraction) {
         if let Some(component_handler) = self.component_handler.as_ref() {
             _ = component_handler.handle_component(&ctx, &i).await;
             return;
@@ -196,7 +196,7 @@ impl EventHandler for Handler {
                 self.on_application_command(ctx, i).await;
             }
             Interaction::MessageComponent(i) => {
-                self.on_message_compoent(ctx, i).await;
+                self.on_message_component(ctx, i).await;
             }
             _ => {}
         }
