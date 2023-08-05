@@ -121,6 +121,63 @@ impl Handler {
             }
         }
     }
+
+    async fn on_application_command(&self, ctx: Context, i: ApplicationCommandInteraction) {
+        if let Some(cmd) = self.mp.get(&i.data.name) {
+            let data = cmd.get_data();
+
+            if data.needs_defer {
+                if let Err(e) = i.defer(&ctx.http).await {
+                    log::error!(target: "handler", "Failed to defer application command: {e}");
+                    return;
+                }
+            }
+            if data.accepts_application_command {
+                let start = Instant::now();
+
+                if let Err(e) = cmd.handle_command(&ctx, &i).await {
+                    e.respond_application_command(&ctx, &i, data.needs_defer)
+                        .await;
+                }
+
+                log::info!(target: "handler",
+                    "Command handler executed in {}ms",
+                    (Instant::now() - start).as_millis()
+                )
+            }
+        }
+    }
+
+    async fn on_message_compoent(&self, ctx: Context, i: MessageComponentInteraction) {
+        if let Some(component_handler) = self.component_handler.as_ref() {
+            _ = component_handler.handle_component(&ctx, &i).await;
+            return;
+        }
+        if let Some(cmd) = self.mp.get(&i.data.custom_id) {
+            let data = cmd.get_data();
+
+            if data.needs_defer {
+                if let Err(e) = i.defer(&ctx.http).await {
+                    log::error!(target: "handler", "Failed to defer message component: {e}");
+                    return;
+                }
+            }
+
+            if data.accepts_message_component {
+                let start = Instant::now();
+
+                if let Err(e) = cmd.handle_component(&ctx, &i).await {
+                    e.respond_message_component(&ctx, &i, data.needs_defer)
+                        .await;
+                }
+
+                log::info!(target: "handler",
+                    "Component handler executed, took {}ms",
+                    (Instant::now() - start).as_millis()
+                )
+            }
+        }
+    }
 }
 
 #[async_trait]
@@ -136,59 +193,10 @@ impl EventHandler for Handler {
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         match interaction {
             Interaction::ApplicationCommand(i) => {
-                if let Some(cmd) = self.mp.get(&i.data.name) {
-                    let data = cmd.get_data();
-
-                    if data.needs_defer {
-                        if let Err(e) = i.defer(&ctx.http).await {
-                            log::error!(target: "handler", "Failed to defer interaction: {e}");
-                            return;
-                        }
-                    }
-                    if data.accepts_application_command {
-                        let start = Instant::now();
-
-                        match cmd.handle_command(&ctx, &i).await {
-                            Ok(_) => {}
-                            Err(e) => {
-                                e.respond_to(&ctx, &i, data.needs_defer).await;
-                            }
-                        };
-
-                        log::info!(target: "handler",
-                            "Command handler executed in {}ms",
-                            (Instant::now() - start).as_millis()
-                        )
-                    }
-                }
+                self.on_application_command(ctx, i).await;
             }
             Interaction::MessageComponent(i) => {
-                if let Some(component_handler) = self.component_handler.as_ref() {
-                    _ = component_handler.handle_component(&ctx, &i).await;
-                    return;
-                }
-                if let Some(cmd) = self.mp.get(&i.data.custom_id) {
-                    let data = cmd.get_data();
-
-                    if data.accepts_message_component {
-                        let start = Instant::now();
-
-                        match cmd.handle_component(&ctx, &i).await {
-                            Ok(_) => {
-                                log::info!(target: "handler",
-                                    "Component handler executed, took {}ms",
-                                    (Instant::now() - start).as_millis()
-                                )
-                            }
-                            Err(e) => {
-                                log::info!(target: "handler",
-                                    "Component handler executed in {}ms with a error {e}",
-                                    (Instant::now() - start).as_millis()
-                                )
-                            }
-                        }
-                    }
-                }
+                self.on_message_compoent(ctx, i).await;
             }
             _ => {}
         }

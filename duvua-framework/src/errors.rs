@@ -48,12 +48,13 @@ impl BotError {
         &self,
         ctx: &Context,
         interaction: &MessageComponentInteraction,
+        defered: bool,
     ) {
         if let &BotError::Serenity(e) = &self {
             log::error!("Serenity error: {e}");
         } else {
             _ = self
-                .get_response(false)
+                .get_response(defered)
                 .respond_message_component(ctx.http.as_ref(), interaction)
                 .await;
         }
