@@ -1,5 +1,6 @@
+use crate::builder::interaction_response::InteractionResponse;
 use serenity::{
-    builder::CreateComponents,
+    builder::{CreateComponents, CreateInteractionResponseData},
     model::prelude::{application_command::ApplicationCommandInteraction, InteractionResponseType},
     prelude::Context,
 };
@@ -30,19 +31,19 @@ impl BotError {
         if let &BotError::Serenity(e) = &self {
             log::error!("Serenity error: {e}");
         } else {
-            _ = interaction
-                .create_interaction_response(ctx.http.as_ref(), |i| {
-                    i.kind(if defered {
-                        InteractionResponseType::UpdateMessage
-                    } else {
-                        InteractionResponseType::ChannelMessageWithSource
-                    })
-                    .interaction_response_data(|d| {
-                        d.set_components(CreateComponents::default())
-                            .set_embeds(Vec::new())
-                            .content(self.get_message())
-                    })
+            _ = InteractionResponse::default()
+                .set_kind(if defered {
+                    InteractionResponseType::UpdateMessage
+                } else {
+                    InteractionResponseType::ChannelMessageWithSource
                 })
+                .set_data(
+                    CreateInteractionResponseData::default()
+                        .set_components(CreateComponents::default())
+                        .set_embeds(Vec::new())
+                        .content(self.get_message()),
+                )
+                .respond_message_component(ctx.http.as_ref(), interaction)
                 .await;
         }
     }
