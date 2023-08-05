@@ -2293,10 +2293,12 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "dotenvy",
+ "duvua-framework",
  "env_logger",
  "log",
  "mongodb",
  "serde",
+ "serenity",
  "tokio",
 ]
 
