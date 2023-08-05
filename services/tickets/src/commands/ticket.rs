@@ -221,9 +221,16 @@ fn build_data_command() -> CreateApplicationCommand {
             CreateApplicationCommandOption::default()
                 .kind(CommandOptionType::SubCommand)
                 .name("delete")
-                .name("delete")
                 .description("Deleta seus tickets caso você tenha algum")
                 .description_localized("en-US", "Deletes a ticket in case you have one open")
+                .add_sub_option(
+                    CreateApplicationCommandOption::default()
+                        .kind(CommandOptionType::String)
+                        .name("id")
+                        .description("O id do ticket que deseja deletar")
+                        .description_localized("en-US", "The id of the ticket you want to delete")
+                        .to_owned(),
+                )
                 .to_owned(),
         )
         .to_owned()
