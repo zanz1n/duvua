@@ -34,16 +34,27 @@ pub enum BotError {
     GuildNotPermitTickets,
     #[error("This guild only allows one ticket per member")]
     OnlyOneTicketAllowed,
-    #[error("Option not '{0}' provided")]
+    #[error("Option '{0}' not provided")]
     OptionNotProvided(&'static str),
+    #[error("Option '{0}' is invalid provided")]
+    InvalidOption(&'static str),
     #[error("Something went wrong")]
     SomethingWentWrong,
+    #[error("You can not delete a ticket that is not yours")]
+    TicketDeletionDenied(String),
 }
 
 impl BotError {
     pub fn get_message(&self) -> String {
         if let Self::OptionNotProvided(s) = self {
             return format!("Opção '{s}' não foi fornecida");
+        } else if let Self::InvalidOption(s) = self {
+            return format!("Opção '{s}' é inválida");
+        } else if let Self::TicketDeletionDenied(s) = self {
+            return format!(
+                "Você não pode deletar um ticket que não é seu! Caso seja \
+                administrador, use o comando `/ticketadmin delete id: {s}`"
+            );
         }
 
         match self {
