@@ -54,6 +54,7 @@ impl TicketCommand {
         guild_id: u64,
         user_id: u64,
         username: String,
+        guild_channel_category: Option<u64>,
     ) -> Result<InteractionResponse, BotError> {
         if !guild.allow_multiple {
             let ticket = self.ticket_repo.get_by_member(guild_id, user_id).await;
@@ -78,11 +79,15 @@ impl TicketCommand {
             },
         ];
 
-        let channel = CreateChannel::default()
+        let mut channel = CreateChannel::default()
             .kind(ChannelType::Text)
             .name(username + "-" + data.id.to_hex().as_str())
             .permissions(permissions)
             .to_owned();
+
+        if let Some(cat) = guild_channel_category {
+            channel.category(cat);
+        }
 
         let channel = http
             .as_ref()
@@ -186,6 +191,8 @@ impl CommandHandler for TicketCommand {
         let sub_command = sub_command.as_str();
 
         if sub_command == "create" {
+            let cat = guild.channel_category;
+
             let res = self
                 .handle_create_ticket(
                     &ctx.http,
@@ -193,6 +200,7 @@ impl CommandHandler for TicketCommand {
                     guild_id,
                     user_id,
                     interaction.user.name.clone(),
+                    cat,
                 )
                 .await?;
 
