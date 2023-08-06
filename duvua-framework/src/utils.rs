@@ -1,5 +1,9 @@
-use serenity::model::prelude::{
-    application_command::CommandDataOption, command::CommandOptionType,
+use crate::builder::hashmap_to_json_map;
+use serde_json::Value;
+use serenity::{
+    builder::CreateMessage,
+    http::Http,
+    model::prelude::{application_command::CommandDataOption, command::CommandOptionType, Message},
 };
 
 #[inline]
@@ -25,4 +29,30 @@ pub fn get_option<T: ToString>(
     }
 
     None
+}
+
+pub async fn send_message(
+    http: impl AsRef<Http>,
+    msg: CreateMessage<'_>,
+    channel_id: u64,
+) -> serenity::Result<Message> {
+    let map = hashmap_to_json_map(msg.0);
+
+    let message = if msg.2.is_empty() {
+        http.as_ref()
+            .send_message(channel_id, &Value::from(map))
+            .await?
+    } else {
+        http.as_ref().send_files(channel_id, msg.2, &map).await?
+    };
+
+    if let Some(reactions) = msg.1 {
+        for reaction in reactions {
+            http.as_ref()
+                .create_reaction(channel_id, message.id.0, &reaction)
+                .await?;
+        }
+    }
+
+    Ok(message)
 }
