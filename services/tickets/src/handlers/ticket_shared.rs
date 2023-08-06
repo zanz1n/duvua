@@ -181,8 +181,7 @@ impl TicketSharedHandler {
         Ok(InteractionResponse::default()
             .set_kind(InteractionResponseType::ChannelMessageWithSource)
             .set_data(
-                CreateInteractionResponseData::default()
-                    .content(format!("Ticket deletado com sucesso <@{user_id}>")),
+                CreateInteractionResponseData::default().content("Ticket deletado com sucesso"),
             )
             .to_owned())
     }
