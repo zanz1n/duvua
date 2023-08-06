@@ -2,7 +2,10 @@ mod handlers;
 mod repository;
 
 use crate::{
-    handlers::{ticket::TicketCommandHandler, ticket_shared::TicketSharedHandler},
+    handlers::{
+        message_component_handler::MessageComponentHandler, ticket::TicketCommandHandler,
+        ticket_shared::TicketSharedHandler,
+    },
     repository::{
         guild::{GuildRepository, GuildService},
         ticket::{TicketRepository, TicketService},
@@ -53,10 +56,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut handler = Handler::new(true);
     let ticket_shared_handler = Arc::new(TicketSharedHandler::new(ticket_repo));
 
-    handler.add_handler(TicketCommandHandler::new(
-        guild_repo,
-        ticket_shared_handler.clone(),
-    ));
+    handler
+        .add_handler(TicketCommandHandler::new(
+            guild_repo,
+            ticket_shared_handler.clone(),
+        ))
+        .set_component_handler(
+            MessageComponentHandler::new(ticket_shared_handler.clone()),
+            true,
+        );
 
     let intents = GatewayIntents::empty();
     let mut client = Client::builder(discord_token, intents)
