@@ -254,6 +254,7 @@ fn build_data_command() -> CreateApplicationCommand {
                         .name("id")
                         .description("O id do ticket que deseja deletar")
                         .description_localized("en-US", "The id of the ticket you want to delete")
+                        .required(true)
                         .to_owned(),
                 )
                 .to_owned(),
