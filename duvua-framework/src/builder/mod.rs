@@ -4,6 +4,7 @@ use std::{
     hash::{BuildHasher, Hash},
 };
 
+pub mod button_action_row;
 pub mod interaction_response;
 
 pub(crate) fn hashmap_to_json_map<H, T>(map: HashMap<T, Value, H>) -> Map<String, Value>
