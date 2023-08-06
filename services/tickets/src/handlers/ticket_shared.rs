@@ -40,7 +40,6 @@ impl TicketSharedHandler {
         guild_id: u64,
         user_id: u64,
         username: String,
-        guild_channel_category: Option<u64>,
     ) -> Result<InteractionResponse, BotError> {
         if !guild.allow_multiple {
             let ticket = self.ticket_repo.get_by_member(guild_id, user_id).await;
@@ -71,7 +70,7 @@ impl TicketSharedHandler {
             .permissions(permissions)
             .to_owned();
 
-        if let Some(cat) = guild_channel_category {
+        if let Some(cat) = guild.channel_category {
             channel.category(cat);
         }
 

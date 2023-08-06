@@ -63,8 +63,6 @@ impl CommandHandler for TicketCommandHandler {
         let res: InteractionResponse<'_>;
 
         if sub_command_str == "create" {
-            let cat = guild.channel_category;
-
             res = self
                 .shared_handler
                 .handle_create_ticket(
@@ -73,7 +71,6 @@ impl CommandHandler for TicketCommandHandler {
                     guild_id,
                     user_id,
                     interaction.user.name.clone(),
-                    cat,
                 )
                 .await?;
         } else if sub_command_str == "delete-id" {
@@ -93,9 +90,33 @@ impl CommandHandler for TicketCommandHandler {
 
     async fn handle_component(
         &self,
-        _ctx: &Context,
-        _interaction: &MessageComponentInteraction,
+        ctx: &Context,
+        interaction: &MessageComponentInteraction,
     ) -> Result<(), BotError> {
+        let guild_id = interaction
+            .guild_id
+            .ok_or(BotError::CommandIssuedOutOfGuild)?
+            .0;
+        let user_id = interaction.user.id.0;
+
+        let guild = self.guild_repo.get_or_create(guild_id).await?;
+
+        if !guild.enable_tickets {
+            return Err(BotError::GuildNotPermitTickets);
+        }
+
+        self.shared_handler
+            .handle_create_ticket(
+                &ctx.http,
+                guild,
+                guild_id,
+                user_id,
+                interaction.user.name.clone(),
+            )
+            .await?
+            .respond_message_component(&ctx.http, interaction)
+            .await?;
+
         Ok(())
     }
 
