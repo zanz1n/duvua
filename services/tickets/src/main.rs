@@ -1,8 +1,8 @@
-mod commands;
+mod handlers;
 mod repository;
 
 use crate::{
-    commands::ticket::TicketCommand,
+    handlers::ticket::TicketCommand,
     repository::{
         guild::{GuildRepository, GuildService},
         ticket::{TicketRepository, TicketService},
