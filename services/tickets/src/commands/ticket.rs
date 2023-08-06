@@ -7,7 +7,7 @@ use duvua_framework::{
     builder::{button_action_row::CreateActionRow, interaction_response::InteractionResponse},
     errors::BotError,
     handler::{CommandHandler, CommandHandlerData},
-    utils::{get_sub_command, send_message},
+    utils::{get_option, get_sub_command, send_message},
 };
 use serenity::{
     builder::{
@@ -18,10 +18,12 @@ use serenity::{
     json::hashmap_to_json_map,
     model::{
         prelude::{
-            application_command::ApplicationCommandInteraction, command::CommandOptionType,
-            component::ButtonStyle, message_component::MessageComponentInteraction, ChannelType,
-            InteractionResponseType, PermissionOverwrite, PermissionOverwriteType, ReactionType,
-            RoleId, UserId,
+            application_command::{ApplicationCommandInteraction, CommandDataOption},
+            command::CommandOptionType,
+            component::ButtonStyle,
+            message_component::MessageComponentInteraction,
+            ChannelType, InteractionResponseType, PermissionOverwrite, PermissionOverwriteType,
+            ReactionType, RoleId, UserId,
         },
         Permissions,
     },
@@ -163,6 +165,52 @@ impl TicketCommand {
             )
             .to_owned())
     }
+
+    async fn handle_delete_ticket_by_id(
+        &self,
+        http: impl AsRef<Http>,
+        options: &Vec<CommandDataOption>,
+        user_id: u64,
+    ) -> Result<InteractionResponse, BotError> {
+        let id = get_option(options, "id")
+            .ok_or(BotError::OptionNotProvided("id"))?
+            .value
+            .ok_or(BotError::InvalidOption("id"))?
+            .as_str()
+            .ok_or(BotError::InvalidOption("id"))?
+            .to_owned();
+
+        let ticket = self.ticket_repo.get(id.clone()).await?;
+
+        if (ticket.user_id as u64) != user_id {
+            return Err(BotError::TicketDeletionDenied(id));
+        }
+
+        match http.as_ref().delete_channel(ticket.channel_id as u64).await {
+            Ok(c) => log::info!("Channel {} deleted", c.id().0),
+            Err(e) => log::warn!("Failed to delete channel: {e}"),
+        }
+
+        if let Err(e) = self.ticket_repo.delete(id).await {
+            match e {
+                BotError::TicketNotFound => Err(e),
+                _ => {
+                    log::error!("Failed to delete ticket: {e}");
+                    Err(e)
+                }
+            }
+        } else {
+            Ok(())
+        }?;
+
+        Ok(InteractionResponse::default()
+            .set_kind(InteractionResponseType::ChannelMessageWithSource)
+            .set_data(
+                CreateInteractionResponseData::default()
+                    .content(format!("Ticket deletado com sucesso <@{user_id}>")),
+            )
+            .to_owned())
+    }
 }
 
 #[async_trait]
@@ -185,15 +233,16 @@ impl CommandHandler for TicketCommand {
             return Err(BotError::GuildNotPermitTickets);
         }
 
-        let sub_command = get_sub_command(&interaction.data.options)
-            .ok_or(BotError::SomethingWentWrong)?
-            .name;
-        let sub_command = sub_command.as_str();
+        let sub_command =
+            get_sub_command(&interaction.data.options).ok_or(BotError::SomethingWentWrong)?;
+        let sub_command_str = sub_command.name.as_str();
 
-        if sub_command == "create" {
+        let res: InteractionResponse<'_>;
+
+        if sub_command_str == "create" {
             let cat = guild.channel_category;
 
-            let res = self
+            res = self
                 .handle_create_ticket(
                     &ctx.http,
                     guild,
@@ -203,11 +252,16 @@ impl CommandHandler for TicketCommand {
                     cat,
                 )
                 .await?;
-
-            res.respond(&ctx.http, interaction.id.0, &interaction.token)
+        } else if sub_command_str == "delete-id" {
+            res = self
+                .handle_delete_ticket_by_id(&ctx.http, &sub_command.options, user_id)
                 .await?;
-        } else if sub_command == "delete" {
+        } else {
+            return Err(BotError::InvalidOption("sub-command"));
         }
+
+        res.respond(&ctx.http, interaction.id.0, &interaction.token)
+            .await?;
 
         Ok(())
     }
