@@ -23,7 +23,7 @@ impl Ticket {
     #[inline]
     pub fn from_data(data: CreateTicketData) -> Self {
         Self {
-            id: ObjectId::new(),
+            id: data.id,
             created_at: Utc::now(),
             channel_id: data.channel_id,
             guild_id: data.guild_id,
