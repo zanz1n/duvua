@@ -64,6 +64,7 @@ pub trait TicketRepository: Sync + Send {
     ) -> Result<Vec<Ticket>, BotError>;
     async fn create(&self, data: CreateTicketData) -> Result<Ticket, BotError>;
     async fn delete(&self, id: String) -> Result<(), BotError>;
+    async fn delete_by_member(&self, guild_id: u64, user_id: u64) -> Result<u64, BotError>;
 }
 
 fn parse_object_id(id: &str) -> Result<ObjectId, BotError> {
@@ -162,5 +163,21 @@ impl TicketRepository for TicketService {
         }
 
         Ok(())
+    }
+
+    async fn delete_by_member(&self, guild_id: u64, user_id: u64) -> Result<u64, BotError> {
+        let res = self
+            .col
+            .delete_many(
+                doc! {"guild_id": guild_id as i64, "user_id": user_id as i64},
+                None,
+            )
+            .await
+            .or_else(|e| {
+                log::error!(target: "mongo_errors", "{e}");
+                Err(BotError::MongoDbError)
+            })?;
+
+        Ok(res.deleted_count)
     }
 }
