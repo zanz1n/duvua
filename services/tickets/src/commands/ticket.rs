@@ -4,15 +4,15 @@ use crate::repository::{
 };
 use async_trait::async_trait;
 use duvua_framework::{
-    builder::interaction_response::InteractionResponse,
+    builder::{button_action_row::CreateActionRow, interaction_response::InteractionResponse},
     errors::BotError,
     handler::{CommandHandler, CommandHandlerData},
-    utils::get_sub_command,
+    utils::{get_sub_command, send_message},
 };
 use serenity::{
     builder::{
-        CreateActionRow, CreateApplicationCommand, CreateApplicationCommandOption, CreateButton,
-        CreateChannel, CreateComponents, CreateInteractionResponseData,
+        CreateApplicationCommand, CreateApplicationCommandOption, CreateButton, CreateChannel,
+        CreateEmbed, CreateInteractionResponseData, CreateMessage,
     },
     http::Http,
     json::hashmap_to_json_map,
@@ -95,6 +95,35 @@ impl TicketCommand {
             .or_else(|e| Err(BotError::Serenity(e)))?;
 
         data.channel_id = channel.id.0 as i64;
+        let id = data.id.to_hex();
+
+        let msg = CreateMessage::default()
+            .set_embed(
+                CreateEmbed::default()
+                    .title("Ticket criado")
+                    .description(format!(
+                        "ID: `{id}`\nO ticket foi criado nesse canal de texto, para excluir use \
+                        `/ticket delete-id id: {id}` ou clique no botão abaixo que terá o mesmo efeito.",
+                    ))
+                    .to_owned(),
+            )
+            .set_components(
+                CreateActionRow::default()
+                    .add_button(
+                        CreateButton::default()
+                            .style(ButtonStyle::Primary)
+                            .label("Cancelar")
+                            .emoji(ReactionType::Unicode("❌".to_owned()))
+                            .custom_id("ticket-delete/".to_owned() + &id)
+                            .to_owned(),
+                    )
+                    .to_components(),
+            )
+            .to_owned();
+
+        send_message(&http, msg, channel.id.0)
+            .await
+            .or_else(|e| Err(BotError::Serenity(e)))?;
 
         if let Err(e) = self.ticket_repo.create(data).await {
             http.as_ref()
@@ -111,23 +140,19 @@ impl TicketCommand {
                 CreateInteractionResponseData::default()
                     .content(format!("Seu ticket foi criado, <@{user_id}>"))
                     .set_components(
-                        CreateComponents::default()
-                            .add_action_row(
-                                CreateActionRow::default()
-                                    .add_button(
-                                        CreateButton::default()
-                                            .style(ButtonStyle::Link)
-                                            .label("Ir")
-                                            .url(format!(
-                                                "https://discord.com/channels/{guild_id}/{}",
-                                                channel.id.0
-                                            ))
-                                            .emoji(ReactionType::Unicode("🚀".to_owned()))
-                                            .to_owned(),
-                                    )
+                        CreateActionRow::default()
+                            .add_button(
+                                CreateButton::default()
+                                    .style(ButtonStyle::Link)
+                                    .label("Ir")
+                                    .url(format!(
+                                        "https://discord.com/channels/{guild_id}/{}",
+                                        channel.id.0
+                                    ))
+                                    .emoji(ReactionType::Unicode("🚀".to_owned()))
                                     .to_owned(),
                             )
-                            .to_owned(),
+                            .to_components(),
                     )
                     .ephemeral(true),
             )
@@ -220,9 +245,9 @@ fn build_data_command() -> CreateApplicationCommand {
         .add_option(
             CreateApplicationCommandOption::default()
                 .kind(CommandOptionType::SubCommand)
-                .name("delete")
-                .description("Deleta seus tickets caso você tenha algum")
-                .description_localized("en-US", "Deletes a ticket in case you have one open")
+                .name("delete-id")
+                .description("Deleta um ticket seu por id")
+                .description_localized("en-US", "Delete one your tickets by id")
                 .add_sub_option(
                     CreateApplicationCommandOption::default()
                         .kind(CommandOptionType::String)
@@ -231,6 +256,14 @@ fn build_data_command() -> CreateApplicationCommand {
                         .description_localized("en-US", "The id of the ticket you want to delete")
                         .to_owned(),
                 )
+                .to_owned(),
+        )
+        .add_option(
+            CreateApplicationCommandOption::default()
+                .kind(CommandOptionType::SubCommand)
+                .name("delete")
+                .description("Deleta seus tickets caso você tenha algum")
+                .description_localized("en-US", "Delete a ticket in case you have one open")
                 .to_owned(),
         )
         .to_owned()
