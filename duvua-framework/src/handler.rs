@@ -44,10 +44,16 @@ pub trait CommandHandler: Send + Sync {
     }
 }
 
+pub enum ComponentHandlerMode {
+    FallBack,
+    Overwrite,
+}
+
 pub struct Handler {
     mp: HashMap<String, Box<dyn CommandHandler>>,
     post_cmds_on_ready: bool,
     component_handler: Option<Box<dyn CommandHandler>>,
+    component_handler_mode: Option<ComponentHandlerMode>,
 }
 
 impl Handler {
@@ -56,11 +62,21 @@ impl Handler {
             mp: HashMap::new(),
             post_cmds_on_ready,
             component_handler: None,
+            component_handler_mode: None,
         }
     }
 
-    pub fn set_component_handler<H: CommandHandler + 'static>(&mut self, handler: H) -> &mut Self {
+    pub fn set_component_handler<H: CommandHandler + 'static>(
+        &mut self,
+        handler: H,
+        fallback: bool,
+    ) -> &mut Self {
         self.component_handler = Some(Box::new(handler));
+        self.component_handler_mode = Some(if fallback {
+            ComponentHandlerMode::FallBack
+        } else {
+            ComponentHandlerMode::Overwrite
+        });
         self
     }
 
@@ -149,10 +165,24 @@ impl Handler {
     }
 
     pub async fn on_message_component(&self, ctx: Context, i: MessageComponentInteraction) {
-        if let Some(component_handler) = self.component_handler.as_ref() {
-            _ = component_handler.handle_component(&ctx, &i).await;
-            return;
+        let fallback: bool;
+
+        if let Some(mode) = self.component_handler_mode.as_ref() {
+            if let ComponentHandlerMode::Overwrite = mode {
+                _ = self
+                    .component_handler
+                    .as_ref()
+                    .unwrap()
+                    .handle_component(&ctx, &i)
+                    .await;
+                return;
+            } else {
+                fallback = true
+            }
+        } else {
+            fallback = false
         }
+
         if let Some(cmd) = self.mp.get(&i.data.custom_id) {
             let data = cmd.get_data();
 
@@ -176,6 +206,13 @@ impl Handler {
                     (Instant::now() - start).as_millis()
                 )
             }
+        } else if fallback {
+            _ = self
+                .component_handler
+                .as_ref()
+                .unwrap()
+                .handle_component(&ctx, &i)
+                .await;
         }
     }
 }
