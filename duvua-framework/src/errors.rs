@@ -42,6 +42,12 @@ pub enum BotError {
     SomethingWentWrong,
     #[error("You can not delete a ticket that is not yours")]
     TicketDeletionDenied(String),
+    #[error("Redis error")]
+    RedisError,
+    #[error("Failed to deserialize cache")]
+    CacheDeserializeError,
+    #[error("Failed to serialize cache")]
+    CacheSerializeError,
 }
 
 impl BotError {

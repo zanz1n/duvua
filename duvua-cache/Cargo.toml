@@ -1,0 +1,19 @@
+[package]
+name = "duvua-cache"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+log = "0.4"
+async-trait = "0.1"
+serde_json = "1.0"
+serde = "1.0"
+duvua-framework = { path = "../duvua-framework" }
+
+[dependencies.deadpool-redis]
+version = "0.12"
+features = ["rt_tokio_1"]
+
+[dependencies.tokio]
+version = "1"
+features = ["full"]

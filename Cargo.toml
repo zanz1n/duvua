@@ -2,6 +2,7 @@
 members = [
     "duvua-framework",
     "duvua-repository",
+    "duvua-cache",
     "services/chimera",
     "services/tickets",
 ]
