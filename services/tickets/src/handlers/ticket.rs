@@ -92,7 +92,7 @@ impl CommandHandler for TicketCommandHandler {
                 "by-id" => {
                     res = self
                         .shared_handler
-                        .handle_delete_ticket_by_id(&ctx.http, &sub_command.options, user_id)
+                        .handle_delete_ticket_by_options(&ctx.http, &sub_command.options, user_id)
                         .await?
                 }
                 _ => return Err(BotError::InvalidOption("sub-command")),

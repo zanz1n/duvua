@@ -152,17 +152,9 @@ impl TicketSharedHandler {
     pub async fn handle_delete_ticket_by_id(
         &self,
         http: impl AsRef<Http>,
-        options: &Vec<CommandDataOption>,
+        id: String,
         user_id: u64,
     ) -> Result<InteractionResponse, BotError> {
-        let id = get_option(options, "id")
-            .ok_or(BotError::OptionNotProvided("id"))?
-            .value
-            .ok_or(BotError::InvalidOption("id"))?
-            .as_str()
-            .ok_or(BotError::InvalidOption("id"))?
-            .to_owned();
-
         let ticket = self.ticket_repo.get(id.clone()).await?;
 
         if (ticket.user_id as u64) != user_id {
@@ -191,6 +183,59 @@ impl TicketSharedHandler {
             .set_data(
                 CreateInteractionResponseData::default()
                     .content(format!("Ticket deletado com sucesso <@{user_id}>")),
+            )
+            .to_owned())
+    }
+
+    pub async fn handle_delete_ticket_by_options(
+        &self,
+        http: impl AsRef<Http>,
+        options: &Vec<CommandDataOption>,
+        user_id: u64,
+    ) -> Result<InteractionResponse, BotError> {
+        let id = get_option(options, "id")
+            .ok_or(BotError::OptionNotProvided("id"))?
+            .value
+            .ok_or(BotError::InvalidOption("id"))?
+            .as_str()
+            .ok_or(BotError::InvalidOption("id"))?
+            .to_owned();
+
+        self.handle_delete_ticket_by_id(http, id, user_id).await
+    }
+
+    pub async fn handle_delete_all(
+        &self,
+        http: impl AsRef<Http>,
+        guild_id: u64,
+        user_id: u64,
+    ) -> Result<InteractionResponse, BotError> {
+        let tickets = self.ticket_repo.get_by_member(guild_id, user_id, 6).await?;
+
+        if tickets.len() > 5 {
+            return Ok(InteractionResponse::default()
+                .set_kind(InteractionResponseType::ChannelMessageWithSource)
+                .set_data(CreateInteractionResponseData::default().content(
+                    "Você tem mais de 5 tickets criados, por favor exclua eles \
+                    individualmente usando `/ticket delete by-id`",
+                ))
+                .to_owned());
+        }
+
+        let deleted_count = self.ticket_repo.delete_by_member(guild_id, user_id).await?;
+
+        for ticket in tickets {
+            match http.as_ref().delete_channel(ticket.channel_id as u64).await {
+                Ok(c) => log::info!("Channel {} deleted", c.id().0),
+                Err(e) => log::warn!("Failed to delete channel: {e}"),
+            }
+        }
+
+        Ok(InteractionResponse::default()
+            .set_kind(InteractionResponseType::ChannelMessageWithSource)
+            .set_data(
+                CreateInteractionResponseData::default()
+                    .content(format!("{deleted_count} tickets excluídos com sucesso")),
             )
             .to_owned())
     }
