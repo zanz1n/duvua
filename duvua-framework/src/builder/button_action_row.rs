@@ -1,8 +1,11 @@
 use super::hashmap_to_json_map;
 use serde_json::Value;
-use serenity::builder::{
-    CreateActionRow as SerenityCreateActionRow, CreateButton, CreateComponents, CreateInputText,
-    CreateSelectMenu,
+use serenity::{
+    builder::{
+        CreateActionRow as SerenityCreateActionRow, CreateButton, CreateComponents,
+        CreateInputText, CreateSelectMenu,
+    },
+    json::ToNumber,
 };
 
 #[derive(Clone, Debug)]
@@ -54,7 +57,8 @@ impl CreateActionRow {
     }
 
     #[inline]
-    pub fn components(self) -> CreateComponents {
+    pub fn components(mut self) -> CreateComponents {
+        self.0 .0.insert("type", (1_u8).to_number());
         CreateComponents(vec![hashmap_to_json_map(self.0 .0).into()])
     }
 }
