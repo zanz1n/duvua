@@ -95,6 +95,12 @@ impl CommandHandler for TicketCommandHandler {
                         .handle_delete_ticket_by_options(&ctx.http, &sub_command.options, user_id)
                         .await?
                 }
+                "all" => {
+                    res = self
+                        .shared_handler
+                        .handle_delete_all(&ctx.http, guild_id, user_id)
+                        .await?;
+                }
                 _ => return Err(BotError::InvalidOption("sub-command")),
             }
 
