@@ -24,12 +24,12 @@ features = [
 ]
 
 [dependencies.mongodb]
-version = "2.6.0"
+version = "2.6"
 features = ["bson-chrono-0_4"]
 
 [dependencies.tokio]
 version = "1"
-features = ["macros", "rt-multi-thread"]
+features = ["full"]
 
 [dependencies.serde]
 version = "1.0"
