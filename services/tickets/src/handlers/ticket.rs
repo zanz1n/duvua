@@ -5,7 +5,7 @@ use duvua_framework::{
     builder::interaction_response::InteractionResponse,
     errors::BotError,
     handler::{CommandHandler, CommandHandlerData},
-    utils::get_sub_command,
+    utils::{get_sub_command, get_sub_command_group},
 };
 use serenity::{
     builder::{CreateApplicationCommand, CreateApplicationCommandOption},
@@ -56,34 +56,52 @@ impl CommandHandler for TicketCommandHandler {
             return Err(BotError::GuildNotPermitTickets);
         }
 
-        let sub_command =
-            get_sub_command(&interaction.data.options).ok_or(BotError::SomethingWentWrong)?;
-        let sub_command_str = sub_command.name.as_str();
+        log::debug!("{:?}", interaction.data.options);
 
         let res: InteractionResponse<'_>;
 
-        if sub_command_str == "create" {
-            res = self
-                .shared_handler
-                .handle_create_ticket(
-                    &ctx.http,
-                    guild,
-                    guild_id,
-                    user_id,
-                    interaction.user.name.clone(),
-                )
-                .await?;
-        } else if sub_command_str == "delete-id" {
-            res = self
-                .shared_handler
-                .handle_delete_ticket_by_id(&ctx.http, &sub_command.options, user_id)
-                .await?;
-        } else {
-            return Err(BotError::InvalidOption("sub-command"));
+        if let Some(sub_command) = get_sub_command(&interaction.data.options) {
+            match sub_command.name.as_str() {
+                "create" => {
+                    res = self
+                        .shared_handler
+                        .handle_create_ticket(
+                            &ctx.http,
+                            guild,
+                            guild_id,
+                            user_id,
+                            interaction.user.name.clone(),
+                        )
+                        .await?
+                }
+                _ => return Err(BotError::InvalidOption("sub-command")),
+            }
+            return res
+                .respond(&ctx.http, interaction.id.0, &interaction.token)
+                .await;
         }
 
-        res.respond(&ctx.http, interaction.id.0, &interaction.token)
-            .await?;
+        let sub_command_group =
+            get_sub_command_group(&interaction.data.options).ok_or(BotError::SomethingWentWrong)?;
+
+        if sub_command_group.name.as_str() == "delete" {
+            let sub_command =
+                get_sub_command(&sub_command_group.options).ok_or(BotError::SomethingWentWrong)?;
+
+            match sub_command.name.as_str() {
+                "by-id" => {
+                    res = self
+                        .shared_handler
+                        .handle_delete_ticket_by_id(&ctx.http, &sub_command.options, user_id)
+                        .await?
+                }
+                _ => return Err(BotError::InvalidOption("sub-command")),
+            }
+
+            return res
+                .respond(&ctx.http, interaction.id.0, &interaction.token)
+                .await;
+        }
 
         Ok(())
     }
@@ -140,7 +158,7 @@ fn build_data() -> CommandHandlerData {
 fn build_data_command() -> CreateApplicationCommand {
     CreateApplicationCommand::default()
         .name("ticket")
-        .description("Comandos para a criação de tickets")
+        .description("Comandos relacionados a tickets")
         .description_localized("en-US", "Ticket realted commands")
         .add_option(
             CreateApplicationCommandOption::default()
@@ -152,27 +170,38 @@ fn build_data_command() -> CreateApplicationCommand {
         )
         .add_option(
             CreateApplicationCommandOption::default()
-                .kind(CommandOptionType::SubCommand)
-                .name("delete-id")
-                .description("Deleta um ticket seu por id")
-                .description_localized("en-US", "Delete one your tickets by id")
+                .kind(CommandOptionType::SubCommandGroup)
+                .name("delete")
+                .description("Comandos para deletar tickets")
+                .description_localized("en-US", "Commands to delete tickets")
                 .add_sub_option(
                     CreateApplicationCommandOption::default()
-                        .kind(CommandOptionType::String)
-                        .name("id")
-                        .description("O id do ticket que deseja deletar")
-                        .description_localized("en-US", "The id of the ticket you want to delete")
-                        .required(true)
+                        .kind(CommandOptionType::SubCommand)
+                        .name("by-id")
+                        .description("Deleta um ticket seu por id")
+                        .description_localized("en-US", "Delete one your tickets by id")
+                        .add_sub_option(
+                            CreateApplicationCommandOption::default()
+                                .kind(CommandOptionType::String)
+                                .name("id")
+                                .description("O id do ticket que deseja deletar")
+                                .description_localized(
+                                    "en-US",
+                                    "The id of the ticket you want to delete",
+                                )
+                                .required(true)
+                                .to_owned(),
+                        )
                         .to_owned(),
                 )
-                .to_owned(),
-        )
-        .add_option(
-            CreateApplicationCommandOption::default()
-                .kind(CommandOptionType::SubCommand)
-                .name("delete")
-                .description("Deleta seus tickets caso você tenha algum")
-                .description_localized("en-US", "Delete a ticket in case you have one open")
+                .add_sub_option(
+                    CreateApplicationCommandOption::default()
+                        .kind(CommandOptionType::SubCommand)
+                        .name("all")
+                        .description("Deleta todos os seus tickets caso você tenha algum")
+                        .description_localized("en-US", "Delete all your tickets if any")
+                        .to_owned(),
+                )
                 .to_owned(),
         )
         .to_owned()
