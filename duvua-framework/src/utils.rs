@@ -18,6 +18,17 @@ pub fn get_sub_command(options: &Vec<CommandDataOption>) -> Option<CommandDataOp
 }
 
 #[inline]
+pub fn get_sub_command_group(options: &Vec<CommandDataOption>) -> Option<CommandDataOption> {
+    for option in options.iter() {
+        if option.kind == CommandOptionType::SubCommandGroup {
+            return Some(option.clone());
+        }
+    }
+
+    None
+}
+
+#[inline]
 pub fn get_option<T: ToString>(
     options: &Vec<CommandDataOption>,
     name: T,
