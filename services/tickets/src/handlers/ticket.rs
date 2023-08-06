@@ -185,7 +185,7 @@ fn build_data_command() -> CreateApplicationCommand {
                         .kind(CommandOptionType::SubCommand)
                         .name("by-id")
                         .description("Deleta um ticket seu por id")
-                        .description_localized("en-US", "Delete one your tickets by id")
+                        .description_localized("en-US", "Deletes one of your tickets by id")
                         .add_sub_option(
                             CreateApplicationCommandOption::default()
                                 .kind(CommandOptionType::String)
