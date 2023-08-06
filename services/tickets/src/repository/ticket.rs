@@ -6,6 +6,7 @@ use mongodb::{
     Collection,
 };
 use serde::{Deserialize, Serialize};
+use serenity::futures::StreamExt;
 use std::str::FromStr;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -55,7 +56,12 @@ impl CreateTicketData {
 #[async_trait]
 pub trait TicketRepository: Sync + Send {
     async fn get(&self, id: String) -> Result<Ticket, BotError>;
-    async fn get_by_member(&self, guild_id: u64, user_id: u64) -> Result<Ticket, BotError>;
+    async fn get_by_member(
+        &self,
+        guild_id: u64,
+        user_id: u64,
+        limit: usize,
+    ) -> Result<Vec<Ticket>, BotError>;
     async fn create(&self, data: CreateTicketData) -> Result<Ticket, BotError>;
     async fn delete(&self, id: String) -> Result<(), BotError>;
 }
@@ -93,15 +99,39 @@ impl TicketRepository for TicketService {
         self.fetch(doc! {"_id": object_id}).await
     }
 
-    async fn get_by_member(&self, guild_id: u64, user_id: u64) -> Result<Ticket, BotError> {
-        self.col
-            .find_one(
+    async fn get_by_member(
+        &self,
+        guild_id: u64,
+        user_id: u64,
+        limit: usize,
+    ) -> Result<Vec<Ticket>, BotError> {
+        let mut stream = self
+            .col
+            .find(
                 doc! {"guild_id": guild_id as i64, "user_id": user_id as i64},
                 None,
             )
             .await
-            .or_else(|_| Err(BotError::MongoDbError))?
-            .ok_or(BotError::TicketNotFound)
+            .or_else(|_| Err(BotError::MongoDbError))?;
+
+        let mut array: Vec<Ticket> = Vec::new();
+
+        loop {
+            if array.len() == limit {
+                break Ok(array);
+            }
+
+            match stream.next().await {
+                Some(result) => match result {
+                    Ok(ticket) => array.push(ticket),
+                    Err(e) => {
+                        log::error!(target: "mongo_errors", "{e}");
+                        break Err(BotError::MongoDbError);
+                    }
+                },
+                None => break Ok(array),
+            }
+        }
     }
 
     async fn create(&self, data: CreateTicketData) -> Result<Ticket, BotError> {

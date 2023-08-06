@@ -42,8 +42,8 @@ impl TicketSharedHandler {
         username: String,
     ) -> Result<InteractionResponse, BotError> {
         if !guild.allow_multiple {
-            let ticket = self.ticket_repo.get_by_member(guild_id, user_id).await;
-            if ticket.is_ok() {
+            let ticket = self.ticket_repo.get_by_member(guild_id, user_id, 2).await?;
+            if ticket.len() != 0 {
                 return Err(BotError::OnlyOneTicketAllowed);
             }
         }
