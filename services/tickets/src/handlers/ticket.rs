@@ -155,7 +155,7 @@ fn build_data() -> CommandHandlerData {
         accepts_application_command: true,
         accepts_message_component: true,
         command_data: Some(build_data_command()),
-        custom_id: Some("ticket-create".to_owned()),
+        custom_id: Some("ticket".to_owned()),
         needs_defer: false,
     }
 }

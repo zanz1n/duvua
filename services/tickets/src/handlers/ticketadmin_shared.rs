@@ -123,7 +123,7 @@ impl TicketAdminSharedHandler {
                             .style(ButtonStyle::Primary)
                             .label("Criar Ticket")
                             .emoji(ReactionType::Unicode("🎫".to_owned()))
-                            .custom_id("ticket-create")
+                            .custom_id("ticket")
                             .to_owned(),
                     )
                     .to_components(),
