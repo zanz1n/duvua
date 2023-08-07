@@ -4,7 +4,8 @@ mod repository;
 use crate::{
     handlers::{
         message_component_handler::MessageComponentHandler, ticket::TicketCommandHandler,
-        ticket_shared::TicketSharedHandler,
+        ticket_shared::TicketSharedHandler, ticketadmin::TicketAdminCommandHandler,
+        ticketadmin_shared::TicketAdminSharedHandler,
     },
     repository::{
         guild::{GuildRepository, GuildService},
@@ -54,17 +55,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
         Arc::new(TicketService::new(db.collection("tickets")));
 
     let mut handler = Handler::new(true);
-    let ticket_shared_handler = Arc::new(TicketSharedHandler::new(ticket_repo));
+
+    let ticket_shared = Arc::new(TicketSharedHandler::new(ticket_repo.clone()));
+    let ticket_adm_shared = Arc::new(TicketAdminSharedHandler::new(
+        ticket_repo,
+        guild_repo.clone(),
+    ));
 
     handler
-        .add_handler(TicketCommandHandler::new(
-            guild_repo,
-            ticket_shared_handler.clone(),
-        ))
-        .set_component_handler(
-            MessageComponentHandler::new(ticket_shared_handler.clone()),
-            true,
-        );
+        .add_handler(TicketCommandHandler::new(guild_repo, ticket_shared.clone()))
+        .add_handler(TicketAdminCommandHandler::new(ticket_adm_shared))
+        .set_component_handler(MessageComponentHandler::new(ticket_shared), true);
 
     let intents = GatewayIntents::empty();
     let mut client = Client::builder(discord_token, intents)

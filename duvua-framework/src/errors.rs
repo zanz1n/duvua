@@ -48,6 +48,12 @@ pub enum BotError {
     CacheDeserializeError,
     #[error("Failed to serialize cache")]
     CacheSerializeError,
+    #[error("Permission denied to issue this command")]
+    CommandPermissionDenied,
+    #[error("Failed to send ticket permanent message")]
+    FailedToSendChannelMessage,
+    #[error("The provided channel is invalid")]
+    InvalidChannelProvided,
 }
 
 impl BotError {
@@ -70,6 +76,9 @@ impl BotError {
             Self::CommandIssuedOutOfGuild => "Esse comando só pode ser usado dentro de um servidor",
             Self::GuildNotPermitTickets => "Tickets não estão habilidatos nesse servidor",
             Self::OnlyOneTicketAllowed => "O servidor só permite a criação de um ticket por membro",
+            Self::CommandPermissionDenied => "Você não tem permissão para usar esse comando!",
+            Self::FailedToSendChannelMessage => "Não foi possível enviar a mensagem no canal de texto",
+            Self::InvalidChannelProvided => "O canal fornecido é inválido",
             e => {
                 log::error!(target: "framework_errors", "Unhandled command error: {}", e.to_string());
                 "🤖 Algo deu errado!"
