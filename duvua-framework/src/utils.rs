@@ -1,9 +1,16 @@
-use crate::builder::hashmap_to_json_map;
+use crate::{
+    builder::{hashmap_to_json_map, interaction_response::InteractionResponse},
+    errors::BotError,
+};
 use serde_json::Value;
 use serenity::{
     builder::CreateMessage,
     http::Http,
-    model::prelude::{application_command::CommandDataOption, command::CommandOptionType, Message},
+    model::prelude::{
+        application_command::{ApplicationCommandInteraction, CommandDataOption},
+        command::CommandOptionType,
+        InteractionResponseType, Message,
+    },
 };
 
 #[inline]
@@ -66,4 +73,15 @@ pub async fn send_message(
     }
 
     Ok(message)
+}
+
+pub async fn defer_interaction(
+    http: impl AsRef<Http>,
+    interaction: &ApplicationCommandInteraction,
+) -> Result<(), BotError> {
+    InteractionResponse::default()
+        .set_kind(InteractionResponseType::DeferredChannelMessageWithSource)
+        .to_owned()
+        .respond(http, interaction.id.0, &interaction.token)
+        .await
 }
