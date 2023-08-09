@@ -36,7 +36,6 @@ impl UserRepository for UserService {
             .execute(&self.db)
             .await
             .or_else(|e| {
-                log::debug!("{e}");
                 Err(match e {
                     sqlx::Error::Database(_) => BotError::UserAlreadyExists,
                     _ => BotError::Query,

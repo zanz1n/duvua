@@ -156,8 +156,6 @@ impl TicketAdminSharedHandler {
             .parse()
             .or_else(|_| Err(BotError::InvalidOption("channel")))?;
 
-        log::debug!("{channel:?}");
-
         let message = match get_option(options, "message") {
             Some(message) => {
                 let value = message.value.ok_or(BotError::InvalidOption("message"))?;
