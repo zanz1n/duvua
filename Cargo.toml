@@ -6,3 +6,8 @@ members = [
     "services/chimera",
     "services/tickets",
 ]
+
+[profile.release]
+panic = 'abort'
+lto = true
+codegen-units = 1

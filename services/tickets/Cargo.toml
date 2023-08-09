@@ -38,8 +38,3 @@ features = ["derive"]
 [dependencies.chrono]
 version = "0.4"
 features = ["serde"]
-
-[profile.release]
-panic = 'abort'
-lto = true
-codegen-units = 1
