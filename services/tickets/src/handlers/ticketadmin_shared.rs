@@ -169,4 +169,39 @@ impl TicketAdminSharedHandler {
         self.handle_add_permanent(http, user_id, message, channel)
             .await
     }
+
+    pub async fn handle_delete_all(
+        &self,
+        http: &Arc<Http>,
+        guild_id: u64,
+        user_id: u64,
+    ) -> Result<InteractionResponse, BotError> {
+        let tickets = self
+            .ticket_repo
+            .get_by_member(guild_id, user_id, 11)
+            .await?;
+
+        if tickets.len() > 10 {
+            return Ok(InteractionResponse::with_content(
+                "O usuário tem mais de 10 tickets, exclua eles manualmente",
+            ));
+        }
+
+        let deleted_count = self.ticket_repo.delete_by_member(guild_id, user_id).await?;
+
+        for ticket in tickets {
+            let http = http.clone();
+
+            tokio::spawn(async move {
+                match http.delete_channel(ticket.channel_id as u64).await {
+                    Ok(c) => log::info!("Channel {} on guild {guild_id} deleted", c.id().0),
+                    Err(e) => log::warn!("Failed to delete channel: {e}"),
+                }
+            });
+        }
+
+        Ok(InteractionResponse::with_content(format!(
+            "{deleted_count} tickets excluídos com sucesso"
+        )))
+    }
 }

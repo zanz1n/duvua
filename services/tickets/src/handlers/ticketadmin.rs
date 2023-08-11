@@ -70,6 +70,11 @@ impl CommandHandler for TicketAdminCommandHandler {
                     .handle_delete_ticket_by_options(&ctx.http, &sub_command.options)
                     .await?
             }
+            "delete-all" => {
+                self.shared_handler
+                    .handle_delete_all(&ctx.http, guild_id, interaction.user.id.0)
+                    .await?
+            }
             "add-permanent" => {
                 self.shared_handler
                     .handle_add_permanent_by_options(
