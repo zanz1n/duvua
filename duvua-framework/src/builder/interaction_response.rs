@@ -1,6 +1,6 @@
 use super::hashmap_to_json_map;
 use crate::errors::BotError;
-use serde_json::Value;
+use serde_json::{json, Map, Value};
 use serenity::{
     builder::CreateInteractionResponseData,
     http::Http,
@@ -21,8 +21,13 @@ pub struct InteractionResponse<'a>(
 impl<'a> InteractionResponse<'a> {
     #[inline]
     pub fn with_content<T: ToString>(content: T) -> Self {
-        let mut map = HashMap::<&'static str, Value>::with_capacity(1);
-        map.insert("content", Value::String(content.to_string()));
+        let mut data = Map::with_capacity(1);
+        data.insert("content".to_owned(), Value::String(content.to_string()));
+
+        let mut map = HashMap::<&'static str, Value>::with_capacity(2);
+        map.insert("type", 4.to_number());
+        map.insert("data", Value::Object(data));
+
         Self(map, Vec::with_capacity(0))
     }
 
