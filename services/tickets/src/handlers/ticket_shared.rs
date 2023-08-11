@@ -178,12 +178,9 @@ impl TicketSharedHandler {
             Ok(())
         }?;
 
-        Ok(InteractionResponse::default()
-            .set_kind(InteractionResponseType::ChannelMessageWithSource)
-            .set_data(
-                CreateInteractionResponseData::default().content("Ticket deletado com sucesso"),
-            )
-            .to_owned())
+        Ok(InteractionResponse::with_content(
+            "Ticket deletado com sucesso",
+        ))
     }
 
     pub async fn handle_delete_ticket_by_options(

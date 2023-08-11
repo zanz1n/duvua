@@ -1,6 +1,6 @@
 use super::hashmap_to_json_map;
 use crate::errors::BotError;
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value};
 use serenity::{
     builder::CreateInteractionResponseData,
     http::Http,

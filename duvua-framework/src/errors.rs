@@ -1,9 +1,8 @@
 use crate::builder::interaction_response::InteractionResponse;
 use serenity::{
-    builder::{CreateComponents, CreateInteractionResponseData},
     model::prelude::{
         application_command::ApplicationCommandInteraction,
-        message_component::MessageComponentInteraction, InteractionResponseType,
+        message_component::MessageComponentInteraction,
     },
     prelude::Context,
 };
@@ -88,22 +87,8 @@ impl BotError {
     }
 
     #[inline]
-    pub fn get_response(&self, defered: bool) -> InteractionResponse<'_> {
-        let mut response = InteractionResponse::default();
-        response
-            .set_kind(if defered {
-                InteractionResponseType::UpdateMessage
-            } else {
-                InteractionResponseType::ChannelMessageWithSource
-            })
-            .set_data(
-                CreateInteractionResponseData::default()
-                    .set_components(CreateComponents::default())
-                    .set_embeds(Vec::new())
-                    .content(self.get_message()),
-            );
-
-        response
+    pub fn get_response(&self, _defered: bool) -> InteractionResponse<'_> {
+        InteractionResponse::with_content(self.get_message())
     }
 
     pub async fn respond_message_component(

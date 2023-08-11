@@ -8,7 +8,7 @@ use duvua_framework::{
     utils::{get_option, send_message},
 };
 use serenity::{
-    builder::{CreateButton, CreateEmbed, CreateInteractionResponseData, CreateMessage},
+    builder::{CreateButton, CreateEmbed, CreateMessage},
     http::Http,
     model::prelude::{
         application_command::CommandDataOption, component::ButtonStyle, ReactionType,
@@ -54,9 +54,7 @@ impl TicketAdminSharedHandler {
             "Ticket desabilidatos no servidor"
         };
 
-        Ok(InteractionResponse::default()
-            .set_data(CreateInteractionResponseData::default().content(msg))
-            .to_owned())
+        Ok(InteractionResponse::with_content(msg))
     }
 
     pub async fn handle_delete_ticket_by_id(
@@ -73,12 +71,10 @@ impl TicketAdminSharedHandler {
 
         self.ticket_repo.delete(id).await?;
 
-        Ok(InteractionResponse::default()
-            .set_data(CreateInteractionResponseData::default().content(format!(
-                "Ticket de <@{}> deletado com sucesso",
-                ticket.user_id
-            )))
-            .to_owned())
+        Ok(InteractionResponse::with_content(format!(
+            "Ticket de <@{}> deletado com sucesso",
+            ticket.user_id
+        )))
     }
 
     pub async fn handle_delete_ticket_by_options(
@@ -134,9 +130,7 @@ impl TicketAdminSharedHandler {
             .await
             .or_else(|_| Err(BotError::FailedToSendChannelMessage))?;
 
-        Ok(InteractionResponse::default()
-            .set_data(CreateInteractionResponseData::default().content("Mensagem enviada"))
-            .to_owned())
+        Ok(InteractionResponse::with_content("Mensagem enviada"))
     }
 
     pub async fn handle_add_permanent_by_options(

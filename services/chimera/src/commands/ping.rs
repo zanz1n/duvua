@@ -5,9 +5,8 @@ use duvua_framework::{
     handler::{CommandHandler, CommandHandlerData},
 };
 use serenity::{
-    builder::{CreateApplicationCommand, CreateInteractionResponseData},
-    model::prelude::application_command::ApplicationCommandInteraction,
-    prelude::Context,
+    builder::CreateApplicationCommand,
+    model::prelude::application_command::ApplicationCommandInteraction, prelude::Context,
 };
 
 pub struct PingCommand {
@@ -29,12 +28,8 @@ impl CommandHandler for PingCommand {
         ctx: &Context,
         interaction: &ApplicationCommandInteraction,
     ) -> Result<(), BotError> {
-        InteractionResponse::default()
-            .set_data(
-                CreateInteractionResponseData::default()
-                    .content(format!("🏓 **Pong!**\n📡 Ping do bot: {}ms", "120")),
-            )
-            .respond_application_command(ctx.http.as_ref(), interaction)
+        InteractionResponse::with_content(format!("🏓 **Pong!**\n📡 Ping do bot: {}ms", "120"))
+            .respond(&ctx.http, interaction.id.0, &interaction.token)
             .await
     }
 
