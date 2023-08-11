@@ -1,9 +1,10 @@
-mod commands;
-use commands::ping::PingCommand;
+mod handlers;
+
 use duvua_framework::{
     env::{env_param, ProcessEnv},
     handler::Handler,
 };
+use handlers::ping::PingCommand;
 use serenity::{prelude::GatewayIntents, Client};
 use std::error::Error;
 
