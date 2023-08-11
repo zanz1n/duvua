@@ -20,6 +20,13 @@ pub struct InteractionResponse<'a>(
 
 impl<'a> InteractionResponse<'a> {
     #[inline]
+    pub fn with_content<T: ToString>(content: T) -> Self {
+        let mut map = HashMap::<&'static str, Value>::with_capacity(1);
+        map.insert("content", Value::String(content.to_string()));
+        Self(map, Vec::with_capacity(0))
+    }
+
+    #[inline]
     pub fn set_kind(&mut self, kind: InteractionResponseType) -> &mut Self {
         self.0.insert("type", (kind as u8).to_number());
         self
