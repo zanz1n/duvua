@@ -205,37 +205,34 @@ impl TicketSharedHandler {
 
     pub async fn handle_delete_all(
         &self,
-        http: impl AsRef<Http>,
+        http: &Arc<Http>,
         guild_id: u64,
         user_id: u64,
     ) -> Result<InteractionResponse, BotError> {
         let tickets = self.ticket_repo.get_by_member(guild_id, user_id, 6).await?;
 
         if tickets.len() > 5 {
-            return Ok(InteractionResponse::default()
-                .set_kind(InteractionResponseType::ChannelMessageWithSource)
-                .set_data(CreateInteractionResponseData::default().content(
-                    "Você tem mais de 5 tickets criados, por favor exclua eles \
-                    individualmente usando `/ticket delete by-id`",
-                ))
-                .to_owned());
+            return Ok(InteractionResponse::with_content(
+                "Você tem mais de 5 tickets criados, por favor exclua \
+                eles individualmente usando `/ticket delete by-id`",
+            ));
         }
 
         let deleted_count = self.ticket_repo.delete_by_member(guild_id, user_id).await?;
 
         for ticket in tickets {
-            match http.as_ref().delete_channel(ticket.channel_id as u64).await {
-                Ok(c) => log::info!("Channel {} deleted", c.id().0),
-                Err(e) => log::warn!("Failed to delete channel: {e}"),
-            }
+            let http = http.clone();
+
+            tokio::spawn(async move {
+                match http.delete_channel(ticket.channel_id as u64).await {
+                    Ok(c) => log::info!("Channel {} on guild {guild_id} deleted", c.id().0),
+                    Err(e) => log::warn!("Failed to delete channel: {e}"),
+                }
+            });
         }
 
-        Ok(InteractionResponse::default()
-            .set_kind(InteractionResponseType::ChannelMessageWithSource)
-            .set_data(
-                CreateInteractionResponseData::default()
-                    .content(format!("{deleted_count} tickets excluídos com sucesso")),
-            )
-            .to_owned())
+        Ok(InteractionResponse::with_content(format!(
+            "{deleted_count} tickets excluídos com sucesso"
+        )))
     }
 }
