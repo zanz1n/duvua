@@ -5,7 +5,7 @@ use duvua_framework::{
     builder::interaction_response::InteractionResponse,
     errors::BotError,
     handler::{CommandHandler, CommandHandlerData},
-    utils::{defer_interaction, get_sub_command, get_sub_command_group},
+    utils::{get_sub_command, get_sub_command_group},
 };
 use serenity::{
     builder::{CreateApplicationCommand, CreateApplicationCommandOption},
@@ -94,8 +94,6 @@ impl CommandHandler for TicketCommandHandler {
                         .await?
                 }
                 "all" => {
-                    defer_interaction(&ctx.http, interaction).await?;
-
                     res = self
                         .shared_handler
                         .handle_delete_all(&ctx.http, guild_id, user_id)

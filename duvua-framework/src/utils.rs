@@ -77,11 +77,12 @@ pub async fn send_message(
 
 pub async fn defer_interaction(
     http: impl AsRef<Http>,
-    interaction: &ApplicationCommandInteraction,
+    id: u64,
+    token: &str,
 ) -> Result<(), BotError> {
     InteractionResponse::default()
         .set_kind(InteractionResponseType::DeferredChannelMessageWithSource)
         .to_owned()
-        .respond(http, interaction.id.0, &interaction.token)
+        .respond(http, id, token)
         .await
 }
