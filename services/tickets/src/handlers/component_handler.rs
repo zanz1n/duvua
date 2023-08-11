@@ -1,8 +1,9 @@
-use super::ticket_shared::TicketSharedHandler;
 use async_trait::async_trait;
 use duvua_framework::{errors::BotError, handler::CommandHandler};
 use serenity::{model::prelude::message_component::MessageComponentInteraction, prelude::Context};
 use std::sync::Arc;
+
+use crate::repository::ticket_shared::TicketSharedHandler;
 
 pub struct MessageComponentHandler {
     shared_handler: Arc<TicketSharedHandler>,

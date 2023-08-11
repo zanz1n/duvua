@@ -3,13 +3,13 @@ mod repository;
 
 use crate::{
     handlers::{
-        message_component_handler::MessageComponentHandler, ticket::TicketCommandHandler,
-        ticket_shared::TicketSharedHandler, ticketadmin::TicketAdminCommandHandler,
-        ticketadmin_shared::TicketAdminSharedHandler,
+        component_handler::MessageComponentHandler, ticket::TicketCommandHandler,
+        ticketadmin::TicketAdminCommandHandler,
     },
     repository::{
         guild::{GuildRepository, GuildService},
         ticket::{TicketRepository, TicketService},
+        ticket_shared::TicketSharedHandler,
     },
 };
 use duvua_framework::{
@@ -57,14 +57,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut handler = Handler::new(true);
 
     let ticket_shared = Arc::new(TicketSharedHandler::new(ticket_repo.clone()));
-    let ticket_adm_shared = Arc::new(TicketAdminSharedHandler::new(
-        ticket_repo,
-        guild_repo.clone(),
-    ));
 
     handler
-        .add_handler(TicketCommandHandler::new(guild_repo, ticket_shared.clone()))
-        .add_handler(TicketAdminCommandHandler::new(ticket_adm_shared))
+        .add_handler(TicketCommandHandler::new(
+            guild_repo.clone(),
+            ticket_repo.clone(),
+            ticket_shared.clone(),
+        ))
+        .add_handler(TicketAdminCommandHandler::new(ticket_repo, guild_repo))
         .set_component_handler(MessageComponentHandler::new(ticket_shared), true);
 
     let intents = GatewayIntents::empty();

@@ -5,7 +5,7 @@ use crate::repository::{
 use duvua_framework::{
     builder::{button_action_row::CreateActionRow, interaction_response::InteractionResponse},
     errors::BotError,
-    utils::{get_option, send_message},
+    utils::send_message,
 };
 use serenity::{
     builder::{
@@ -15,9 +15,8 @@ use serenity::{
     json::hashmap_to_json_map,
     model::{
         prelude::{
-            application_command::CommandDataOption, component::ButtonStyle, ChannelType,
-            InteractionResponseType, PermissionOverwrite, PermissionOverwriteType, ReactionType,
-            RoleId, UserId,
+            component::ButtonStyle, ChannelType, InteractionResponseType, PermissionOverwrite,
+            PermissionOverwriteType, ReactionType, RoleId, UserId,
         },
         Permissions,
     },
@@ -181,55 +180,5 @@ impl TicketSharedHandler {
         Ok(InteractionResponse::with_content(
             "Ticket deletado com sucesso",
         ))
-    }
-
-    pub async fn handle_delete_ticket_by_options(
-        &self,
-        http: impl AsRef<Http>,
-        options: &Vec<CommandDataOption>,
-        user_id: u64,
-    ) -> Result<InteractionResponse, BotError> {
-        let id = get_option(options, "id")
-            .ok_or(BotError::OptionNotProvided("id"))?
-            .value
-            .ok_or(BotError::InvalidOption("id"))?
-            .as_str()
-            .ok_or(BotError::InvalidOption("id"))?
-            .to_owned();
-
-        self.handle_delete_ticket_by_id(http, id, user_id).await
-    }
-
-    pub async fn handle_delete_all(
-        &self,
-        http: &Arc<Http>,
-        guild_id: u64,
-        user_id: u64,
-    ) -> Result<InteractionResponse, BotError> {
-        let tickets = self.ticket_repo.get_by_member(guild_id, user_id, 6).await?;
-
-        if tickets.len() > 5 {
-            return Ok(InteractionResponse::with_content(
-                "Você tem mais de 5 tickets criados, por favor exclua \
-                eles individualmente usando `/ticket delete by-id`",
-            ));
-        }
-
-        let deleted_count = self.ticket_repo.delete_by_member(guild_id, user_id).await?;
-
-        for ticket in tickets {
-            let http = http.clone();
-
-            tokio::spawn(async move {
-                match http.delete_channel(ticket.channel_id as u64).await {
-                    Ok(c) => log::info!("Channel {} on guild {guild_id} deleted", c.id().0),
-                    Err(e) => log::warn!("Failed to delete channel: {e}"),
-                }
-            });
-        }
-
-        Ok(InteractionResponse::with_content(format!(
-            "{deleted_count} tickets excluídos com sucesso"
-        )))
     }
 }
