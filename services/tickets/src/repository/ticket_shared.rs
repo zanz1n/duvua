@@ -143,7 +143,8 @@ impl TicketSharedHandler {
                             )
                             .to_components(),
                     )
-                    .ephemeral(true),
+                    .ephemeral(true)
+                    .to_owned(),
             )
             .to_owned())
     }

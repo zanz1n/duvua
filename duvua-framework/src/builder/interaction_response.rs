@@ -38,9 +38,7 @@ impl<'a> InteractionResponse<'a> {
     }
 
     #[inline]
-    pub fn set_data(&mut self, data: &mut CreateInteractionResponseData<'a>) -> &mut Self {
-        let data = data.to_owned();
-
+    pub fn set_data(&mut self, data: CreateInteractionResponseData<'a>) -> &mut Self {
         let map = hashmap_to_json_map(data.0);
 
         self.0.insert("data", Value::from(map));
