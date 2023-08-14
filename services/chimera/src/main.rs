@@ -6,8 +6,9 @@ use duvua_framework::{
     handler::Handler,
 };
 use handlers::{component_handler::MessageComponentHandler, kiss::KissCommand, ping::PingCommand};
+use repository::kiss_shared::KissSharedHandler;
 use serenity::{prelude::GatewayIntents, Client};
-use std::error::Error;
+use std::{error::Error, sync::Arc};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -21,9 +22,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let discord_token: String = env_param("DISCORD_TOKEN", None);
 
+    let shared_handler = Arc::new(KissSharedHandler::new());
+
     let mut handler = Handler::new(true);
     handler
-        .set_component_handler(MessageComponentHandler::new(), true)
+        .set_component_handler(MessageComponentHandler::new(shared_handler), true)
         .add_handler(KissCommand::new())
         .add_handler(PingCommand::new());
 
