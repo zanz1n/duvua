@@ -1,4 +1,3 @@
-use crate::repository::KISS_GIFS;
 use async_trait::async_trait;
 use duvua_framework::{
     builder::{button_action_row::CreateActionRow, interaction_response::InteractionResponse},
@@ -6,7 +5,6 @@ use duvua_framework::{
     handler::{CommandHandler, CommandHandlerData},
     utils::get_option,
 };
-use rand::seq::SliceRandom;
 use serenity::{
     builder::{
         CreateApplicationCommand, CreateApplicationCommandOption, CreateButton, CreateEmbed,
@@ -18,15 +16,17 @@ use serenity::{
     },
     prelude::Context,
 };
+use std::sync::Arc;
+
+use crate::repository::random::RandomStringProvider;
 
 pub struct KissCommand {
     data: &'static CommandHandlerData,
-    kiss_gifs: Vec<&'static str>,
+    kiss_gifs: Arc<RandomStringProvider>,
 }
 
 impl KissCommand {
-    pub fn new() -> Self {
-        let kiss_gifs: Vec<&str> = KISS_GIFS.split("\n").collect();
+    pub fn new(kiss_gifs: Arc<RandomStringProvider>) -> Self {
         Self {
             data: Box::leak(Box::new(build_data())),
             kiss_gifs,
@@ -60,9 +60,9 @@ impl CommandHandler for KissCommand {
             .title("O amor está no ar!  ❤️")
             .description(format!("<@{user_id}> beijou <@{target_id}>"));
 
-        let rand_gif = *self
+        let rand_gif = self
             .kiss_gifs
-            .choose(&mut rand::thread_rng())
+            .get_choice()
             .ok_or(BotError::SomethingWentWrong)?;
 
         embed.image(rand_gif);
