@@ -242,6 +242,7 @@ dependencies = [
  "duvua-framework",
  "env_logger",
  "log",
+ "rand",
  "serenity",
  "tokio",
 ]
