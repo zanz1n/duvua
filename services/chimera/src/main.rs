@@ -4,7 +4,7 @@ use duvua_framework::{
     env::{env_param, ProcessEnv},
     handler::Handler,
 };
-use handlers::ping::PingCommand;
+use handlers::{component_handler::MessageComponentHandler, ping::PingCommand};
 use serenity::{prelude::GatewayIntents, Client};
 use std::error::Error;
 
@@ -21,7 +21,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let discord_token: String = env_param("DISCORD_TOKEN", None);
 
     let mut handler = Handler::new(true);
-    handler.add_handler(PingCommand::new());
+    handler
+        .set_component_handler(MessageComponentHandler::new(), true)
+        .add_handler(PingCommand::new());
 
     let intents = GatewayIntents::empty();
     let mut client = Client::builder(discord_token, intents)
