@@ -1,10 +1,11 @@
 mod handlers;
+mod repository;
 
 use duvua_framework::{
     env::{env_param, ProcessEnv},
     handler::Handler,
 };
-use handlers::{component_handler::MessageComponentHandler, ping::PingCommand};
+use handlers::{component_handler::MessageComponentHandler, kiss::KissCommand, ping::PingCommand};
 use serenity::{prelude::GatewayIntents, Client};
 use std::error::Error;
 
@@ -23,6 +24,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut handler = Handler::new(true);
     handler
         .set_component_handler(MessageComponentHandler::new(), true)
+        .add_handler(KissCommand::new())
         .add_handler(PingCommand::new());
 
     let intents = GatewayIntents::empty();
