@@ -8,6 +8,7 @@ use serenity::{
     model::prelude::{
         application_command::ApplicationCommandInteraction,
         message_component::MessageComponentInteraction, AttachmentType, InteractionResponseType,
+        MessageFlags,
     },
 };
 use std::collections::HashMap;
@@ -23,6 +24,22 @@ impl<'a> InteractionResponse<'a> {
     pub fn with_content<T: ToString>(content: T) -> Self {
         let mut data = Map::with_capacity(1);
         data.insert("content".to_owned(), Value::String(content.to_string()));
+
+        let mut map = HashMap::<&'static str, Value>::with_capacity(2);
+        map.insert("type", 4.to_number());
+        map.insert("data", Value::Object(data));
+
+        Self(map, Vec::with_capacity(0))
+    }
+
+    #[inline]
+    pub fn with_content_ephemeral<T: ToString>(content: T) -> Self {
+        let mut data = Map::with_capacity(1);
+        data.insert("content".to_owned(), Value::String(content.to_string()));
+        data.insert(
+            "flags".to_owned(),
+            MessageFlags::EPHEMERAL.bits().to_number(),
+        );
 
         let mut map = HashMap::<&'static str, Value>::with_capacity(2);
         map.insert("type", 4.to_number());
