@@ -53,6 +53,8 @@ pub enum BotError {
     FailedToSendChannelMessage,
     #[error("The provided channel is invalid")]
     InvalidChannelProvided,
+    #[error("Failed to fetch user avatar")]
+    UserAvatarFetchFailed,
 }
 
 impl BotError {
@@ -78,6 +80,7 @@ impl BotError {
             Self::CommandPermissionDenied => "Você não tem permissão para usar esse comando!",
             Self::FailedToSendChannelMessage => "Não foi possível enviar a mensagem no canal de texto",
             Self::InvalidChannelProvided => "O canal fornecido é inválido",
+            Self::UserAvatarFetchFailed => "Não foi possível procurar o avatar do usuário",
             e => {
                 log::error!(target: "framework_errors", "Unhandled command error: {}", e.to_string());
                 "🤖 Algo deu errado!"

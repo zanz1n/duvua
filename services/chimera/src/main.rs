@@ -7,7 +7,10 @@ use duvua_framework::{
     env::{env_param, ProcessEnv},
     handler::Handler,
 };
-use handlers::{component_handler::MessageComponentHandler, kiss::KissCommand, ping::PingCommand};
+use handlers::{
+    avatar::AvatarCommand, component_handler::MessageComponentHandler, kiss::KissCommand,
+    ping::PingCommand,
+};
 use repository::{kiss_shared::KissSharedHandler, random::RandomStringProvider};
 use serenity::{prelude::GatewayIntents, Client};
 use std::{error::Error, sync::Arc};
@@ -42,8 +45,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
             MessageComponentHandler::new(shared_handler, cache_service.clone()),
             true,
         )
-        .add_handler(KissCommand::new(kiss_gifs, cache_service))
-        .add_handler(PingCommand::new());
+        .add_handler(KissCommand::new(kiss_gifs, cache_service.clone()))
+        .add_handler(PingCommand::new())
+        .add_handler(AvatarCommand::new(cache_service));
 
     let intents = GatewayIntents::empty();
     let mut client = Client::builder(discord_token, intents)
