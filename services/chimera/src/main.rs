@@ -15,8 +15,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let process_env = env_param("APP_ENV", Some(ProcessEnv::None));
 
     if let ProcessEnv::None = process_env {
-        dotenvy::dotenv()
-            .expect("Failed to open .env file, please provide environment variables or the file");
+        dotenvy::dotenv().expect("Failed to open .env file, please provide environment variables");
     }
     env_logger::init();
 
