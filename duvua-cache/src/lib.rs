@@ -32,22 +32,19 @@ pub trait CacheRepository: Sync + Send {
     async fn set_ttl(&self, key: String, value: String, ttl: usize) -> Result<(), BotError>;
     async fn del(&self, key: String) -> Result<(), BotError>;
 
-    async fn de_get<T: Sized + DeserializeOwned>(&self, key: String)
-        -> Result<Option<T>, BotError>;
-    async fn de_get_ttl<T: Sized + DeserializeOwned>(
-        &self,
-        key: String,
-        ttl: usize,
-    ) -> Result<Option<T>, BotError>;
-    async fn ser_set<T: Sized + Serialize + Send>(
-        &self,
-        key: String,
-        value: T,
-    ) -> Result<(), BotError>;
-    async fn ser_set_ttl<T: Sized + Serialize + Send>(
-        &self,
-        key: String,
-        value: T,
-        ttl: usize,
-    ) -> Result<(), BotError>;
+    async fn de_get<T>(&self, key: String) -> Result<Option<T>, BotError>
+    where
+        T: Sized + DeserializeOwned;
+
+    async fn de_get_ttl<T>(&self, key: String, ttl: usize) -> Result<Option<T>, BotError>
+    where
+        T: Sized + DeserializeOwned;
+
+    async fn ser_set<T>(&self, key: String, value: T) -> Result<(), BotError>
+    where
+        T: Sized + Serialize + Send;
+
+    async fn ser_set_ttl<T>(&self, key: String, value: T, ttl: usize) -> Result<(), BotError>
+    where
+        T: Sized + Serialize + Send;
 }
