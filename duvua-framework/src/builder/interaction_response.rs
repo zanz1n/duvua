@@ -20,7 +20,6 @@ pub struct InteractionResponse<'a>(
 );
 
 impl<'a> InteractionResponse<'a> {
-    #[inline]
     pub fn with_content<T: ToString>(content: T) -> Self {
         let mut data = Map::with_capacity(1);
         data.insert("content".to_owned(), Value::String(content.to_string()));
@@ -32,7 +31,6 @@ impl<'a> InteractionResponse<'a> {
         Self(map, Vec::with_capacity(0))
     }
 
-    #[inline]
     pub fn with_content_ephemeral<T: ToString>(content: T) -> Self {
         let mut data = Map::with_capacity(1);
         data.insert("content".to_owned(), Value::String(content.to_string()));
@@ -48,13 +46,11 @@ impl<'a> InteractionResponse<'a> {
         Self(map, Vec::with_capacity(0))
     }
 
-    #[inline]
     pub fn set_kind(&mut self, kind: InteractionResponseType) -> &mut Self {
         self.0.insert("type", (kind as u8).to_number());
         self
     }
 
-    #[inline]
     pub fn set_data(&mut self, data: CreateInteractionResponseData<'a>) -> &mut Self {
         let map = hashmap_to_json_map(data.0);
 
