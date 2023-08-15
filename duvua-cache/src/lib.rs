@@ -14,8 +14,8 @@ pub(crate) fn de<T: Sized + DeserializeOwned>(value: &str) -> Result<T, BotError
     }
 }
 
-pub(crate) fn ser<T: Sized + Serialize>(value: T) -> Result<String, BotError> {
-    match serde_json::to_string(&value) {
+pub(crate) fn ser<T: Sized + Serialize>(value: &T) -> Result<String, BotError> {
+    match serde_json::to_string(value) {
         Ok(v) => Ok(v),
         Err(e) => {
             log::error!("Failed do serialize cache: {e}");

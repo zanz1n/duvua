@@ -129,7 +129,7 @@ impl CacheRepository for RedisCacheService {
         key: String,
         value: T,
     ) -> Result<(), BotError> {
-        let value = ser(value)?;
+        let value = ser(&value)?;
         self.set(key, value).await
     }
 
@@ -139,7 +139,7 @@ impl CacheRepository for RedisCacheService {
         value: T,
         ttl: usize,
     ) -> Result<(), BotError> {
-        let value = ser(value)?;
+        let value = ser(&value)?;
         self.set_ttl(key, value, ttl).await
     }
 }
