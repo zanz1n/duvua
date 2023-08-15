@@ -1,7 +1,7 @@
 use crate::builder::hashmap_to_json_map;
 use serde_json::Value;
 use serenity::{
-    builder::CreateMessage,
+    builder::{CreateMessage, EditInteractionResponse},
     http::Http,
     model::prelude::{application_command::CommandDataOption, command::CommandOptionType, Message},
 };
@@ -63,4 +63,15 @@ pub async fn send_message(
     }
 
     Ok(message)
+}
+
+pub async fn update_interaction_response(
+    http: impl AsRef<Http>,
+    interaction_token: &str,
+    data: EditInteractionResponse,
+) -> serenity::Result<Message> {
+    let map = hashmap_to_json_map(data.0);
+    http.as_ref()
+        .edit_original_interaction_response(interaction_token, &Value::Object(map))
+        .await
 }
