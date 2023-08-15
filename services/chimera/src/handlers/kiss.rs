@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use duvua_cache::{redis::RedisCacheService, CacheRepository};
 use duvua_framework::{
     builder::{button_action_row::CreateActionRow, interaction_response::InteractionResponse},
     errors::BotError,
@@ -7,29 +8,34 @@ use duvua_framework::{
 };
 use serenity::{
     builder::{
-        CreateApplicationCommand, CreateApplicationCommandOption, CreateButton, CreateEmbed,
-        CreateEmbedFooter, CreateInteractionResponseData,
+        CreateApplicationCommand, CreateApplicationCommandOption, CreateEmbed, CreateEmbedFooter,
+        CreateInteractionResponseData,
     },
     model::prelude::{
         application_command::ApplicationCommandInteraction, command::CommandOptionType,
-        component::ButtonStyle, ReactionType,
     },
     prelude::Context,
 };
 use std::sync::Arc;
 
-use crate::repository::random::RandomStringProvider;
+use crate::repository::{
+    kiss_cache_data::KissCacheData,
+    kiss_shared::{create_kiss_deny_button, create_kiss_reply_button},
+    random::RandomStringProvider,
+};
 
 pub struct KissCommand {
     data: &'static CommandHandlerData,
+    cache: Arc<RedisCacheService>,
     kiss_gifs: Arc<RandomStringProvider>,
 }
 
 impl KissCommand {
-    pub fn new(kiss_gifs: Arc<RandomStringProvider>) -> Self {
+    pub fn new(kiss_gifs: Arc<RandomStringProvider>, cache: Arc<RedisCacheService>) -> Self {
         Self {
             data: Box::leak(Box::new(build_data())),
             kiss_gifs,
+            cache,
         }
     }
 }
@@ -74,24 +80,26 @@ impl CommandHandler for KissCommand {
                     .to_owned(),
             );
         } else {
+            let custom_id = nanoid::nanoid!(30);
+
+            self.cache
+                .ser_set_ttl(
+                    "component/".to_owned() + &custom_id,
+                    KissCacheData::new(
+                        interaction.user.id.0,
+                        target_id
+                            .parse()
+                            .or_else(|_| Err(BotError::SomethingWentWrong))?,
+                        interaction.token.clone(),
+                    ),
+                    10,
+                )
+                .await?;
+
             response_data.set_components(
                 CreateActionRow::default()
-                    .add_button(
-                        CreateButton::default()
-                            .style(ButtonStyle::Primary)
-                            .label("Retribuir")
-                            .emoji(ReactionType::Unicode("🔁".to_owned()))
-                            .custom_id(format!("rkiss/{user_id}-{target_id}"))
-                            .to_owned(),
-                    )
-                    .add_button(
-                        CreateButton::default()
-                            .style(ButtonStyle::Primary)
-                            .label("Recusar")
-                            .emoji(ReactionType::Unicode("❌".to_owned()))
-                            .custom_id(format!("dkiss/{user_id}-{target_id}"))
-                            .to_owned(),
-                    )
+                    .add_button(create_kiss_reply_button(&custom_id, true))
+                    .add_button(create_kiss_deny_button(&custom_id, true))
                     .to_components(),
             );
         }

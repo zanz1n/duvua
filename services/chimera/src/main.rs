@@ -1,6 +1,8 @@
 mod handlers;
 mod repository;
 
+use deadpool_redis::{Config as RedisConfig, Runtime as DeadpoolRuntime};
+use duvua_cache::redis::RedisCacheService;
 use duvua_framework::{
     env::{env_param, ProcessEnv},
     handler::Handler,
@@ -20,6 +22,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
 
     let discord_token: String = env_param("DISCORD_TOKEN", None);
+    let redis_uri: String = env_param("REDIS_URL", None);
+
+    let redis_client =
+        RedisConfig::from_url(redis_uri).create_pool(Some(DeadpoolRuntime::Tokio1))?;
+    let redis_client = Arc::new(redis_client);
+
+    let cache_service = RedisCacheService::new(redis_client).await?;
+    let cache_service = Arc::new(cache_service);
 
     let kiss_gifs = Arc::new(RandomStringProvider::kiss_gifs());
     let slap_gifs = Arc::new(RandomStringProvider::slap_gifs());
@@ -28,8 +38,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let mut handler = Handler::new(true);
     handler
-        .set_component_handler(MessageComponentHandler::new(shared_handler), true)
-        .add_handler(KissCommand::new(kiss_gifs))
+        .set_component_handler(
+            MessageComponentHandler::new(shared_handler, cache_service.clone()),
+            true,
+        )
+        .add_handler(KissCommand::new(kiss_gifs, cache_service))
         .add_handler(PingCommand::new());
 
     let intents = GatewayIntents::empty();
