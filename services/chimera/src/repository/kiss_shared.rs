@@ -60,7 +60,7 @@ impl KissSharedHandler {
                     .set_embed(
                         CreateEmbed::default()
                             .title("Quem nunca levou um fora, né?")
-                            .description(format!("<@{target_id}> negou o beijo de {user_id}  💔",))
+                            .description(format!("<@{target_id}> negou o beijo de <@{user_id}>  💔",))
                             .image(image_url)
                             .to_owned(),
                     )
