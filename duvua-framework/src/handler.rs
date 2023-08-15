@@ -54,11 +54,13 @@ pub struct Handler {
     post_cmds_on_ready: bool,
     component_handler: Option<Box<dyn CommandHandler>>,
     component_handler_mode: Option<ComponentHandlerMode>,
+    creation_instant: Instant,
 }
 
 impl Handler {
     pub fn new(post_cmds_on_ready: bool) -> Self {
         Self {
+            creation_instant: Instant::now(),
             mp: HashMap::new(),
             post_cmds_on_ready,
             component_handler: None,
@@ -220,7 +222,11 @@ impl Handler {
 #[async_trait]
 impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, info: Ready) {
-        log::info!(target: "handler", "Logged in as {}", info.user.name);
+        log::info!(target: "handler",
+            "Logged in as {}. Initialization took {}ms",
+            info.user.name,
+            (Instant::now() - self.creation_instant).as_millis(),
+        );
 
         if self.post_cmds_on_ready {
             self.post_commands(ctx.http.as_ref()).await;
