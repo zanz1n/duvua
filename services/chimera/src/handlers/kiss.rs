@@ -128,7 +128,6 @@ fn build_data() -> CommandHandlerData {
     }
 }
 
-#[inline]
 fn build_data_command() -> CreateApplicationCommand {
     CreateApplicationCommand::default()
         .name("kiss")
