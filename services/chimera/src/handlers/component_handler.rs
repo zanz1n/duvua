@@ -1,5 +1,5 @@
 use crate::repository::{
-    kiss_cache_data::KissCacheData,
+    kiss_cache::KissCacheData,
     kiss_shared::{
         create_kiss_deny_button, create_kiss_reply_button, expiry_kiss_buttons, KissSharedHandler,
         SKIP_STR,
