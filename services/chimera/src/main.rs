@@ -1,16 +1,15 @@
+mod commands;
 mod handlers;
 mod repository;
 
+use commands::{avatar::AvatarCommand, kiss::KissCommand, ping::PingCommand};
 use deadpool_redis::{Config as RedisConfig, Runtime as DeadpoolRuntime};
 use duvua_cache::redis::RedisCacheService;
 use duvua_framework::{
     env::{env_param, ProcessEnv},
     handler::Handler,
 };
-use handlers::{
-    avatar::AvatarCommand, component_handler::MessageComponentHandler, kiss::KissCommand,
-    ping::PingCommand,
-};
+use handlers::component_handler::MessageComponentHandler;
 use repository::{kiss_shared::KissSharedHandler, random::RandomStringProvider};
 use serenity::{prelude::GatewayIntents, Client};
 use std::{error::Error, sync::Arc};
