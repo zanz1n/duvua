@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use duvua_cache::{redis::RedisCacheService, CacheRepository};
+use duvua_cache::{redis::RedisCacheService, utils::get_or_store_user};
 use duvua_framework::{
     builder::{button_action_row::CreateActionRow, interaction_response::InteractionResponse},
     errors::BotError,
@@ -11,12 +11,9 @@ use serenity::{
         CreateApplicationCommand, CreateApplicationCommandOption, CreateButton, CreateEmbed,
         CreateInteractionResponseData,
     },
-    model::{
-        prelude::{
-            application_command::ApplicationCommandInteraction, command::CommandOptionType,
-            component::ButtonStyle, ReactionType,
-        },
-        user::User,
+    model::prelude::{
+        application_command::ApplicationCommandInteraction, command::CommandOptionType,
+        component::ButtonStyle, ReactionType,
     },
     prelude::Context,
 };
@@ -50,35 +47,15 @@ impl CommandHandler for AvatarCommand {
                     .ok_or(BotError::InvalidOption("user"))?
                     .as_str()
                     .ok_or(BotError::InvalidOption("user"))?
-                    .to_owned();
+                    .parse()
+                    .or_else(|_| Err(BotError::InvalidOption("user")))?;
 
                 v
             }
-            None => interaction.user.id.to_string(),
+            None => interaction.user.id.0,
         };
 
-        let key = format!("user/{}", &user_id);
-
-        let user: Option<User> = self.cache.de_get(key.clone()).await?;
-
-        let user = match user {
-            Some(v) => v,
-            None => {
-                let user = ctx
-                    .http
-                    .get_user(
-                        user_id
-                            .parse()
-                            .or_else(|_| Err(BotError::InvalidOption("user")))?,
-                    )
-                    .await
-                    .or_else(|e| Err(BotError::Serenity(e)))?;
-
-                self.cache.ser_set_ttl(key, user.clone(), 60).await?;
-
-                user
-            }
-        };
+        let user = get_or_store_user(&ctx.http, &self.cache, user_id).await?;
 
         let url = user.avatar_url().ok_or(BotError::UserAvatarFetchFailed)?;
 
