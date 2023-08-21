@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use duvua_framework::errors::BotError;
 use serenity::{http::Http, model::user::User};
 
