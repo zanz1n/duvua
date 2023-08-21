@@ -1,4 +1,5 @@
 pub mod redis;
+pub mod utils;
 
 use async_trait::async_trait;
 use duvua_framework::errors::BotError;

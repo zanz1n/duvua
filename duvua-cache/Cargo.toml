@@ -14,6 +14,11 @@ duvua-framework = { path = "../duvua-framework" }
 version = "0.12"
 features = ["rt_tokio_1"]
 
+[dependencies.serenity]
+version = "0.11"
+default-features = false
+features = ["http", "model"]
+
 [dependencies.tokio]
 version = "1"
 features = ["full"]
