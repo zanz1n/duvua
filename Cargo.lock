@@ -241,6 +241,7 @@ name = "chimera"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "base64 0.21.2",
  "deadpool-redis",
  "dotenvy",
  "duvua-cache",
@@ -249,6 +250,7 @@ dependencies = [
  "log",
  "nanoid",
  "rand",
+ "reqwest",
  "serde",
  "serde_json",
  "serenity",

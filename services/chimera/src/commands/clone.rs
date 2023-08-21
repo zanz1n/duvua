@@ -1,9 +1,11 @@
+use super::get_base64_image_data;
 use async_trait::async_trait;
 use duvua_cache::{redis::RedisCacheService, utils::get_or_store_user};
 use duvua_framework::{
+    builder::interaction_response::InteractionResponse,
     errors::BotError,
     handler::{CommandHandler, CommandHandlerData},
-    utils::get_option,
+    utils::{get_avatar_url, get_option},
 };
 use serde_json::json;
 use serenity::{
@@ -13,7 +15,7 @@ use serenity::{
     },
     prelude::Context,
 };
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 pub struct CloneCommand {
     data: &'static CommandHandlerData,
@@ -43,7 +45,7 @@ impl CommandHandler for CloneCommand {
             .as_str()
             .ok_or(BotError::InvalidOption("user"))?
             .parse()
-            .or_else(|_| Err(BotError::InvalidOption("user")))?;
+            .or(Err(BotError::InvalidOption("user")))?;
 
         let message = get_option(&interaction.data.options, "message")
             .ok_or(BotError::OptionNotProvided("message"))?
@@ -55,9 +57,17 @@ impl CommandHandler for CloneCommand {
 
         let user = get_or_store_user(&ctx.http, &self.cache, user_id).await?;
 
+        let avatar = user.avatar.ok_or(BotError::UserAvatarFetchFailed)?;
+        let avatar = get_avatar_url(user_id, &avatar, "webp", Some(128));
+
+        let avatar_base64 = match get_base64_image_data(&avatar).await {
+            Ok(v) => Some("data:image/webp;base64,".to_owned() + &v),
+            Err(_) => None,
+        };
+
         let data = json!({
             "name": user.name,
-            "avatar": user.static_avatar_url(),
+            "avatar": avatar_base64,
         });
 
         let webhook = ctx
@@ -66,10 +76,22 @@ impl CommandHandler for CloneCommand {
             .await
             .or_else(|e| Err(BotError::Serenity(e)))?;
 
-        webhook
+        _ = InteractionResponse::with_content_ephemeral("Clone criado")
+            .respond(&ctx.http, interaction.id.0, &interaction.token)
+            .await;
+
+        if let Err(e) = webhook
             .execute(&ctx.http, false, |w| w.content(message))
             .await
-            .or_else(|e| Err(BotError::Serenity(e)))?;
+        {
+            log::error!("Failed to send webhook message: {e}");
+        }
+
+        tokio::time::sleep(Duration::from_millis(3000)).await;
+
+        if let Err(e) = webhook.delete(&ctx.http).await {
+            log::error!("Failed to delete webhook: {e}");
+        }
 
         Ok(())
     }
