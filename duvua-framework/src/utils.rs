@@ -6,6 +6,22 @@ use serenity::{
     model::prelude::{application_command::CommandDataOption, command::CommandOptionType, Message},
 };
 
+pub fn get_avatar_url(user_id: u64, hash: &str, ext: &str, size: Option<u16>) -> String {
+    let mut query = String::new();
+
+    if let Some(size) = size {
+        query += "?size=";
+        query += &size.to_string()
+    }
+
+    format!("https://cdn.discordapp.com/avatars/{user_id}/{hash}.{ext}{query}")
+}
+
+#[inline]
+pub fn get_cdn_address(addr: &str) -> String {
+    "https://cdn.discordapp.com".to_owned() + addr
+}
+
 pub fn get_sub_command(options: &Vec<CommandDataOption>) -> Option<CommandDataOption> {
     for option in options.iter() {
         if option.kind == CommandOptionType::SubCommand {
