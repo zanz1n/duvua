@@ -1,10 +1,11 @@
-use base64::{engine::general_purpose::STANDARD, Engine};
-use duvua_framework::errors::BotError;
-
 pub mod avatar;
 pub mod clone;
+pub mod facts;
 pub mod kiss;
 pub mod ping;
+
+use base64::{engine::general_purpose::STANDARD, Engine};
+use duvua_framework::errors::BotError;
 
 pub(crate) async fn get_base64_image_data(url: &str) -> Result<String, BotError> {
     log::info!("{url}");

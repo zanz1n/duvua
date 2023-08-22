@@ -2,7 +2,10 @@ mod commands;
 mod handlers;
 mod repository;
 
-use commands::{avatar::AvatarCommand, clone::CloneCommand, kiss::KissCommand, ping::PingCommand};
+use commands::{
+    avatar::AvatarCommand, clone::CloneCommand, facts::FactsCommand, kiss::KissCommand,
+    ping::PingCommand,
+};
 use deadpool_redis::{Config as RedisConfig, Runtime as DeadpoolRuntime};
 use duvua_cache::redis::RedisCacheService;
 use duvua_framework::{
@@ -47,7 +50,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .add_handler(KissCommand::new(kiss_gifs, cache_service.clone()))
         .add_handler(PingCommand::new())
         .add_handler(AvatarCommand::new(cache_service.clone()))
-        .add_handler(CloneCommand::new(cache_service.clone()));
+        .add_handler(CloneCommand::new(cache_service.clone()))
+        .add_handler(FactsCommand::new());
 
     let intents = GatewayIntents::empty();
     let mut client = Client::builder(discord_token, intents)
