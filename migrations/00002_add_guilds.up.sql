@@ -11,7 +11,7 @@ CREATE TABLE "guilds" (
 CREATE TABLE "welcome" (
     "id" BIGINT PRIMARY KEY,
     "enabled" BOOLEAN NOT NULL DEFAULT FALSE,
-    "channelId" BIGINT NOT NULL,
+    "channelId" BIGINT,
     "message" VARCHAR(255) NOT NULL DEFAULT 'Seja Bem Vind@ ao servidor {{USER}}',
     "type" "WelcomeType" NOT NULL DEFAULT 'MESSAGE'
 );
