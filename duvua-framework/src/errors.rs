@@ -55,6 +55,8 @@ pub enum BotError {
     InvalidChannelProvided,
     #[error("Failed to fetch user avatar")]
     UserAvatarFetchFailed,
+    #[error("Postgres error")]
+    PostgresError,
 }
 
 impl BotError {
