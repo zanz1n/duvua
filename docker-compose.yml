@@ -1,0 +1,62 @@
+version: '3.9'
+
+x-duvua-service:
+  &duvua-service
+  restart: always
+  networks:
+      - duvua-bot
+  env_file: .env
+
+services:
+  duvua_redis:
+    <<: *duvua-service
+    container_name: duvua_redis
+    image: redis:alpine
+    command: redis-server --save 60 1 --loglevel warning --requirepass "${REDIS_PASSWORD}"
+    volumes:
+      - ./.docker-volumes/redis_volume:/data
+
+  duvua_postgresql:
+    <<: *duvua-service
+    container_name: duvua_postgresql
+    image: postgres:alpine
+    volumes:
+      - ./.docker-volumes/postgres_volume:/var/lib/postgresql/data
+
+  duvua_mongodb:
+    <<: *duvua-service
+    container_name: duvua_mongodb
+    image: mongo:6-jammy
+    volumes:
+      - ./.docker-volumes/mongo_volume:/data/db
+
+  duvua_commands:
+    restart: 'no'
+    networks:
+      - duvua-bot
+    env_file: .env
+    container_name: duvua_commands
+    depends_on: [ duvua_redis ]
+    build:
+      context: .
+      dockerfile: services/commands/Dockerfile
+
+  duvua_chimera:
+    <<: *duvua-service
+    container_name: duvua_chimera
+    depends_on: [ duvua_commands, duvua_redis ]
+    build:
+      context: .
+      dockerfile: services/chimera/Dockerfile
+
+  duvua_tickets:
+    <<: *duvua-service
+    container_name: duvua_tickets
+    depends_on: [ duvua_commands, duvua_redis, duvua_mongodb ]
+    build:
+      context: .
+      dockerfile: services/tickets/Dockerfile
+
+networks:
+  duvua-bot:
+    driver: bridge

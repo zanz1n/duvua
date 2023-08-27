@@ -1,0 +1,9 @@
+/target
+dist/
+.env
+.env.example
+README.md
+Dockerfile
+/.docker-volumes
+/docker
+/docker-compose.yml
