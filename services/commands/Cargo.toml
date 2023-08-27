@@ -1,0 +1,23 @@
+[package]
+name = "commands"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+log = "0.4"
+env_logger = "0.10"
+dotenvy = "0.15"
+serde_json = "1.0"
+
+[dependencies.redis]
+version = "0.23.2"
+features = ["tokio-rustls-comp"]
+
+[dependencies.tokio]
+version = "1"
+features = ["full"]
+
+[dependencies.serenity]
+version = "0.11"
+default-features = false
+features = ["http", "rustls_backend"]

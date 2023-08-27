@@ -5,6 +5,7 @@ members = [
     "duvua-cache",
     "services/chimera",
     "services/tickets",
+    "services/commands",
 ]
 
 [profile.release]

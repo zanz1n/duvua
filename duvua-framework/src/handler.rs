@@ -1,5 +1,9 @@
 use crate::errors::BotError;
 use async_trait::async_trait;
+use deadpool_redis::{
+    redis::{AsyncCommands, RedisError},
+    Pool,
+};
 use serde_json::Value;
 use serenity::{
     builder::{CreateApplicationCommand, CreateApplicationCommands},
@@ -10,7 +14,7 @@ use serenity::{
     },
     prelude::{Context, EventHandler},
 };
-use std::{collections::HashMap, time::Instant};
+use std::{collections::HashMap, sync::Arc, time::Instant};
 
 #[derive(Debug, Clone, Default)]
 pub struct CommandHandlerData {
@@ -51,20 +55,20 @@ pub enum ComponentHandlerMode {
 
 pub struct Handler {
     mp: HashMap<String, Box<dyn CommandHandler>>,
-    post_cmds_on_ready: bool,
     component_handler: Option<Box<dyn CommandHandler>>,
     component_handler_mode: Option<ComponentHandlerMode>,
     creation_instant: Instant,
+    redis_client: Option<Arc<Pool>>,
 }
 
 impl Handler {
-    pub fn new(post_cmds_on_ready: bool) -> Self {
+    pub fn new(cmds_pubsub: Option<Arc<Pool>>) -> Self {
         Self {
             creation_instant: Instant::now(),
             mp: HashMap::new(),
-            post_cmds_on_ready,
             component_handler: None,
             component_handler_mode: None,
+            redis_client: cmds_pubsub,
         }
     }
 
@@ -122,22 +126,56 @@ impl Handler {
         let commands_data = self.get_application_commands_data();
         let init_len = commands_data.len();
 
-        let mut create_application_commands = CreateApplicationCommands::default();
-        create_application_commands.set_application_commands(commands_data);
+        let mut success_len = 0;
 
-        let result = http
-            .as_ref()
-            .create_global_application_commands(&Value::from(create_application_commands.0))
-            .await;
+        if let Some(client) = &self.redis_client {
+            let mut conn = match client.get().await {
+                Ok(v) => v,
+                Err(e) => {
+                    log::error!(target: "handler", "Failed to get redis connection: {e}");
+                    return;
+                }
+            };
 
-        match result {
-            Ok(v) => {
-                log::info!(target: "handler", "Posted {}/{init_len} commands", v.len());
+            for command in commands_data {
+                let encoded = match serde_json::to_string(&command.0) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        log::error!(target: "handler", "Failed to serialize application command: {e}");
+                        continue;
+                    }
+                };
+
+                let result: Result<i32, RedisError> = conn.publish("commands", encoded).await;
+                match result {
+                    Ok(_) => {
+                        success_len += 1;
+                    }
+                    Err(e) => {
+                        log::error!(target: "handler", "Failed to publish command message: {e}");
+                    }
+                }
             }
-            Err(e) => {
-                log::error!(target: "handler", "Failed to post application commands: {e}");
+        } else {
+            let mut create_application_commands = CreateApplicationCommands::default();
+            create_application_commands.set_application_commands(commands_data);
+
+            let result = http
+                .as_ref()
+                .create_global_application_commands(&Value::from(create_application_commands.0))
+                .await;
+
+            match result {
+                Ok(v) => {
+                    success_len = v.len();
+                }
+                Err(e) => {
+                    log::error!(target: "handler", "Failed to post application commands: {e}");
+                }
             }
         }
+
+        log::info!(target: "handler", "Posted {success_len}/{init_len} commands");
     }
 
     pub async fn on_application_command(&self, ctx: Context, i: ApplicationCommandInteraction) {
@@ -228,9 +266,7 @@ impl EventHandler for Handler {
             (Instant::now() - self.creation_instant).as_millis(),
         );
 
-        if self.post_cmds_on_ready {
-            self.post_commands(ctx.http.as_ref()).await;
-        }
+        self.post_commands(ctx.http.as_ref()).await;
     }
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {

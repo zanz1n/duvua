@@ -25,6 +25,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         dotenvy::dotenv().expect("Failed to open .env file, please provide environment variables");
     }
     env_logger::init();
+    let process_env = env_param("APP_ENV", None);
 
     let discord_token: String = env_param("DISCORD_TOKEN", None);
     let redis_uri: String = env_param("REDIS_URL", None);
@@ -33,7 +34,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         RedisConfig::from_url(redis_uri).create_pool(Some(DeadpoolRuntime::Tokio1))?;
     let redis_client = Arc::new(redis_client);
 
-    let cache_service = RedisCacheService::new(redis_client).await?;
+    let cache_service = RedisCacheService::new(redis_client.clone()).await?;
     let cache_service = Arc::new(cache_service);
 
     let kiss_gifs = Arc::new(RandomStringProvider::kiss_gifs());
@@ -41,7 +42,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let shared_handler = Arc::new(KissSharedHandler::new(kiss_gifs.clone(), slap_gifs.clone()));
 
-    let mut handler = Handler::new(true);
+    let mut handler = Handler::new(if let ProcessEnv::Production = process_env {
+        Some(redis_client.clone())
+    } else {
+        None
+    });
+
     handler
         .set_component_handler(
             MessageComponentHandler::new(shared_handler, cache_service.clone()),

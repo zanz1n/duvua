@@ -23,6 +23,10 @@ features = [
     "rustls_backend",
 ]
 
+[dependencies.deadpool-redis]
+version = "0.12"
+features = ["rt_tokio_1"]
+
 [dependencies.mongodb]
 version = "2.6"
 features = ["bson-chrono-0_4"]
