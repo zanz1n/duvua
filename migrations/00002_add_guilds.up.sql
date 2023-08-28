@@ -1,4 +1,4 @@
-CREATE TYPE "WelcomeType" AS ENUM ('MESSAGE', 'IMAGE', 'EMBED');
+CREATE TYPE "welcometype" AS ENUM ('MESSAGE', 'IMAGE', 'EMBED');
 
 CREATE TABLE "guilds" (
     "id" BIGINT PRIMARY KEY,
@@ -13,7 +13,7 @@ CREATE TABLE "welcome" (
     "enabled" BOOLEAN NOT NULL DEFAULT FALSE,
     "channelId" BIGINT,
     "message" VARCHAR(255) NOT NULL DEFAULT 'Seja Bem Vind@ ao servidor {{USER}}',
-    "type" "WelcomeType" NOT NULL DEFAULT 'MESSAGE'
+    "type" "welcometype" NOT NULL DEFAULT 'MESSAGE'
 );
 
 ALTER TABLE "welcome"

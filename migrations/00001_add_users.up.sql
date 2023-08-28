@@ -1,9 +1,9 @@
-CREATE TYPE "UserLanguage" AS ENUM ('PT_BR', 'EN_US');
+CREATE TYPE "userlanguage" AS ENUM ('PT_BR', 'EN_US');
 
 CREATE TABLE "users" (
     "id" BIGINT PRIMARY KEY,
     "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "language" "UserLanguage" NOT NULL DEFAULT 'PT_BR',
+    "language" "userlanguage" NOT NULL DEFAULT 'PT_BR',
     "coins" INTEGER NOT NULL DEFAULT 0
 );
