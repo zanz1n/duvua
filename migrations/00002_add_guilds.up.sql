@@ -10,12 +10,10 @@ CREATE TABLE "guilds" (
 
 CREATE TABLE "welcome" (
     "id" BIGINT PRIMARY KEY,
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "enabled" BOOLEAN NOT NULL DEFAULT FALSE,
     "channelId" BIGINT,
     "message" VARCHAR(255) NOT NULL DEFAULT 'Seja Bem Vind@ ao servidor {{USER}}',
     "type" "welcometype" NOT NULL DEFAULT 'MESSAGE'
 );
-
-ALTER TABLE "welcome"
-ADD CONSTRAINT "welcome_id_fkey" FOREIGN KEY ("id") REFERENCES "guilds"("id")
-ON DELETE CASCADE ON UPDATE CASCADE;
