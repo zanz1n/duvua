@@ -8,6 +8,9 @@ log = "0.4"
 async-trait = "0.1"
 duvua-framework = { path = "../duvua-framework" }
 
+[dev-dependencies]
+dotenvy = "0.15"
+
 [dependencies.sqlx]
 version = "0.7"
 features = ["postgres", "chrono", "runtime-tokio", "tls-rustls"]
