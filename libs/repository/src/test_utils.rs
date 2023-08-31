@@ -1,7 +1,7 @@
 use sqlx::migrate::Migrator;
 use std::env;
 
-static MIGRATIONS: Migrator = sqlx::migrate!("../migrations");
+static MIGRATIONS: Migrator = sqlx::migrate!("../../migrations");
 
 pub fn check_integration_test_environment() -> bool {
     _ = dotenvy::dotenv();

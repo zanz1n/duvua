@@ -1,13 +1,13 @@
 [workspace]
 resolver = "2"
 members = [
-    "duvua-framework",
-    "duvua-repository",
-    "duvua-cache",
+    "libs/framework",
+    "libs/repository",
+    "libs/cache",
     "services/chimera",
     "services/tickets",
     "services/commands",
-    "services/welcome"
+    "services/welcome",
 ]
 
 [profile.release]

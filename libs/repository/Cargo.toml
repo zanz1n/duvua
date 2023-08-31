@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 log = "0.4"
 async-trait = "0.1"
-duvua-framework = { path = "../duvua-framework" }
+duvua-framework = { path = "../framework" }
 
 [dev-dependencies]
 dotenvy = "0.15"

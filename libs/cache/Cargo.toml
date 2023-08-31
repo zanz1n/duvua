@@ -8,7 +8,7 @@ log = "0.4"
 async-trait = "0.1"
 serde_json = "1.0"
 serde = "1.0"
-duvua-framework = { path = "../duvua-framework" }
+duvua-framework = { path = "../framework" }
 
 [dependencies.deadpool-redis]
 version = "0.12"
