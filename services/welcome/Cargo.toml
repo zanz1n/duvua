@@ -1,0 +1,33 @@
+[package]
+name = "welcome"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+log = "0.4"
+env_logger = "0.10"
+dotenvy = "0.15"
+async-trait = "0.1"
+duvua-framework = { path = "../../duvua-framework" }
+duvua-repository = { path = "../../duvua-repository" }
+
+[dependencies.deadpool-redis]
+version = "0.12"
+features = ["rt_tokio_1"]
+
+[dependencies.serenity]
+version = "0.11"
+default-features = false
+features = [
+    "builder",
+    "client",
+    "gateway",
+    "http",
+    "model",
+    "utils",
+    "rustls_backend",
+]
+
+[dependencies.tokio]
+version = "1"
+features = ["full"]
