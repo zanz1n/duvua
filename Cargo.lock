@@ -220,6 +220,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "cerberus"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "deadpool-redis",
+ "dotenvy",
+ "duvua-cache",
+ "duvua-framework",
+ "duvua-repository",
+ "env_logger",
+ "log",
+ "serenity",
+ "tokio",
+]
+
+[[package]]
 name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2980,22 +2996,6 @@ name = "webpki-roots"
 version = "0.25.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "14247bb57be4f377dfb94c72830b8ce8fc6beac03cf4bf7b9732eadd414123fc"
-
-[[package]]
-name = "welcome"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "deadpool-redis",
- "dotenvy",
- "duvua-cache",
- "duvua-framework",
- "duvua-repository",
- "env_logger",
- "log",
- "serenity",
- "tokio",
-]
 
 [[package]]
 name = "whoami"

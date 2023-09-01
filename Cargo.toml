@@ -7,7 +7,7 @@ members = [
     "services/chimera",
     "services/tickets",
     "services/commands",
-    "services/welcome",
+    "services/cerberus",
 ]
 
 [profile.release]

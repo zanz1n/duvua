@@ -71,13 +71,13 @@ services:
       context: .
       dockerfile: services/tickets/Dockerfile
 
-  duvua_welcome:
+  duvua_cerberus:
     <<: *duvua-service
-    container_name: duvua_welcome
+    container_name: duvua_cerberus
     depends_on: [ duvua_commands, duvua_redis, duvua_postgresql ]
     build:
       context: .
-      dockerfile: services/welcome/Dockerfile
+      dockerfile: services/cerberus/Dockerfile
 
 networks:
   duvua-bot:
