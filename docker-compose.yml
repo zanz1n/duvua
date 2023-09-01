@@ -23,6 +23,20 @@ services:
     volumes:
       - ./.docker-volumes/postgres_volume:/var/lib/postgresql/data
 
+  duvua_migrator:
+    restart: 'no'
+    networks:
+      - duvua-bot
+    profiles:
+      - donotstart
+    env_file: .env
+    container_name: duvua_migrator
+    build:
+      context: .
+      dockerfile: docker/migrator.dockerfile
+    volumes:
+      - ./migrations:/root/migrations
+
   duvua_mongodb:
     <<: *duvua-service
     container_name: duvua_mongodb
