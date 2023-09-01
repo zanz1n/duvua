@@ -220,13 +220,13 @@ fn build_data_command() -> CreateApplicationCommand {
                         .kind(CommandOptionType::String)
                         .name("message")
                         .description(
-                            "Placeholders: [{{USER}} (o novo membro), \
-                            {{GUILD}} (nome do servidor)] podem ser usados",
+                            "Placeholders: {{USER}} (o novo membro), \
+                            {{GUILD}} (nome do servidor) podem ser usados",
                         )
                         .description_localized(
                             "en-US",
-                            "Placeholders: [{{USER}} (the new member) \
-                            {{GUILD}} (the name of server)] can be used",
+                            "Placeholders: {{USER}} (the new member) \
+                            {{GUILD}} (the name of server) can be used",
                         )
                         .required(true)
                         .to_owned(),

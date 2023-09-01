@@ -1,10 +1,9 @@
-use std::{fmt::Display, io::ErrorKind, str::FromStr};
-
 use async_trait::async_trait;
 use chrono::{NaiveDateTime, Utc};
 use duvua_framework::errors::BotError;
 use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgRow, FromRow, Pool, Postgres, Row};
+use std::{fmt::Display, io::ErrorKind, str::FromStr};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, sqlx::Type)]
 #[sqlx(type_name = "welcometype", rename_all = "UPPERCASE")]
