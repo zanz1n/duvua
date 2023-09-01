@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use duvua_cache::redis::RedisCacheService;
 use duvua_framework::handler::Handler;
 use serenity::{
     model::prelude::{Interaction, Member, Ready},
