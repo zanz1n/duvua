@@ -1,3 +1,5 @@
+use std::{fmt::Display, io::ErrorKind, str::FromStr};
+
 use async_trait::async_trait;
 use chrono::{NaiveDateTime, Utc};
 use duvua_framework::errors::BotError;
@@ -11,6 +13,32 @@ pub enum WelcomeType {
     Message,
     Image,
     Embed,
+}
+
+impl Display for WelcomeType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Message => "MESSAGE",
+            Self::Image => "IMAGE",
+            Self::Embed => "EMBED",
+        })
+    }
+}
+
+impl FromStr for WelcomeType {
+    type Err = std::io::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "MESSAGE" => Ok(Self::Message),
+            "IMAGE" => Ok(Self::Image),
+            "EMBED" => Ok(Self::Embed),
+            _ => Err(std::io::Error::new(
+                ErrorKind::InvalidData,
+                "WelcomeType enumerator must be MESSAGE | IMAGE | EMBED",
+            )),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

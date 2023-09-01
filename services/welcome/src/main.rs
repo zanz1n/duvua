@@ -6,16 +6,20 @@ use duvua_framework::{
     handler::Handler,
 };
 use duvua_repository::{sqlx::PgPool, welcome::WelcomeService};
-use handlers::serenity_handler::SerenityHandler;
+use handlers::{
+    serenity_handler::SerenityHandler, welcome_shared::WelcomeSharedHandler,
+    welcomeadmin::WelcomeAdminCommand,
+};
 use serenity::{prelude::GatewayIntents, Client};
 use std::sync::Arc;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let process_env = env_param("APP_ENV", Some(ProcessEnv::None));
+    let mut process_env = env_param("APP_ENV", Some(ProcessEnv::None));
 
     if let ProcessEnv::None = process_env {
         dotenvy::dotenv().expect("Failed to open .env file, please provide environment variables");
+        process_env = env_param("APP_ENV", None)
     }
     env_logger::init();
 
@@ -28,13 +32,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let redis_client = Arc::new(redis_client);
 
     let db_pool = PgPool::connect(&database_url).await?;
-    let welcome_service = WelcomeService::new(db_pool);
+    let welcome_service = Arc::new(WelcomeService::new(db_pool));
 
-    let handler = Handler::new(if let ProcessEnv::Production = process_env {
+    let shared_handler = Arc::new(WelcomeSharedHandler::new(welcome_service.clone()));
+
+    let mut handler = Handler::new(if let ProcessEnv::Production = process_env {
         Some(redis_client.clone())
     } else {
         None
     });
+
+    handler.add_handler(WelcomeAdminCommand::new(shared_handler.clone()));
 
     let event_handler = SerenityHandler::new(handler);
 
