@@ -57,6 +57,14 @@ services:
       context: .
       dockerfile: services/tickets/Dockerfile
 
+  duvua_welcome:
+    <<: *duvua-service
+    container_name: duvua_welcome
+    depends_on: [ duvua_commands, duvua_redis, duvua_postgresql ]
+    build:
+      context: .
+      dockerfile: services/welcome/Dockerfile
+
 networks:
   duvua-bot:
     driver: bridge
