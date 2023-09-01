@@ -57,6 +57,8 @@ pub enum BotError {
     UserAvatarFetchFailed,
     #[error("Postgres error")]
     PostgresError,
+    #[error("Command inssued by a partial member")]
+    CommandIssuedByPartialMember,
 }
 
 impl BotError {
@@ -83,6 +85,7 @@ impl BotError {
             Self::FailedToSendChannelMessage => "Não foi possível enviar a mensagem no canal de texto",
             Self::InvalidChannelProvided => "O canal fornecido é inválido",
             Self::UserAvatarFetchFailed => "Não foi possível procurar o avatar do usuário",
+            Self::CommandIssuedByPartialMember => "O comando não pode ser utilizados por um membro parcial",
             e => {
                 log::error!(target: "framework_errors", "Unhandled command error: {}", e.to_string());
                 "🤖 Algo deu errado!"
