@@ -2988,6 +2988,7 @@ dependencies = [
  "async-trait",
  "deadpool-redis",
  "dotenvy",
+ "duvua-cache",
  "duvua-framework",
  "duvua-repository",
  "env_logger",

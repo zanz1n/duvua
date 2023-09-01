@@ -10,6 +10,7 @@ dotenvy = "0.15"
 async-trait = "0.1"
 duvua-framework = { path = "../../libs/framework" }
 duvua-repository = { path = "../../libs/repository" }
+duvua-cache = { path = "../../libs/cache" }
 
 [dependencies.deadpool-redis]
 version = "0.12"

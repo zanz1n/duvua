@@ -1,3 +1,4 @@
+use duvua_cache::{redis::RedisCacheService, utils::get_or_store_guild};
 use duvua_framework::{builder::interaction_response::InteractionResponse, errors::BotError};
 use duvua_repository::welcome::{Welcome, WelcomeRepository, WelcomeService, WelcomeType};
 use serenity::{
@@ -10,11 +11,12 @@ use std::sync::Arc;
 
 pub struct WelcomeSharedHandler {
     repository: Arc<WelcomeService>,
+    cache: Arc<RedisCacheService>,
 }
 
 impl WelcomeSharedHandler {
-    pub fn new(repository: Arc<WelcomeService>) -> Self {
-        Self { repository }
+    pub fn new(repository: Arc<WelcomeService>, cache: Arc<RedisCacheService>) -> Self {
+        Self { repository, cache }
     }
 
     pub async fn handle_set_message(
@@ -133,7 +135,6 @@ impl WelcomeSharedHandler {
         &self,
         http: &Arc<Http>,
         guild_id: u64,
-        guild_name: &str,
         member: &Member,
     ) -> Result<bool, BotError> {
         let welcome = match self.repository.get_by_id(guild_id as i64).await? {
@@ -146,10 +147,14 @@ impl WelcomeSharedHandler {
             None => return Ok(false),
         };
 
-        let text_message = welcome
+        let mut text_message = welcome
             .message
-            .replace("{{USER}}", &format!("<@{}>", member.user.id.0))
-            .replace("{{GUILD}}", guild_name);
+            .replace("{{USER}}", &format!("<@{}>", member.user.id.0));
+
+        if text_message.contains("{{GUILD}}") {
+            let guild = get_or_store_guild(http, &self.cache, guild_id).await?;
+            text_message = text_message.replace("{{GUILD}}", &guild.name);
+        }
 
         let mut message = CreateMessage::default();
 

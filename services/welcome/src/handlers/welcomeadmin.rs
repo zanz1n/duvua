@@ -34,13 +34,9 @@ impl WelcomeAdminCommand {
         &self,
         http: &Arc<Http>,
         guild_id: u64,
-        guild_name: &str,
         member: &Member,
     ) -> Result<InteractionResponse, BotError> {
-        let bool_result = self
-            .shared_handler
-            .trigger(http, guild_id, guild_name, member)
-            .await?;
+        let bool_result = self.shared_handler.trigger(http, guild_id, member).await?;
 
         let msg = if bool_result {
             "Mensagem de teste enviada!"
@@ -130,7 +126,7 @@ impl CommandHandler for WelcomeAdminCommand {
                     .await?
             }
             "test" => {
-                self.handle_test_message(&ctx.http, guild_id, "", member)
+                self.handle_test_message(&ctx.http, guild_id, member)
                     .await?
             }
             _ => return Err(BotError::InvalidOption("sub-command")),
