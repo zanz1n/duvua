@@ -61,7 +61,7 @@ async fn listen_loop(
 
                 commands.push(cmd);
             }
-            _ = tokio::time::sleep(Duration::from_secs(10)) => {
+            _ = tokio::time::sleep(Duration::from_secs(20)) => {
                 match post_commands(http, commands).await {
                     Ok(_) => {
                         break Ok(());
