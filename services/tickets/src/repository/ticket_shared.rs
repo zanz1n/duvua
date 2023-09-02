@@ -1,3 +1,4 @@
+use super::ticket::TicketService;
 use crate::repository::{
     guild::Guild,
     ticket::{CreateTicketData, TicketRepository},
@@ -24,11 +25,11 @@ use serenity::{
 use std::sync::Arc;
 
 pub struct TicketSharedHandler {
-    ticket_repo: Arc<dyn TicketRepository>,
+    ticket_repo: Arc<TicketService>,
 }
 
 impl TicketSharedHandler {
-    pub fn new(ticket_repo: Arc<dyn TicketRepository>) -> Self {
+    pub fn new(ticket_repo: Arc<TicketService>) -> Self {
         Self { ticket_repo }
     }
 

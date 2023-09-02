@@ -1,5 +1,7 @@
 use crate::repository::{
-    guild::GuildRepository, ticket::TicketRepository, ticket_shared::TicketSharedHandler,
+    guild::{GuildRepository, GuildService},
+    ticket::{TicketRepository, TicketService},
+    ticket_shared::TicketSharedHandler,
 };
 use async_trait::async_trait;
 use duvua_framework::{
@@ -21,16 +23,16 @@ use serenity::{
 use std::sync::Arc;
 
 pub struct TicketCommandHandler {
-    guild_repo: Arc<dyn GuildRepository>,
-    ticket_repo: Arc<dyn TicketRepository>,
+    guild_repo: Arc<GuildService>,
+    ticket_repo: Arc<TicketService>,
     shared_handler: Arc<TicketSharedHandler>,
     data: &'static CommandHandlerData,
 }
 
 impl TicketCommandHandler {
     pub fn new(
-        guild_repo: Arc<dyn GuildRepository>,
-        ticket_repo: Arc<dyn TicketRepository>,
+        guild_repo: Arc<GuildService>,
+        ticket_repo: Arc<TicketService>,
         shared_handler: Arc<TicketSharedHandler>,
     ) -> Self {
         Self {

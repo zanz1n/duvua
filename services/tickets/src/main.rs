@@ -6,11 +6,7 @@ use crate::{
         component_handler::MessageComponentHandler, ticket::TicketCommandHandler,
         ticketadmin::TicketAdminCommandHandler,
     },
-    repository::{
-        guild::{GuildRepository, GuildService},
-        ticket::{TicketRepository, TicketService},
-        ticket_shared::TicketSharedHandler,
-    },
+    repository::{guild::GuildService, ticket::TicketService, ticket_shared::TicketSharedHandler},
 };
 use deadpool_redis::{Config as RedisConfig, Runtime as DeadpoolRuntime};
 use duvua_framework::{
@@ -56,9 +52,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let db = client.database("duvua-tickets");
 
-    let guild_repo: Arc<dyn GuildRepository> = Arc::new(GuildService::new(db.collection("guilds")));
-    let ticket_repo: Arc<dyn TicketRepository> =
-        Arc::new(TicketService::new(db.collection("tickets")));
+    let guild_repo = Arc::new(GuildService::new(db.collection("guilds")));
+    let ticket_repo = Arc::new(TicketService::new(db.collection("tickets")));
 
     let mut handler = Handler::new(if let ProcessEnv::Production = process_env {
         Some(redis_client.clone())
