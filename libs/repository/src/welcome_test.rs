@@ -1,10 +1,9 @@
-use chrono::{NaiveDateTime, Utc};
-use std::time::Duration;
-
 use crate::{
     test_utils::{check_integration_test_environment, prepare_environment},
     welcome::{Welcome, WelcomeRepository, WelcomeService, WelcomeType},
 };
+use chrono::{NaiveDateTime, Utc};
+use std::time::Duration;
 
 async fn create_repo() -> WelcomeService {
     let pool = match prepare_environment().await {

@@ -84,7 +84,7 @@ impl FromRow<'_, PgRow> for Welcome {
 }
 
 #[async_trait]
-pub trait WelcomeRepository {
+pub trait WelcomeRepository: Sync + Send {
     async fn get_by_id(&self, id: i64) -> Result<Option<Welcome>, BotError>;
     async fn exists(&self, id: i64) -> Result<bool, BotError>;
     async fn update_enabled(&self, id: i64, enabled: bool) -> Result<(), BotError>;
