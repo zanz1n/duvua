@@ -51,7 +51,7 @@ async fn test_create_default() {
 
     assert_creation(&service, welcome, start).await;
 
-    service.delete_by_id(welcome_id).await.unwrap();
+    assert!(service.delete_by_id(welcome_id).await.unwrap())
 }
 
 #[tokio::test]
@@ -81,7 +81,7 @@ async fn test_create() {
 
     assert_creation(&service, created, start).await;
 
-    service.delete_by_id(welcome_id).await.unwrap();
+    assert!(service.delete_by_id(welcome_id).await.unwrap());
 }
 
 #[tokio::test]
@@ -101,7 +101,7 @@ async fn test_exists() {
 
     assert!(exists);
 
-    service.delete_by_id(welcome.id).await.unwrap();
+    assert!(service.delete_by_id(welcome.id).await.unwrap());
 }
 
 #[tokio::test]
@@ -128,7 +128,7 @@ async fn test_update_enabled() {
     assert_eq!(!find.enabled, welcome.enabled);
     assert_ne!(find.updated_at, welcome.updated_at);
 
-    service.delete_by_id(welcome.id).await.unwrap();
+    assert!(service.delete_by_id(welcome.id).await.unwrap());
 }
 
 #[tokio::test]
@@ -156,7 +156,7 @@ async fn test_update_channel_id() {
     assert_eq!(Some(FAKE_CHANNEL_ID), find.channel_id);
     assert_ne!(find.updated_at, welcome.updated_at);
 
-    service.delete_by_id(welcome.id).await.unwrap();
+    assert!(service.delete_by_id(welcome.id).await.unwrap());
 }
 
 #[tokio::test]
@@ -185,5 +185,5 @@ async fn test_update_message() {
     assert_eq!(WelcomeType::Image, find.kind);
     assert_ne!(find.updated_at, welcome.updated_at);
 
-    service.delete_by_id(welcome.id).await.unwrap();
+    assert!(service.delete_by_id(welcome.id).await.unwrap());
 }

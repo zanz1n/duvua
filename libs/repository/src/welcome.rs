@@ -97,7 +97,7 @@ pub trait WelcomeRepository: Sync + Send {
     ) -> Result<(), BotError>;
     async fn create(&self, data: Welcome) -> Result<Welcome, BotError>;
     async fn create_default(&self, id: i64) -> Result<Welcome, BotError>;
-    async fn delete_by_id(&self, id: i64) -> Result<(), BotError>;
+    async fn delete_by_id(&self, id: i64) -> Result<bool, BotError>;
 }
 
 pub struct WelcomeService {
@@ -258,8 +258,8 @@ impl WelcomeRepository for WelcomeService {
         Ok(row)
     }
 
-    async fn delete_by_id(&self, id: i64) -> Result<(), BotError> {
-        sqlx::query(r#"DELETE FROM "welcome" WHERE "id" = $1;"#)
+    async fn delete_by_id(&self, id: i64) -> Result<bool, BotError> {
+        let result = sqlx::query(r#"DELETE FROM "welcome" WHERE "id" = $1;"#)
             .bind(id)
             .execute(&self.db)
             .await
@@ -268,6 +268,6 @@ impl WelcomeRepository for WelcomeService {
                 Err(BotError::PostgresError)
             })?;
 
-        Ok(())
+        Ok(result.rows_affected() == 1)
     }
 }
