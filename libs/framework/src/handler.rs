@@ -1,9 +1,10 @@
-use crate::errors::BotError;
+use crate::{builder::hashmap_to_json_map, errors::BotError};
 use async_trait::async_trait;
 use deadpool_redis::{
     redis::{AsyncCommands, RedisError},
     Pool,
 };
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use serenity::{
     builder::{CreateApplicationCommand, CreateApplicationCommands},
@@ -16,13 +17,48 @@ use serenity::{
 };
 use std::{collections::HashMap, sync::Arc, time::Instant};
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Deserialize)]
+pub enum CustomCommandType {
+    Fun,
+    Info,
+    Moderation,
+    Config,
+    Music,
+    Money,
+    Level,
+    Utility,
+}
+
+impl Serialize for CustomCommandType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_u8(match self {
+            Self::Fun => 0,
+            Self::Info => 1,
+            Self::Moderation => 2,
+            Self::Config => 3,
+            Self::Music => 4,
+            Self::Money => 5,
+            Self::Level => 6,
+            Self::Utility => 7,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CommandPayload {
+    pub data: Value,
+    pub kind: CustomCommandType,
+}
+
+#[derive(Debug, Clone)]
 pub struct CommandHandlerData {
-    pub accepts_message_component: bool,
-    pub accepts_application_command: bool,
     pub needs_defer: bool,
     pub command_data: Option<CreateApplicationCommand>,
     pub custom_id: Option<String>,
+    pub kind: CustomCommandType,
 }
 
 #[async_trait]
@@ -89,10 +125,8 @@ impl Handler {
     pub fn add_handler<H: CommandHandler + 'static>(&mut self, handler: H) -> &mut Self {
         let info = handler.get_data();
 
-        let name = if info.accepts_application_command {
-            info.command_data
-                .as_ref()
-                .unwrap()
+        let name = if let Some(command_data) = &info.command_data {
+            command_data
                 .0
                 .get("name")
                 .unwrap()
@@ -108,14 +142,31 @@ impl Handler {
         self
     }
 
+    pub fn get_pubsub_payload(&self) -> Vec<CommandPayload> {
+        let mut array: Vec<CommandPayload> = Vec::new();
+
+        for (_, v) in self.mp.iter() {
+            let data = v.get_data();
+
+            if let Some(command_data) = &data.command_data {
+                array.push(CommandPayload {
+                    data: Value::Object(hashmap_to_json_map(command_data.0.clone())),
+                    kind: data.kind.clone(),
+                })
+            }
+        }
+
+        array
+    }
+
     pub fn get_application_commands_data(&self) -> Vec<CreateApplicationCommand> {
         let mut array: Vec<CreateApplicationCommand> = Vec::new();
 
         for (_, v) in self.mp.iter() {
             let data = v.get_data();
 
-            if data.accepts_application_command {
-                array.push(data.command_data.clone().unwrap())
+            if let Some(command_data) = &data.command_data {
+                array.push(command_data.clone())
             }
         }
 
@@ -123,12 +174,13 @@ impl Handler {
     }
 
     pub async fn post_commands(&self, http: impl AsRef<Http>) {
-        let commands_data = self.get_application_commands_data();
-        let init_len = commands_data.len();
-
         let mut success_len = 0;
+        let init_len: usize;
 
         if let Some(client) = &self.redis_client {
+            let commands_data = self.get_pubsub_payload();
+            init_len = commands_data.len();
+
             let mut conn = match client.get().await {
                 Ok(v) => v,
                 Err(e) => {
@@ -138,7 +190,7 @@ impl Handler {
             };
 
             for command in commands_data {
-                let encoded = match serde_json::to_string(&command.0) {
+                let encoded = match serde_json::to_string(&command) {
                     Ok(v) => v,
                     Err(e) => {
                         log::error!(target: "handler", "Failed to serialize application command: {e}");
@@ -157,6 +209,9 @@ impl Handler {
                 }
             }
         } else {
+            let commands_data = self.get_application_commands_data();
+            init_len = commands_data.len();
+
             let mut create_application_commands = CreateApplicationCommands::default();
             create_application_commands.set_application_commands(commands_data);
 
@@ -188,7 +243,7 @@ impl Handler {
                     return;
                 }
             }
-            if data.accepts_application_command {
+            if data.command_data.is_some() {
                 let start = Instant::now();
 
                 if let Err(e) = cmd.handle_command(&ctx, &i).await {
@@ -233,7 +288,7 @@ impl Handler {
                 }
             }
 
-            if data.accepts_message_component {
+            if data.custom_id.is_some() {
                 let start = Instant::now();
 
                 if let Err(e) = cmd.handle_component(&ctx, &i).await {

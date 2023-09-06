@@ -3,7 +3,7 @@ use duvua_cache::{redis::RedisCacheService, utils::get_or_store_user};
 use duvua_framework::{
     builder::{button_action_row::CreateActionRow, interaction_response::InteractionResponse},
     errors::BotError,
-    handler::{CommandHandler, CommandHandlerData},
+    handler::{CommandHandler, CommandHandlerData, CustomCommandType},
     utils::get_option,
 };
 use serenity::{
@@ -96,11 +96,10 @@ impl CommandHandler for AvatarCommand {
 #[inline]
 fn build_data() -> CommandHandlerData {
     CommandHandlerData {
-        accepts_application_command: true,
-        accepts_message_component: false,
         command_data: Some(build_data_command()),
         custom_id: None,
         needs_defer: false,
+        kind: CustomCommandType::Fun,
     }
 }
 

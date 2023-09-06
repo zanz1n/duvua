@@ -1,5 +1,6 @@
 mod messaging;
 
+use crate::messaging::{extract_payload_data, Payload};
 use messaging::{spawn_daemon, SubClient};
 use serde_json::Value;
 use serenity::{http::Http, model::prelude::command::Command};
@@ -33,10 +34,10 @@ async fn post_commands(
 }
 
 async fn listen_loop(
-    client: Arc<SubClient>,
+    client: &Arc<SubClient>,
     http: Arc<Http>,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let mut commands = Vec::<Value>::new();
+) -> Result<String, Box<dyn std::error::Error>> {
+    let mut payloads = Vec::<Payload>::new();
 
     loop {
         tokio::select! {
@@ -48,7 +49,14 @@ async fn listen_loop(
                     }
                 };
 
-                let cmd: Value = match serde_json::from_str(&msg.payload) {
+                let payload: Value = match serde_json::from_str(&msg.payload) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        log::error!("Received poorly encoded pub/sub payload on channel 'commands': {e}");
+                        continue;
+                    }
+                };
+                let payload = match Payload::from_json(&payload) {
                     Ok(v) => v,
                     Err(e) => {
                         log::error!("Received invalid pub/sub payload on channel 'commands': {e}");
@@ -56,15 +64,22 @@ async fn listen_loop(
                     }
                 };
 
-                log::info!("Received command '{}'", display_value(cmd.get("name")));
-                log::debug!("Received command: {cmd:?}");
+                log::info!("Received command '{}'", display_value(payload.data.get("name")));
+                log::debug!("Received command: {:?}", payload.data);
 
-                commands.push(cmd);
+                payloads.push(payload);
             }
             _ = tokio::time::sleep(Duration::from_secs(20)) => {
+                let s = match serde_json::to_string(&payloads) {
+                    Ok(v) => v,
+                    Err(e) => break Err(e.into()),
+                };
+
+                let commands = extract_payload_data(payloads);
+
                 match post_commands(http, commands).await {
                     Ok(_) => {
-                        break Ok(());
+                        break Ok(s);
                     }
                     Err(e) => {
                         break Err(e.into());
@@ -104,9 +119,13 @@ async fn entrypoint() -> Result<(), String> {
     let http = Arc::new(Http::new(&token));
     http.set_application_id(application_id);
 
-    listen_loop(client, http)
+    let result = listen_loop(&client, http)
         .await
         .or_else(|e| Err(format!("{e}")))?;
+
+    client
+        .set("commands", result)
+        .or_else(|e| Err(e.to_string()))?;
 
     Ok(())
 }

@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use duvua_framework::{
     builder::interaction_response::InteractionResponse,
     errors::BotError,
-    handler::{CommandHandler, CommandHandlerData},
+    handler::{CommandHandler, CommandHandlerData, CustomCommandType},
     utils::{get_option, get_sub_command},
 };
 use reqwest::Client;
@@ -80,11 +80,10 @@ async fn text_req(http: &Client, url: String) -> Result<String, BotError> {
 #[inline]
 fn build_data() -> CommandHandlerData {
     CommandHandlerData {
-        accepts_message_component: false,
-        accepts_application_command: true,
         needs_defer: false,
         command_data: Some(build_data_command()),
         custom_id: None,
+        kind: CustomCommandType::Fun,
     }
 }
 

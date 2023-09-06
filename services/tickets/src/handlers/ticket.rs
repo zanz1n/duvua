@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use duvua_framework::{
     builder::interaction_response::InteractionResponse,
     errors::BotError,
-    handler::{CommandHandler, CommandHandlerData},
+    handler::{CommandHandler, CommandHandlerData, CustomCommandType},
     utils::{get_option, get_sub_command, get_sub_command_group},
 };
 use serenity::{
@@ -206,11 +206,10 @@ impl CommandHandler for TicketCommandHandler {
 #[inline]
 fn build_data() -> CommandHandlerData {
     CommandHandlerData {
-        accepts_application_command: true,
-        accepts_message_component: true,
         command_data: Some(build_data_command()),
         custom_id: Some("ticket".to_owned()),
         needs_defer: false,
+        kind: CustomCommandType::Utility,
     }
 }
 

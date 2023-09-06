@@ -1,5 +1,8 @@
-use redis::{Client, RedisError};
+use redis::{Client, Commands, RedisError};
+use serde::Serialize;
+use serde_json::Value;
 use std::{
+    io::{Error, ErrorKind},
     sync::{Arc, Mutex},
     thread,
 };
@@ -9,6 +12,53 @@ use tokio::sync::broadcast::{channel, error::RecvError, Receiver, Sender};
 pub struct Message {
     pub channel: String,
     pub payload: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct Payload {
+    pub kind: u8,
+    pub data: Value,
+}
+
+impl Payload {
+    pub fn from_json(value: &Value) -> Result<Self, Error> {
+        let data = value.get("data").ok_or(Error::new(
+            ErrorKind::InvalidData,
+            "Field 'data' not provided",
+        ))?;
+
+        let kind = value.get("kind").ok_or(Error::new(
+            ErrorKind::InvalidData,
+            "Field 'kind' not provided",
+        ))?;
+
+        let kind: u8 = kind
+            .as_u64()
+            .ok_or(Error::new(
+                ErrorKind::InvalidData,
+                "Field 'kind' must be a unsigned integer",
+            ))?
+            .try_into()
+            .or(Err(Error::new(
+                ErrorKind::InvalidData,
+                "Field 'kind' must be a unsigned 8 bit integer",
+            )))?;
+
+        Ok(Self {
+            kind,
+            data: data.clone(),
+        })
+    }
+}
+
+pub fn extract_payload_data(payloads: Vec<Payload>) -> Vec<Value> {
+    let mut data = Vec::with_capacity(payloads.len());
+
+    for payload in payloads {
+        data.push(payload.data)
+    }
+
+    data
 }
 
 pub struct SubClient {
@@ -34,6 +84,11 @@ impl SubClient {
 
     pub fn subscribe(&mut self, channel: &'static str) {
         self.sub_list.push(channel);
+    }
+
+    pub fn set(&self, key: &str, value: String) -> Result<(), RedisError> {
+        let mut conn = self.client.get_connection()?;
+        conn.set(key, value)
     }
 
     pub fn new(client: Arc<Client>) -> Self {
