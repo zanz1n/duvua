@@ -1,4 +1,4 @@
-use duvua_cache::{redis::RedisCacheService, utils::get_or_store_guild};
+use duvua_cache::{utils::get_or_store_guild, CacheRepository};
 use duvua_framework::{builder::interaction_response::InteractionResponse, errors::BotError};
 use duvua_repository::welcome::{Welcome, WelcomeRepository, WelcomeService, WelcomeType};
 use serenity::{
@@ -9,13 +9,13 @@ use serenity::{
 };
 use std::sync::Arc;
 
-pub struct WelcomeSharedHandler {
+pub struct WelcomeSharedHandler<C: CacheRepository> {
     repository: Arc<WelcomeService>,
-    cache: Arc<RedisCacheService>,
+    cache: Arc<C>,
 }
 
-impl WelcomeSharedHandler {
-    pub fn new(repository: Arc<WelcomeService>, cache: Arc<RedisCacheService>) -> Self {
+impl<C: CacheRepository> WelcomeSharedHandler<C> {
+    pub fn new(repository: Arc<WelcomeService>, cache: Arc<C>) -> Self {
         Self { repository, cache }
     }
 

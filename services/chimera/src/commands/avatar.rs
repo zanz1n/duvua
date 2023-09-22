@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use duvua_cache::{redis::RedisCacheService, utils::get_or_store_user};
+use duvua_cache::{utils::get_or_store_user, CacheRepository};
 use duvua_framework::{
     builder::{button_action_row::CreateActionRow, interaction_response::InteractionResponse},
     errors::BotError,
@@ -19,13 +19,13 @@ use serenity::{
 };
 use std::sync::Arc;
 
-pub struct AvatarCommand {
+pub struct AvatarCommand<C: CacheRepository> {
     data: &'static CommandHandlerData,
-    cache: Arc<RedisCacheService>,
+    cache: Arc<C>,
 }
 
-impl AvatarCommand {
-    pub fn new(cache: Arc<RedisCacheService>) -> Self {
+impl<C: CacheRepository> AvatarCommand<C> {
+    pub fn new(cache: Arc<C>) -> Self {
         Self {
             data: Box::leak(Box::new(build_data())),
             cache,
@@ -34,7 +34,7 @@ impl AvatarCommand {
 }
 
 #[async_trait]
-impl CommandHandler for AvatarCommand {
+impl<C: CacheRepository> CommandHandler for AvatarCommand<C> {
     async fn handle_command(
         &self,
         ctx: &Context,

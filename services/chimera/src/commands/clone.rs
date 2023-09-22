@@ -1,6 +1,6 @@
 use super::get_base64_image_data;
 use async_trait::async_trait;
-use duvua_cache::{redis::RedisCacheService, utils::get_or_store_user};
+use duvua_cache::{utils::get_or_store_user, CacheRepository};
 use duvua_framework::{
     builder::interaction_response::InteractionResponse,
     errors::BotError,
@@ -17,13 +17,13 @@ use serenity::{
 };
 use std::{sync::Arc, time::Duration};
 
-pub struct CloneCommand {
+pub struct CloneCommand<C: CacheRepository> {
     data: &'static CommandHandlerData,
-    cache: Arc<RedisCacheService>,
+    cache: Arc<C>,
 }
 
-impl CloneCommand {
-    pub fn new(cache: Arc<RedisCacheService>) -> Self {
+impl<C: CacheRepository> CloneCommand<C> {
+    pub fn new(cache: Arc<C>) -> Self {
         Self {
             data: Box::leak(Box::new(build_data())),
             cache,
@@ -32,7 +32,7 @@ impl CloneCommand {
 }
 
 #[async_trait]
-impl CommandHandler for CloneCommand {
+impl<C: CacheRepository> CommandHandler for CloneCommand<C> {
     async fn handle_command(
         &self,
         ctx: &Context,

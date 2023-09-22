@@ -1,14 +1,13 @@
+use crate::CacheRepository;
 use duvua_framework::errors::BotError;
 use serenity::{
     http::Http,
     model::{prelude::PartialGuild, user::User},
 };
 
-use crate::{redis::RedisCacheService, CacheRepository};
-
-pub async fn get_or_store_user(
+pub async fn get_or_store_user<C: CacheRepository>(
     http: impl AsRef<Http>,
-    cache: impl AsRef<RedisCacheService>,
+    cache: impl AsRef<C>,
     id: u64,
 ) -> Result<User, BotError> {
     let key = id.to_string();
@@ -28,9 +27,9 @@ pub async fn get_or_store_user(
     Ok(user)
 }
 
-pub async fn get_or_store_guild(
+pub async fn get_or_store_guild<C: CacheRepository>(
     http: impl AsRef<Http>,
-    cache: impl AsRef<RedisCacheService>,
+    cache: impl AsRef<C>,
     id: u64,
 ) -> Result<PartialGuild, BotError> {
     let key = id.to_string();

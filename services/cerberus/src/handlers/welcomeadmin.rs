@@ -1,5 +1,6 @@
 use super::welcome_shared::WelcomeSharedHandler;
 use async_trait::async_trait;
+use duvua_cache::CacheRepository;
 use duvua_framework::{
     builder::interaction_response::InteractionResponse,
     errors::BotError,
@@ -17,13 +18,13 @@ use serenity::{
 };
 use std::{str::FromStr, sync::Arc};
 
-pub struct WelcomeAdminCommand {
-    shared_handler: Arc<WelcomeSharedHandler>,
+pub struct WelcomeAdminCommand<C: CacheRepository> {
+    shared_handler: Arc<WelcomeSharedHandler<C>>,
     data: &'static CommandHandlerData,
 }
 
-impl WelcomeAdminCommand {
-    pub fn new(shared_handler: Arc<WelcomeSharedHandler>) -> Self {
+impl<C: CacheRepository> WelcomeAdminCommand<C> {
+    pub fn new(shared_handler: Arc<WelcomeSharedHandler<C>>) -> Self {
         Self {
             shared_handler,
             data: Box::leak(Box::new(build_data())),
@@ -50,7 +51,7 @@ impl WelcomeAdminCommand {
 }
 
 #[async_trait]
-impl CommandHandler for WelcomeAdminCommand {
+impl<C: CacheRepository> CommandHandler for WelcomeAdminCommand<C> {
     async fn handle_command(
         &self,
         ctx: &Context,

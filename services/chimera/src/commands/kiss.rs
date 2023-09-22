@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use duvua_cache::{redis::RedisCacheService, CacheRepository};
+use duvua_cache::CacheRepository;
 use duvua_framework::{
     builder::{button_action_row::CreateActionRow, interaction_response::InteractionResponse},
     errors::BotError,
@@ -24,14 +24,14 @@ use crate::repository::{
     random::RandomStringProvider,
 };
 
-pub struct KissCommand {
+pub struct KissCommand<C: CacheRepository> {
     data: &'static CommandHandlerData,
-    cache: Arc<RedisCacheService>,
+    cache: Arc<C>,
     kiss_gifs: Arc<RandomStringProvider>,
 }
 
-impl KissCommand {
-    pub fn new(kiss_gifs: Arc<RandomStringProvider>, cache: Arc<RedisCacheService>) -> Self {
+impl<C: CacheRepository> KissCommand<C> {
+    pub fn new(kiss_gifs: Arc<RandomStringProvider>, cache: Arc<C>) -> Self {
         Self {
             data: Box::leak(Box::new(build_data())),
             kiss_gifs,
@@ -41,7 +41,7 @@ impl KissCommand {
 }
 
 #[async_trait]
-impl CommandHandler for KissCommand {
+impl<C: CacheRepository> CommandHandler for KissCommand<C> {
     async fn handle_command(
         &self,
         ctx: &Context,

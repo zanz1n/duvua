@@ -1,4 +1,6 @@
+use super::welcome_shared::WelcomeSharedHandler;
 use async_trait::async_trait;
+use duvua_cache::CacheRepository;
 use duvua_framework::handler::Handler;
 use serenity::{
     model::prelude::{Interaction, Member, Ready},
@@ -6,15 +8,13 @@ use serenity::{
 };
 use std::sync::Arc;
 
-use super::welcome_shared::WelcomeSharedHandler;
-
-pub struct SerenityHandler {
+pub struct SerenityHandler<C: CacheRepository> {
     framework_handler: Handler,
-    shared_handler: Arc<WelcomeSharedHandler>,
+    shared_handler: Arc<WelcomeSharedHandler<C>>,
 }
 
-impl SerenityHandler {
-    pub fn new(framework_handler: Handler, shared_handler: Arc<WelcomeSharedHandler>) -> Self {
+impl<C: CacheRepository> SerenityHandler<C> {
+    pub fn new(framework_handler: Handler, shared_handler: Arc<WelcomeSharedHandler<C>>) -> Self {
         Self {
             framework_handler,
             shared_handler,
@@ -23,7 +23,7 @@ impl SerenityHandler {
 }
 
 #[async_trait]
-impl EventHandler for SerenityHandler {
+impl<C: CacheRepository> EventHandler for SerenityHandler<C> {
     async fn ready(&self, ctx: Context, info: Ready) {
         self.framework_handler.ready(ctx, info).await
     }

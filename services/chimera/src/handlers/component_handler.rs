@@ -6,7 +6,7 @@ use crate::repository::{
     },
 };
 use async_trait::async_trait;
-use duvua_cache::{redis::RedisCacheService, CacheRepository};
+use duvua_cache::CacheRepository;
 use duvua_framework::{
     builder::{button_action_row::CreateActionRow, interaction_response::InteractionResponse},
     errors::BotError,
@@ -19,13 +19,13 @@ use serenity::{
 };
 use std::sync::Arc;
 
-pub struct MessageComponentHandler {
+pub struct MessageComponentHandler<C: CacheRepository> {
     shared_handler: Arc<KissSharedHandler>,
-    cache: Arc<RedisCacheService>,
+    cache: Arc<C>,
 }
 
-impl MessageComponentHandler {
-    pub fn new(shared_handler: Arc<KissSharedHandler>, cache: Arc<RedisCacheService>) -> Self {
+impl<C: CacheRepository> MessageComponentHandler<C> {
+    pub fn new(shared_handler: Arc<KissSharedHandler>, cache: Arc<C>) -> Self {
         Self {
             shared_handler,
             cache,
@@ -91,7 +91,7 @@ impl MessageComponentHandler {
 }
 
 #[async_trait]
-impl CommandHandler for MessageComponentHandler {
+impl<C: CacheRepository> CommandHandler for MessageComponentHandler<C> {
     async fn handle_component(
         &self,
         ctx: &Context,
