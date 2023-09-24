@@ -74,16 +74,16 @@ pub enum BotError {
 impl BotError {
     pub fn get_message(&self) -> String {
         if let Self::OptionNotProvided(s) = self {
-            return format!("Opção '{s}' não foi fornecida");
+            return format!("A opção '{s}' não foi fornecida");
         } else if let Self::InvalidOption(s) = self {
-            return format!("Opção '{s}' é inválida");
+            return format!("A opção '{s}' é inválida");
         } else if let Self::TicketDeletionDenied(s) = self {
             return format!(
                 "Você não pode deletar um ticket que não é seu! Caso seja \
                 administrador, use o comando `/ticketadmin delete id: {s}`",
             );
         } else if let Self::IntegerOptionOutOfRange { name, min, max } = self {
-            return format!("A opção {name} precisa ser um inteiro válido entre {min} e {max}");
+            return format!("A opção '{name}' precisa ser um inteiro válido entre {min} e {max}");
         } else if let Self::ChannelMessagesFetchFailed(channel_id) = self {
             return format!(
                 "Não foi possível buscar por mensagens no canal de texto <#{channel_id}>",
