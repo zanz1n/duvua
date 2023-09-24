@@ -1,4 +1,5 @@
 pub mod avatar;
+pub mod clear;
 pub mod clone;
 pub mod facts;
 pub mod kiss;

@@ -3,8 +3,8 @@ mod handlers;
 mod repository;
 
 use commands::{
-    avatar::AvatarCommand, clone::CloneCommand, facts::FactsCommand, kiss::KissCommand,
-    ping::PingCommand,
+    avatar::AvatarCommand, clear::ClearCommand, clone::CloneCommand, facts::FactsCommand,
+    kiss::KissCommand, ping::PingCommand,
 };
 use deadpool_redis::{Config as RedisConfig, Runtime as DeadpoolRuntime};
 use duvua_cache::redis::RedisCacheService;
@@ -57,7 +57,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .add_handler(PingCommand::new())
         .add_handler(AvatarCommand::new(cache_service.clone()))
         .add_handler(CloneCommand::new(cache_service.clone()))
-        .add_handler(FactsCommand::new());
+        .add_handler(FactsCommand::new())
+        .add_handler(ClearCommand::new());
 
     let intents = GatewayIntents::empty();
     let mut client = Client::builder(discord_token, intents)

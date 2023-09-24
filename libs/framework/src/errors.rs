@@ -67,8 +67,10 @@ pub enum BotError {
     },
     #[error("Failed to fetch the messages of the channel: {0}")]
     ChannelMessagesFetchFailed(u64),
-    #[error("")]
+    #[error("No message with the required filters found")]
     FilteredEmptyMessageSet,
+    #[error("Failed to bulk delete messages on channel {0}")]
+    MessageBulkDeleteFailed(u64),
 }
 
 impl BotError {
@@ -88,6 +90,8 @@ impl BotError {
             return format!(
                 "Não foi possível buscar por mensagens no canal de texto <#{channel_id}>",
             );
+        } else if let Self::MessageBulkDeleteFailed(channel_id) = self {
+            return format!("Algo deu errado na exclusão das mensagens no canal {channel_id}");
         }
 
         match self {
