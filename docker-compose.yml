@@ -19,7 +19,7 @@ services:
   duvua_postgresql:
     <<: *duvua-service
     container_name: duvua_postgresql
-    image: postgres:alpine
+    image: postgres:15-alpine
     volumes:
       - ./.docker-volumes/postgres_volume:/var/lib/postgresql/data
 
