@@ -59,6 +59,16 @@ pub enum BotError {
     PostgresError,
     #[error("Command inssued by a partial member")]
     CommandIssuedByPartialMember,
+    #[error("Integer option '{name}' out of range")]
+    IntegerOptionOutOfRange {
+        name: &'static str,
+        min: i32,
+        max: i32,
+    },
+    #[error("Failed to fetch the messages of the channel: {0}")]
+    ChannelMessagesFetchFailed(u64),
+    #[error("")]
+    FilteredEmptyMessageSet,
 }
 
 impl BotError {
@@ -70,7 +80,13 @@ impl BotError {
         } else if let Self::TicketDeletionDenied(s) = self {
             return format!(
                 "Você não pode deletar um ticket que não é seu! Caso seja \
-                administrador, use o comando `/ticketadmin delete id: {s}`"
+                administrador, use o comando `/ticketadmin delete id: {s}`",
+            );
+        } else if let Self::IntegerOptionOutOfRange { name, min, max } = self {
+            return format!("A opção {name} precisa ser um inteiro válido entre {min} e {max}");
+        } else if let Self::ChannelMessagesFetchFailed(channel_id) = self {
+            return format!(
+                "Não foi possível buscar por mensagens no canal de texto <#{channel_id}>",
             );
         }
 
@@ -82,12 +98,23 @@ impl BotError {
             Self::GuildNotPermitTickets => "Tickets não estão habilidatos nesse servidor",
             Self::OnlyOneTicketAllowed => "O servidor só permite a criação de um ticket por membro",
             Self::CommandPermissionDenied => "Você não tem permissão para usar esse comando!",
-            Self::FailedToSendChannelMessage => "Não foi possível enviar a mensagem no canal de texto",
+            Self::FailedToSendChannelMessage => {
+                "Não foi possível enviar a mensagem no canal de texto"
+            }
             Self::InvalidChannelProvided => "O canal fornecido é inválido",
             Self::UserAvatarFetchFailed => "Não foi possível procurar o avatar do usuário",
-            Self::CommandIssuedByPartialMember => "O comando não pode ser utilizados por um membro parcial",
+            Self::FilteredEmptyMessageSet => {
+                "Não foi possível achar nenhuma mensagem que \
+                atendesse aos filtros fornecidos no canal de texto"
+            }
+            Self::CommandIssuedByPartialMember => {
+                "O comando não pode ser utilizados por um membro parcial"
+            }
             e => {
-                log::error!(target: "framework_errors", "Unhandled command error: {}", e.to_string());
+                log::error!(
+                    target: "framework_errors",
+                    "Unhandled command error: {}", e.to_string(),
+                );
                 "🤖 Algo deu errado!"
             }
         }
@@ -105,7 +132,7 @@ impl BotError {
         interaction: &MessageComponentInteraction,
         defered: bool,
     ) {
-        if let &BotError::Serenity(e) = &self {
+        if let BotError::Serenity(e) = self {
             log::error!("Serenity error: {e}");
         } else {
             _ = self
@@ -121,7 +148,7 @@ impl BotError {
         interaction: &ApplicationCommandInteraction,
         defered: bool,
     ) {
-        if let &BotError::Serenity(e) = &self {
+        if let BotError::Serenity(e) = self {
             log::error!("Serenity error: {e}");
         } else {
             _ = self
