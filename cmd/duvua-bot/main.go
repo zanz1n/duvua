@@ -41,7 +41,7 @@ func main() {
 		log.Fatalln("Failed to create discord session:", err)
 	}
 
-	s.LogLevel = logger.SlogLevelToDiscordgo(config.LogLevel)
+	s.LogLevel = logger.SlogLevelToDiscordgo(config.LogLevel + 4)
 
 	pgxConfig, err := pgxpool.ParseConfig(config.Postgres.IntoUri())
 	if err != nil {

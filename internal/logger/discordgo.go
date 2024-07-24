@@ -17,6 +17,6 @@ func SlogLevelToDiscordgo(level slog.Level) int {
 	case slog.LevelError:
 		return discordgo.LogError
 	default:
-		return discordgo.LogInformational
+		return discordgo.LogError
 	}
 }
