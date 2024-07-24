@@ -86,7 +86,7 @@ func (m *Manager) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		)
 	} else {
 		slog.Info(
-			"Command %s executed, took %v",
+			"Command executed",
 			"name", cmd.Data.Name,
 			"took", time.Since(startTime),
 		)
