@@ -65,7 +65,7 @@ func main() {
 
 	m := manager.NewManager()
 
-	m.Add(commands.NewHelpCommand())
+	m.Add(commands.NewHelpCommand(m))
 
 	m.AutoHandle(s)
 	s.AddHandler(events.NewReadyEvent(m).Handle)

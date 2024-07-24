@@ -16,7 +16,7 @@ var helpCommandData = discordgo.ApplicationCommand{
 	},
 }
 
-func NewHelpCommand() manager.Command {
+func NewHelpCommand(m *manager.Manager) manager.Command {
 	return manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
@@ -25,7 +25,7 @@ func NewHelpCommand() manager.Command {
 		Data:       &helpCommandData,
 		Category:   manager.CommandCategoryInfo,
 		NeedsDefer: false,
-		Handler:    &HelpCommand{},
+		Handler:    &HelpCommand{m: m},
 	}
 }
 

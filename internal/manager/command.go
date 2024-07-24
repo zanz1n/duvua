@@ -5,7 +5,7 @@ import "github.com/bwmarrin/discordgo"
 type CommandCategory uint8
 
 const (
-	CommandCategoryInfo = iota + 1
+	CommandCategoryInfo CommandCategory = iota + 1
 	CommandCategoryConfig
 	CommandCategoryFun
 	CommandCategoryTicket
