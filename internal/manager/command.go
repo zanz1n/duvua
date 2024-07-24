@@ -30,8 +30,9 @@ type CommandAccept struct {
 }
 
 type Command struct {
-	Accepts  CommandAccept
-	Data     *discordgo.ApplicationCommand
-	Category CommandCategory
-	Handler  InteractionHandler
+	Accepts    CommandAccept
+	Data       *discordgo.ApplicationCommand
+	Category   CommandCategory
+	NeedsDefer bool
+	Handler    InteractionHandler
 }

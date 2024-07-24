@@ -67,6 +67,16 @@ func (m *Manager) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
+	if cmd.NeedsDefer {
+		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		})
+		if err != nil {
+			slog.Error("Failed to defer reply interaction", "error", err)
+			return
+		}
+	}
+
 	if err := cmd.Handler.Handle(s, i); err != nil {
 		slog.Error(
 			"Exception caught while executing a command",
