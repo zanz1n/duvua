@@ -2,9 +2,12 @@ package manager
 
 import (
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/zanz1n/duvua-bot/internal/errors"
+	"github.com/zanz1n/duvua-bot/internal/utils"
 )
 
 type Manager struct {
@@ -23,17 +26,90 @@ func (m *Manager) Add(cmd Command) {
 	m.cmds[cmd.Data.Name] = cmd
 }
 
+func (m *Manager) handleCommand(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	startTime time.Time,
+	cmd *Command,
+) {
+	if err := cmd.Handler.Handle(s, i); err != nil {
+		oerr := err
+
+		expected := false
+		if err, ok := err.(errors.Expected); ok {
+			expected = err.IsExpected()
+		}
+
+		var errorRes string
+		if expected {
+			errorRes = "Algo deu errado: " + err.Error()
+		} else {
+			errorRes = "Algo deu errado!"
+		}
+
+		if cmd.NeedsDefer {
+			_, err = s.InteractionResponseEdit(i.Interaction, utils.BasicResponseEdit(errorRes))
+		} else {
+			err = s.InteractionRespond(i.Interaction, utils.BasicResponse(errorRes))
+		}
+		if err != nil {
+			slog.Error(
+				"Failed to set command response after error",
+				"error", err,
+			)
+		}
+
+		if !expected {
+			slog.Error(
+				"Exception caught while executing a command",
+				"name", cmd.Data.Name,
+				"took", time.Since(startTime),
+				"error", oerr,
+			)
+			return
+		}
+	}
+
+	slog.Info(
+		"Command executed",
+		"name", cmd.Data.Name,
+		"took", time.Since(startTime),
+	)
+}
+
+func (m *Manager) handleButton(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	startTime time.Time,
+) {
+	if err := m.buttonHandler.Handle(s, i); err != nil {
+		slog.Error(
+			"Exception caught while handling message component",
+			"took", time.Since(startTime),
+			"error", err,
+		)
+	} else {
+		slog.Info(
+			"Message component action handled",
+			"took", time.Since(startTime),
+		)
+	}
+}
+
 func (m *Manager) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	startTime := time.Now()
 
 	var (
+		name string
 		cmd  Command
-		ok   bool
+		ok   bool = false
 		btnH bool = false
 	)
 	if i.Type == discordgo.InteractionApplicationCommand ||
 		i.Type == discordgo.InteractionApplicationCommandAutocomplete {
-		if cmd, ok = m.cmds[i.ApplicationCommandData().Name]; ok {
+		name = i.ApplicationCommandData().Name
+
+		if cmd, ok = m.cmds[name]; ok {
 			if !cmd.Accepts.Slash {
 				return
 			}
@@ -41,7 +117,16 @@ func (m *Manager) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			return
 		}
 	} else if i.Type == discordgo.InteractionMessageComponent {
-		if cmd, ok = m.cmds[i.MessageComponentData().CustomID]; ok {
+		name = i.MessageComponentData().CustomID
+
+		if strings.Contains(name, "/") {
+			splited := strings.Split(name, "/")
+			if len(splited) >= 1 {
+				name = splited[0]
+			}
+		}
+
+		if cmd, ok = m.cmds[name]; ok {
 			if !cmd.Accepts.Button {
 				btnH = true
 			}
@@ -51,19 +136,15 @@ func (m *Manager) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	if btnH {
-		if err := m.buttonHandler.Handle(s, i); err != nil {
-			slog.Error(
-				"Exception caught while handling message component",
-				"took", time.Since(startTime),
-				"error", err,
-			)
-		} else {
-			slog.Info(
-				"Message component action handled",
-				"took", time.Since(startTime),
-			)
-		}
-
+		m.handleButton(s, i, startTime)
+		return
+	}
+	if !ok {
+		slog.Info(
+			"Cound not find a handler for the given command",
+			"name", "",
+			"took", time.Since(startTime),
+		)
 		return
 	}
 
@@ -77,20 +158,7 @@ func (m *Manager) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	}
 
-	if err := cmd.Handler.Handle(s, i); err != nil {
-		slog.Error(
-			"Exception caught while executing a command",
-			"name", cmd.Data.Name,
-			"took", time.Since(startTime),
-			"error", err,
-		)
-	} else {
-		slog.Info(
-			"Command executed",
-			"name", cmd.Data.Name,
-			"took", time.Since(startTime),
-		)
-	}
+	m.handleCommand(s, i, startTime, &cmd)
 }
 
 func (m *Manager) AutoHandle(s *discordgo.Session) {
