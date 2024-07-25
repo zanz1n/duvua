@@ -62,11 +62,13 @@ func main() {
 	if err != nil {
 		log.Fatalln("Failed to connect to postgres:", err)
 	}
+	defer pool.Close()
 
 	m := manager.NewManager()
 
 	m.Add(commands.NewHelpCommand(m))
 	m.Add(commands.NewAvatarCommand())
+	m.Add(commands.NewClearCommand())
 
 	m.AutoHandle(s)
 	s.AddHandler(events.NewReadyEvent(m).Handle)
@@ -74,10 +76,8 @@ func main() {
 	if err = s.Open(); err != nil {
 		log.Fatalln("Failed to open discord session:", err)
 	}
+	defer s.Close()
 
 	<-endCh
 	log.Println("Closing bot ...")
-
-	pool.Close()
-	s.Close()
 }
