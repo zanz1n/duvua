@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/zanz1n/duvua-bot/internal/errors"
 	"github.com/zanz1n/duvua-bot/internal/manager"
+	"github.com/zanz1n/duvua-bot/internal/utils"
 )
 
 var helpCommandData = discordgo.ApplicationCommand{
@@ -34,28 +36,11 @@ type HelpCommand struct {
 }
 
 func (c *HelpCommand) renderHome(i *discordgo.InteractionCreate) discordgo.MessageEmbed {
-	var avatarUrl string
-	if i.User == nil {
-		avatarUrl = i.Member.AvatarURL("128")
-	} else {
-		avatarUrl = i.User.AvatarURL("128")
-	}
-
-	var userName string
-	if i.User == nil {
-		userName = i.Member.DisplayName()
-	} else {
-		userName = i.User.GlobalName
-	}
-
 	return discordgo.MessageEmbed{
 		Type:        discordgo.EmbedTypeArticle,
 		Title:       "Help",
 		Description: "Use o seletor a baixo para ver os comandos disponíveis em cada categoria",
-		Footer: &discordgo.MessageEmbedFooter{
-			Text:    "Requisitado por " + userName,
-			IconURL: avatarUrl,
-		},
+		Footer:      utils.EmbedRequestedByFooter(i.Interaction),
 	}
 }
 
@@ -99,7 +84,7 @@ func (c *HelpCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCreat
 	if i.Type == discordgo.InteractionMessageComponent {
 		data := i.MessageComponentData()
 		if data.Values == nil || len(data.Values) != 1 {
-			return nil
+			return errors.New("o input selecionado é inválido")
 		}
 
 		value := data.Values[0]
