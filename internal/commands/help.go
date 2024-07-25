@@ -56,6 +56,8 @@ func (c *HelpCommand) renderCategory(cat manager.CommandCategory) discordgo.Mess
 		catName = "Fun"
 	case manager.CommandCategoryTicket:
 		catName = "Info"
+	case manager.CommandCategoryModeration:
+		catName = "Moderação"
 	}
 
 	embed := discordgo.MessageEmbed{
@@ -102,6 +104,8 @@ func (c *HelpCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCreat
 			embed = c.renderCategory(manager.CommandCategoryFun)
 		case "ticket":
 			embed = c.renderCategory(manager.CommandCategoryTicket)
+		case "moderation":
+			embed = c.renderCategory(manager.CommandCategoryModeration)
 		default:
 			embed = c.renderHome(i)
 		}
@@ -121,11 +125,12 @@ func (c *HelpCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCreat
 	} else if i.Type == discordgo.InteractionApplicationCommand ||
 		i.Type == discordgo.InteractionApplicationCommandAutocomplete {
 		options := []discordgo.SelectMenuOption{
-			{Label: "Help", Value: "help", Description: "Informações sobre o bot", Emoji: emoji("🏡")},
+			// {Label: "Help", Value: "help", Description: "Informações sobre o bot", Emoji: emoji("🏡")},
 			{Label: "Info", Value: "info", Description: "Comandos de informação", Emoji: emoji("ℹ️")},
 			{Label: "Config", Value: "config", Description: "Comandos de configuração", Emoji: emoji("⚙️")},
 			{Label: "Fun", Value: "fun", Description: "Comandos para descontrair", Emoji: emoji("🎉")},
 			{Label: "Ticket", Value: "ticket", Description: "Comandos de ticket", Emoji: emoji("🎫")},
+			{Label: "Moderação", Value: "moderation", Description: "Comandos de moderação", Emoji: emoji("🔨")},
 		}
 
 		embed := c.renderHome(i)

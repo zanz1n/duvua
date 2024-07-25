@@ -9,6 +9,7 @@ const (
 	CommandCategoryConfig
 	CommandCategoryFun
 	CommandCategoryTicket
+	CommandCategoryModeration
 )
 
 type InteractionHandler interface {
