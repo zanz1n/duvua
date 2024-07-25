@@ -56,7 +56,7 @@ func (c *AvatarCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCre
 	)
 	if opt := utils.GetOption(data.Options, "user"); opt != nil {
 		if opt.Type != discordgo.ApplicationCommandOptionUser {
-			return errors.New("opção `user` tem um tipo inválido: um usuário válido era esperado")
+			return errors.New("opção `user` precisa ser um usuário válido")
 		}
 
 		if i.Member != nil {
