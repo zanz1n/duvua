@@ -25,7 +25,7 @@ type PostgresConfig struct {
 	Password string `env:"PASSWORD, required"`
 	SslMode  string `env:"SSL_MODE, default=disable"`
 
-	Database string `env:"DATABASE, required"`
+	Database string `env:"DB, required"`
 
 	MaxConns int32 `env:"MAX_CONNS, default=32"`
 	MinConns int32 `env:"MIN_CONNS, default=3"`
