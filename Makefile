@@ -3,3 +3,6 @@ run:
 
 build:
 	go build -ldflags "-s -w" -o bin/duvua-bot cmd/duvua-bot/main.go
+
+test:
+	go test ./... -v --race
