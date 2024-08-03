@@ -21,7 +21,7 @@ var welcomeCommandData = discordgo.ApplicationCommand{
 			Type:        discordgo.ApplicationCommandOptionSubCommand,
 			Name:        "enable",
 			Description: "Habilita mensagens de boas vindas no servidor",
-			NameLocalizations: map[discordgo.Locale]string{
+			DescriptionLocalizations: map[discordgo.Locale]string{
 				discordgo.EnglishUS: "Enables the welcome message on the server",
 			},
 		},
@@ -29,7 +29,7 @@ var welcomeCommandData = discordgo.ApplicationCommand{
 			Type:        discordgo.ApplicationCommandOptionSubCommand,
 			Name:        "disable",
 			Description: "Disabilita mensagens de boas vindas no servidor",
-			NameLocalizations: map[discordgo.Locale]string{
+			DescriptionLocalizations: map[discordgo.Locale]string{
 				discordgo.EnglishUS: "Disables the welcome message on the server",
 			},
 		},
