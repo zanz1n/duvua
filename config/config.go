@@ -21,7 +21,7 @@ type PostgresConfig struct {
 	Host string `env:"HOST, required"`
 	Port uint16 `env:"PORT, default=5432"`
 
-	Username string `env:"USERNAME, required"`
+	Username string `env:"USER, required"`
 	Password string `env:"PASSWORD, required"`
 	SslMode  string `env:"SSL_MODE, default=disable"`
 

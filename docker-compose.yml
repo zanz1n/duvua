@@ -1,0 +1,41 @@
+x-common:
+  bot: &bot-env
+    LOG_LEVEL: info
+
+    DISCORD_TOKEN: ""
+    DISCORD_GUILD: ""
+
+  postgres: &postgres-env
+    POSTGRES_DB: duvua
+    POSTGRES_USER: docker
+    POSTGRES_PASSWORD: ""
+
+    POSTGRES_MIN_CONNS: 2
+    POSTGRES_MAX_CONNS: 32
+
+services:
+  bot:
+    build: .
+    command: ["/bin/duvua-bot", "--migrate"]
+    restart: always
+    links:
+      - postgres
+
+    environment:
+      <<: [*bot-env, *postgres-env]
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+
+  postgres:
+    image: postgres:16
+    restart: always
+
+    environment:
+      <<: *postgres-env
+
+    volumes:
+      - .docker-volumes/postgres-data:/var/lib/postgresql/data
+
+networks:
+  default:
+    driver: bridge

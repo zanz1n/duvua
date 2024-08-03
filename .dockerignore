@@ -1,0 +1,7 @@
+.env
+
+/bin
+/tmp
+
+/data
+/.docker-volumes
