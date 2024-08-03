@@ -24,6 +24,7 @@ import (
 	"github.com/zanz1n/duvua-bot/internal/events"
 	"github.com/zanz1n/duvua-bot/internal/logger"
 	"github.com/zanz1n/duvua-bot/internal/manager"
+	"github.com/zanz1n/duvua-bot/internal/welcome"
 	embedsql "github.com/zanz1n/duvua-bot/sql"
 )
 
@@ -71,11 +72,14 @@ func main() {
 		}
 	}
 
+	welcomeRepo := welcome.NewPostgresWelcomeRepository(db)
+
 	m := manager.NewManager()
 
 	m.Add(commands.NewHelpCommand(m))
 	m.Add(commands.NewAvatarCommand())
 	m.Add(commands.NewClearCommand())
+	m.Add(commands.NewWelcomeCommand(welcomeRepo))
 
 	m.AutoHandle(s)
 	s.AddHandler(events.NewReadyEvent(m).Handle)
