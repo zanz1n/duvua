@@ -37,6 +37,10 @@ var (
 var endCh chan os.Signal
 
 func init() {
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+}
+
+func init() {
 	flag.Parse()
 }
 
@@ -67,7 +71,13 @@ func main() {
 	s.LogLevel = logger.SlogLevelToDiscordgo(cfg.LogLevel + 4)
 
 	db := connectToPostgres()
-	defer db.Close()
+	defer func() {
+		if e := db.Close(); e != nil {
+			slog.Error("Failed to close postgres client", "error", e)
+		} else {
+			slog.Info("Closed postgres client")
+		}
+	}()
 
 	if *migrate {
 		if err = execMigration(db); err != nil {
@@ -91,7 +101,13 @@ func main() {
 	if err = s.Open(); err != nil {
 		log.Fatalln("Failed to open discord session:", err)
 	}
-	defer s.Close()
+	defer func() {
+		if e := s.Close(); e != nil {
+			slog.Error("Failed to close discordgo session", "error", e)
+		} else {
+			slog.Info("Closed discordgo session")
+		}
+	}()
 
 	utils.SetStatus(s, utils.StatusTypeStarting)
 
