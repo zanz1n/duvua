@@ -67,14 +67,26 @@ func (c *HelpCommand) renderCategory(cat manager.CommandCategory) discordgo.Mess
 
 	cmds := c.m.GetDataByCategory(manager.CommandAccept{Slash: true, Button: false}, cat)
 
-	fields := make([]*discordgo.MessageEmbedField, len(cmds))
+	fields := []*discordgo.MessageEmbedField{}
 
-	for i, cmd := range cmds {
-		fields[i] = &discordgo.MessageEmbedField{
-			Name:   fmt.Sprintf("%v. %s", i+1, cmd.Name),
+	for _, cmd := range cmds {
+		if len(cmd.Options) > 0 {
+			kind := cmd.Options[0].Type
+			isRootCmd := kind == discordgo.ApplicationCommandOptionSubCommand ||
+				kind == discordgo.ApplicationCommandOptionSubCommandGroup
+
+			if isRootCmd {
+				newFields := c.appendSubCommandFields(cmd)
+				fields = append(fields, newFields...)
+				continue
+			}
+		}
+
+		fields = append(fields, &discordgo.MessageEmbedField{
+			Name:   fmt.Sprintf("/" + cmd.Name),
 			Value:  cmd.Description,
 			Inline: true,
-		}
+		})
 	}
 
 	embed.Fields = fields
@@ -157,6 +169,34 @@ func (c *HelpCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCreat
 	}
 
 	return nil
+}
+
+func (c *HelpCommand) appendSubCommandFields(
+	cmd *discordgo.ApplicationCommand,
+) []*discordgo.MessageEmbedField {
+	fields := []*discordgo.MessageEmbedField{}
+
+	for _, opt := range cmd.Options {
+		if opt.Type == discordgo.ApplicationCommandOptionSubCommand {
+			fields = append(fields, &discordgo.MessageEmbedField{
+				Name:   fmt.Sprintf("/%s %s", cmd.Name, opt.Name),
+				Value:  opt.Description,
+				Inline: true,
+			})
+		} else if opt.Type == discordgo.ApplicationCommandOptionSubCommandGroup {
+			for _, subopt := range opt.Options {
+				if opt.Type == discordgo.ApplicationCommandOptionSubCommand {
+					fields = append(fields, &discordgo.MessageEmbedField{
+						Name:   fmt.Sprintf("/%s %s %s", cmd.Name, opt.Name, subopt.Name),
+						Value:  subopt.Description,
+						Inline: true,
+					})
+				}
+			}
+		}
+	}
+
+	return fields
 }
 
 func emoji(name string) *discordgo.ComponentEmoji {
