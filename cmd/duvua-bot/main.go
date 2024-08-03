@@ -61,6 +61,8 @@ func main() {
 		log.Fatalln("Failed to create discord session:", err)
 	}
 
+	s.Identify.Intents = discordgo.IntentsGuildMembers
+
 	s.LogLevel = logger.SlogLevelToDiscordgo(cfg.LogLevel + 4)
 
 	db := connectToPostgres()
@@ -83,6 +85,7 @@ func main() {
 
 	m.AutoHandle(s)
 	s.AddHandler(events.NewReadyEvent(m).Handle)
+	s.AddHandler(events.NewMemberAddEvent(welcomeRepo).Handle)
 
 	if err = s.Open(); err != nil {
 		log.Fatalln("Failed to open discord session:", err)

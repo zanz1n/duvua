@@ -5,6 +5,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua-bot/internal/errors"
+	"github.com/zanz1n/duvua-bot/internal/events"
 	"github.com/zanz1n/duvua-bot/internal/manager"
 	"github.com/zanz1n/duvua-bot/internal/utils"
 	"github.com/zanz1n/duvua-bot/internal/welcome"
@@ -137,12 +138,16 @@ func NewWelcomeCommand(r welcome.WelcomeRepository) manager.Command {
 		Data:       &welcomeCommandData,
 		Category:   manager.CommandCategoryConfig,
 		NeedsDefer: false,
-		Handler:    &WelcomeCommand{r: r},
+		Handler: &WelcomeCommand{
+			r:   r,
+			evt: events.NewMemberAddEvent(r),
+		},
 	}
 }
 
 type WelcomeCommand struct {
-	r welcome.WelcomeRepository
+	r   welcome.WelcomeRepository
+	evt *events.MemberAddEvent
 }
 
 func (c *WelcomeCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) error {
@@ -211,7 +216,8 @@ func (c *WelcomeCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCr
 
 		response, err = c.handleSetMessage(i.GuildID, kind, message)
 	case "test":
-		response, err = c.handleTest(s, i.GuildID, i.Member)
+		i.Member.GuildID = i.GuildID
+		response, err = c.handleTest(s, i.Member)
 	default:
 		return errors.New("opção `sub-command` inválida")
 	}
@@ -321,9 +327,12 @@ func (c *WelcomeCommand) handleSetMessage(
 
 func (c *WelcomeCommand) handleTest(
 	s *discordgo.Session,
-	guildId string,
 	member *discordgo.Member,
 ) (string, error) {
-	// TODO:
-	return "", nil
+	err := c.evt.Trigger(s, member)
+	if err != nil {
+		return "", err
+	}
+
+	return "Mensagem enviada no canal de texto", nil
 }
