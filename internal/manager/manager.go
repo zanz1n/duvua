@@ -142,7 +142,7 @@ func (m *Manager) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if !ok {
 		slog.Info(
 			"Cound not find a handler for the given command",
-			"name", "",
+			"name", name,
 			"took", time.Since(startTime),
 		)
 		return
@@ -200,6 +200,8 @@ func (m *Manager) GetDataByCategory(accepts CommandAccept, category CommandCateg
 }
 
 func (m *Manager) PostCommands(s *discordgo.Session, guildId *string) {
+	start := time.Now()
+
 	arr := m.GetData(CommandAccept{Slash: true, Button: false})
 
 	gId := ""
@@ -209,7 +211,11 @@ func (m *Manager) PostCommands(s *discordgo.Session, guildId *string) {
 
 	created, err := s.ApplicationCommandBulkOverwrite(s.State.User.ID, gId, arr)
 	if err != nil {
-		slog.Error("Something went wrong while posting commands", "error", err)
+		slog.Error(
+			"Something went wrong while posting commands",
+			"took", time.Since(start),
+			"error", err,
+		)
 
 		return
 	}
@@ -218,5 +224,6 @@ func (m *Manager) PostCommands(s *discordgo.Session, guildId *string) {
 		"Posted commands",
 		"success_count", len(arr),
 		"failed_count", len(arr)-len(created),
+		"took", time.Since(start),
 	)
 }

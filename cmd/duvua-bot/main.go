@@ -72,10 +72,15 @@ func main() {
 
 	db := connectToPostgres()
 	defer func() {
+		start := time.Now()
 		if e := db.Close(); e != nil {
-			slog.Error("Failed to close postgres client", "error", e)
+			slog.Error(
+				"Failed to close postgres client",
+				"took", time.Since(start),
+				"error", e,
+			)
 		} else {
-			slog.Info("Closed postgres client")
+			slog.Info("Closed postgres client", "took", time.Since(start))
 		}
 	}()
 
@@ -102,10 +107,15 @@ func main() {
 		log.Fatalln("Failed to open discord session:", err)
 	}
 	defer func() {
+		start := time.Now()
 		if e := s.Close(); e != nil {
-			slog.Error("Failed to close discordgo session", "error", e)
+			slog.Error(
+				"Failed to close discordgo session",
+				"took", time.Since(start),
+				"error", e,
+			)
 		} else {
-			slog.Info("Closed discordgo session")
+			slog.Info("Closed discordgo session", "took", time.Since(start))
 		}
 	}()
 
