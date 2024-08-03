@@ -117,14 +117,14 @@ var welcomeCommandData = discordgo.ApplicationCommand{
 
 const (
 	welcomeComplementDisabled = ", mas as mensagens de boas vindas estão desabilitadas.\n" +
-		"Use `/welcome enable` para habilitar."
+		"Use `/welcome enable` para habilitá-las."
 
 	welcomeComplementNoChannel = ", mas nenhum canal de texto está definido.\n" +
 		"Use `/welcome set-channel` para definir o canal de texto."
 
 	welcomeComplementNoChannelDisabled = ", mas nenhum canal de texto está definido e " +
 		"as mensagens de boas vindas estão desabilitadas.\n" +
-		"Use `/welcome enable` para habilitar e " +
+		"Use `/welcome enable` para habilitá-las e " +
 		"`/welcome set-channel` para definir o canal de texto."
 )
 
@@ -174,7 +174,7 @@ func (c *WelcomeCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCr
 	case "disable":
 		response, err = c.handleSetEnabled(i.GuildID, false)
 	case "set-channel":
-		channelOpt := utils.GetOption(data.Options, "channel")
+		channelOpt := utils.GetOption(subCommand.Options, "channel")
 		if channelOpt == nil {
 			return errors.New("opção `channel` é necessária")
 		} else if channelOpt.Type != discordgo.ApplicationCommandOptionChannel {
@@ -188,7 +188,7 @@ func (c *WelcomeCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCr
 
 		response, err = c.handleSetChannel(i.GuildID, channel.ID)
 	case "set-message":
-		typeOpt := utils.GetOption(data.Options, "type")
+		typeOpt := utils.GetOption(subCommand.Options, "type")
 		if typeOpt == nil {
 			return errors.New("opção `type` é necessária")
 		} else if typeOpt.Type != discordgo.ApplicationCommandOptionString {
@@ -200,7 +200,7 @@ func (c *WelcomeCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCr
 			return errors.New("opção `type` precisa ser (Mensagem, Imagem ou Embed)")
 		}
 
-		messageOpt := utils.GetOption(data.Options, "message")
+		messageOpt := utils.GetOption(subCommand.Options, "message")
 		if messageOpt == nil {
 			return errors.New("opção `message` é necessária")
 		} else if messageOpt.Type != discordgo.ApplicationCommandOptionString {
@@ -219,8 +219,7 @@ func (c *WelcomeCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCr
 	if err != nil {
 		return err
 	}
-	_, err = s.InteractionResponseEdit(i.Interaction, utils.BasicResponseEdit(response))
-	return err
+	return s.InteractionRespond(i.Interaction, utils.BasicResponse(response))
 }
 
 func (c *WelcomeCommand) handleSetEnabled(guildId string, enabled bool) (string, error) {
@@ -238,11 +237,6 @@ func (c *WelcomeCommand) handleSetEnabled(guildId string, enabled bool) (string,
 		if err != nil {
 			return "", err
 		}
-
-		if enabled {
-			return "Mensagem de boas vindas habilitada, " +
-				"mas nenhum canal de texto foi configurado", nil
-		}
 	}
 
 	if enabled {
@@ -250,9 +244,16 @@ func (c *WelcomeCommand) handleSetEnabled(guildId string, enabled bool) (string,
 		if wc.ChannelId == nil {
 			msgComp = welcomeComplementNoChannel
 		}
-		return "Mensagem de boas vindas habilitada" + msgComp, nil
+
+		if wc.Enabled {
+			return "**Mensagem de boas vindas já estava habilitada**" + msgComp, nil
+		}
+		return "**Mensagem de boas vindas habilitada**" + msgComp, nil
 	} else {
-		return "Mensagem de boas vindas desabilitada", nil
+		if !wc.Enabled {
+			return "**Mensagem de boas vindas já estava desabilitada**", nil
+		}
+		return "**Mensagem de boas vindas desabilitada**", nil
 	}
 }
 
@@ -278,7 +279,7 @@ func (c *WelcomeCommand) handleSetChannel(guildId string, channelId string) (str
 		msgComp = welcomeComplementDisabled
 	}
 
-	return fmt.Sprintf("Canal de texto alterado para <#%s>"+msgComp, channelId), nil
+	return fmt.Sprintf("**Canal de texto alterado para <#%s>**"+msgComp, channelId), nil
 }
 
 func (c *WelcomeCommand) handleSetMessage(
@@ -313,7 +314,7 @@ func (c *WelcomeCommand) handleSetMessage(
 	}
 
 	return fmt.Sprintf(
-		"Mensagem alterada pra `%s` com tipo `%s`"+msgComp,
+		"**Mensagem alterada pra** `%s` **com tipo** `%s`"+msgComp,
 		message, kind.StringPtBr(),
 	), nil
 }
