@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -97,6 +98,8 @@ const (
 )
 
 func SetStatus(s *discordgo.Session, status StatusType) {
+	start := time.Now()
+
 	str, name := "online", "/help"
 
 	if status == StatusTypeIdle {
@@ -109,7 +112,7 @@ func SetStatus(s *discordgo.Session, status StatusType) {
 		slog.Error("Failed to parse StatusType enumeration. Invalid")
 	}
 
-	s.UpdateStatusComplex(discordgo.UpdateStatusData{
+	err := s.UpdateStatusComplex(discordgo.UpdateStatusData{
 		IdleSince: nil,
 		Status:    str,
 		AFK:       false,
@@ -120,4 +123,18 @@ func SetStatus(s *discordgo.Session, status StatusType) {
 			},
 		},
 	})
+	if err != nil {
+		slog.Error(
+			"Failed to set bot status",
+			"took", time.Since(start),
+			"error", err,
+		)
+	} else {
+		slog.Info(
+			"Bot status set",
+			"status", str,
+			"name", name,
+			"took", time.Since(start),
+		)
+	}
 }

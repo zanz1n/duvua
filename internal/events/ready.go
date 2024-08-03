@@ -6,6 +6,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua-bot/config"
 	"github.com/zanz1n/duvua-bot/internal/manager"
+	"github.com/zanz1n/duvua-bot/internal/utils"
 )
 
 type ReadyEvent struct {
@@ -24,4 +25,6 @@ func (re *ReadyEvent) Handle(s *discordgo.Session, ready *discordgo.Ready) {
 	)
 
 	re.m.PostCommands(s, config.GetConfig().Discord.Guild)
+
+	utils.SetStatus(s, utils.StatusTypeIdle)
 }

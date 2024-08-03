@@ -24,6 +24,7 @@ import (
 	"github.com/zanz1n/duvua-bot/internal/events"
 	"github.com/zanz1n/duvua-bot/internal/logger"
 	"github.com/zanz1n/duvua-bot/internal/manager"
+	"github.com/zanz1n/duvua-bot/internal/utils"
 	"github.com/zanz1n/duvua-bot/internal/welcome"
 	embedsql "github.com/zanz1n/duvua-bot/sql"
 )
@@ -92,8 +93,11 @@ func main() {
 	}
 	defer s.Close()
 
+	utils.SetStatus(s, utils.StatusTypeStarting)
+
 	<-endCh
 	log.Println("Closing bot ...")
+	utils.SetStatus(s, utils.StatusTypeStopping)
 }
 
 func connectToPostgres() *sql.DB {
