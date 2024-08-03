@@ -8,7 +8,8 @@ import (
 
 func NewPostgresWelcomeRepository(pool *sql.DB) WelcomeRepository {
 	return &PostgresWelcomeRepository{
-		pool: pool,
+		pool:      pool,
+		opTimeout: 5 * time.Second,
 	}
 }
 
@@ -140,6 +141,9 @@ func (r *PostgresWelcomeRepository) GetById(id string) (*Welcome, error) {
 		&w.Kind,
 	)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
 
