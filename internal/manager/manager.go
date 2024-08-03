@@ -42,7 +42,7 @@ func (m *Manager) handleCommand(
 
 		var errorRes string
 		if expected {
-			errorRes = "Algo deu errado: " + err.Error()
+			errorRes = "Erro: " + err.Error()
 		} else {
 			errorRes = "Algo deu errado!"
 		}
