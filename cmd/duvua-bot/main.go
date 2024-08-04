@@ -98,6 +98,7 @@ func main() {
 	m.Add(commands.NewAvatarCommand())
 	m.Add(commands.NewClearCommand())
 	m.Add(commands.NewWelcomeCommand(welcomeRepo))
+	m.Add(commands.NewCloneCommand())
 
 	m.AutoHandle(s)
 	s.AddHandler(events.NewReadyEvent(m).Handle)
