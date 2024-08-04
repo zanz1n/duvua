@@ -2,6 +2,7 @@ package events
 
 import (
 	"log/slog"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua-bot/config"
@@ -10,18 +11,19 @@ import (
 )
 
 type ReadyEvent struct {
-	m *manager.Manager
+	m     *manager.Manager
+	start time.Time
 }
 
 func NewReadyEvent(m *manager.Manager) *ReadyEvent {
-	return &ReadyEvent{m: m}
+	return &ReadyEvent{m: m, start: time.Now()}
 }
 
 func (re *ReadyEvent) Handle(s *discordgo.Session, ready *discordgo.Ready) {
 	slog.Info(
-		"Logged to discord",
-		"username",
-		s.State.User.Username+"#"+s.State.User.Discriminator,
+		"Discord session ready",
+		"username", s.State.User.Username+"#"+s.State.User.Discriminator,
+		"took", time.Since(re.start),
 	)
 
 	re.m.PostCommands(s, config.GetConfig().Discord.Guild)

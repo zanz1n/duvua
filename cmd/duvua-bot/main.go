@@ -101,7 +101,7 @@ func main() {
 	m.Add(commands.NewCloneCommand())
 
 	m.AutoHandle(s)
-	s.AddHandler(events.NewReadyEvent(m).Handle)
+	s.AddHandlerOnce(events.NewReadyEvent(m).Handle)
 	s.AddHandler(events.NewMemberAddEvent(welcomeRepo).Handle)
 
 	if err = s.Open(); err != nil {
@@ -122,8 +122,8 @@ func main() {
 
 	utils.SetStatus(s, utils.StatusTypeStarting)
 
-	<-endCh
-	log.Println("Closing bot ...")
+	sig := <-endCh
+	log.Printf("Received signal %s: closing bot ...\n", sig.String())
 	utils.SetStatus(s, utils.StatusTypeStopping)
 }
 
