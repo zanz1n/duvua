@@ -99,6 +99,7 @@ func main() {
 	m := manager.NewManager()
 
 	m.Add(commands.NewHelpCommand(m))
+	m.Add(commands.NewPingCommand())
 	m.Add(commands.NewAvatarCommand())
 	m.Add(commands.NewClearCommand())
 	m.Add(commands.NewWelcomeCommand(welcomeRepo))
