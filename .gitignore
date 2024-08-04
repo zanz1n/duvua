@@ -1,5 +1,0 @@
-/target
-dist/
-.env
-/.docker-volumes
-.idea/

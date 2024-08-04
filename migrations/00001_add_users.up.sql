@@ -1,9 +1,0 @@
-CREATE TYPE "userlanguage" AS ENUM ('PT_BR', 'EN_US');
-
-CREATE TABLE "users" (
-    "id" BIGINT PRIMARY KEY,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "language" "userlanguage" NOT NULL DEFAULT 'PT_BR',
-    "coins" INTEGER NOT NULL DEFAULT 0
-);
