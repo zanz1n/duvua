@@ -205,11 +205,10 @@ func (c *ClearCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCrea
 		if opt.Type != discordgo.ApplicationCommandOptionChannel {
 			return errors.New("opção `channel` precisa ser um canal de texto válido")
 		}
+		ch := opt.ChannelValue(s)
+		channel = ch.ID
 
-		channel = opt.ChannelValue(nil).ID
-
-		ch, err := s.Channel(channel)
-		if err != nil {
+		if ch.GuildID == "" {
 			return errors.New("não foi possível verificar o canal fornecido")
 		}
 		if ch.Type != discordgo.ChannelTypeGuildText {
