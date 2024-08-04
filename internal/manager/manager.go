@@ -50,7 +50,7 @@ func (m *Manager) handleCommand(
 		if cmd.NeedsDefer {
 			_, err = s.InteractionResponseEdit(i.Interaction, utils.BasicResponseEdit(errorRes))
 		} else {
-			err = s.InteractionRespond(i.Interaction, utils.BasicResponse(errorRes))
+			err = s.InteractionRespond(i.Interaction, utils.BasicEphemeralResponse(errorRes))
 		}
 		if err != nil {
 			slog.Error(
