@@ -30,18 +30,22 @@ import (
 )
 
 var (
-	migrate = flag.Bool("migrate", false, "Migrates the database")
-	debug   = flag.Bool("debug", false, "Enables debug logs")
+	migrate  = flag.Bool("migrate", false, "Migrates the database")
+	debug    = flag.Bool("debug", false, "Enables debug logs")
+	jsonLogs = flag.Bool("json-logs", false, "Enables json logs")
 )
 
 var endCh chan os.Signal
 
 func init() {
-	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+	flag.Parse()
 }
 
 func init() {
-	flag.Parse()
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+	if *jsonLogs {
+		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stderr, nil)))
+	}
 }
 
 func init() {
