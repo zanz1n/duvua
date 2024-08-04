@@ -1,0 +1,59 @@
+# This workflow will build a golang project
+
+name: Go
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ["1.22"]
+        goos: [linux]
+        goarch: [amd64, arm64]
+
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Code checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-golang-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-golang-
+
+      - name: Download packages
+        env:
+          CGO_ENABLED: 0
+        run: go mod download
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+          SRC_PATH: cmd/duvua-bot/main.go
+        run: |
+          go build -v -ldflags "-s -w" -o bin/duvua-bot ${SRC_PATH}
+          go build -v -o bin/duvua-bot-debug ${SRC_PATH}
+
+      - name: Test
+        env:
+          CGO_ENABLED: 1
+        run: go test ./... -v --race
