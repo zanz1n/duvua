@@ -24,16 +24,16 @@ func (e *MemberAddEvent) Trigger(s *discordgo.Session, member *discordgo.Member)
 	if err != nil {
 		return err
 	} else if w == nil {
-		return nil
+		return errors.New("a mensagem de boas vindas está desabilitada")
 	} else if !w.Enabled {
 		slog.Info(
-			"Guild welcome message is disabled",
+			"Welcome message not sent: guild welcome disabled",
 			"guild_id", member.GuildID,
 		)
 		return errors.New("a mensagem de boas vindas está desabilitada")
 	} else if w.ChannelId == nil {
 		slog.Info(
-			"Guild welcome is enabled, but no channel was set",
+			"Welcome message not sent: enabled, but no channel set",
 			"guild_id", member.GuildID,
 		)
 		return errors.New("a mensagem de boas vindas")
