@@ -104,6 +104,7 @@ func main() {
 	m.Add(commands.NewClearCommand())
 	m.Add(commands.NewWelcomeCommand(welcomeRepo))
 	m.Add(commands.NewCloneCommand())
+	m.Add(commands.NewFactsCommand())
 
 	m.AutoHandle(s)
 	s.AddHandlerOnce(events.NewReadyEvent(m).Handle)
