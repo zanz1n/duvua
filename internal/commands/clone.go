@@ -58,7 +58,11 @@ func NewCloneCommand() manager.Command {
 type CloneCommand struct {
 }
 
-func (c *CloneCommand) getBase64Avatar(hs *http.Client, guildId string, member *discordgo.Member) (string, error) {
+func (c *CloneCommand) getBase64Avatar(
+	hs *http.Client,
+	guildId string,
+	member *discordgo.Member,
+) (string, error) {
 	var url string
 	if member.Avatar == "" {
 		url = discordgo.EndpointUserAvatar(member.User.ID, member.User.Avatar)
@@ -70,6 +74,7 @@ func (c *CloneCommand) getBase64Avatar(hs *http.Client, guildId string, member *
 	if err != nil {
 		return "", err
 	}
+	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
 		return "", errors.Unexpected("unexpected status code")
