@@ -5,7 +5,6 @@ import (
 	"mime"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua-bot/internal/errors"
@@ -71,14 +70,11 @@ func NewFactsCommand() manager.Command {
 		Data:       &factsCommandData,
 		Category:   manager.CommandCategoryInfo,
 		NeedsDefer: false,
-		Handler: &FactsCommand{
-			client: &http.Client{Timeout: 2 * time.Second},
-		},
+		Handler:    &FactsCommand{},
 	}
 }
 
 type FactsCommand struct {
-	client *http.Client
 }
 
 func (c *FactsCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) error {
@@ -113,7 +109,7 @@ func (c *FactsCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCrea
 		url = baseUrl + number + "/" + "trivia"
 	}
 
-	res, err := c.client.Get(url)
+	res, err := s.Client.Get(url)
 	if err != nil {
 		return errors.Unexpected("failed to fetch numbers api: " + err.Error())
 	}
