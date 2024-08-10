@@ -86,7 +86,8 @@ func (e *MemberAddEvent) Trigger(s *discordgo.Session, member *discordgo.Member)
 			username = member.User.Username
 		}
 
-		if member.User.Discriminator != "" {
+		disc := member.User.Discriminator
+		if disc != "" && disc != "0" && disc != "0000" {
 			username += "#" + member.User.Discriminator
 		}
 		msg = strings.ReplaceAll(msg, "{{USER}}", username)
