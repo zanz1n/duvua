@@ -167,10 +167,12 @@ func (e *MemberAddEvent) generateImage(
 	}
 	defer av.Close()
 
+	start := time.Now()
 	buf, err := e.gen.Generate(av, username, msg)
 	if err != nil {
 		return nil, errors.Unexpected("generate image: " + err.Error())
 	}
+	slog.Info("Generated welcome image", "took", time.Since(start))
 
 	return bytes.NewReader(buf), err
 }
