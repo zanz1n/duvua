@@ -47,17 +47,14 @@ func (e *MemberAddEvent) Trigger(s *discordgo.Session, member *discordgo.Member)
 			"Welcome message not sent: enabled, but no channel set",
 			"guild_id", member.GuildID,
 		)
-		return errors.New("a mensagem de boas vindas")
+		return errors.New("nenhum canal de texto foi configurado")
 	}
 
 	msg := w.Message
 	if strings.Contains(w.Message, "{{GUILD}}") {
-		guild, err := s.State.Guild(member.GuildID)
+		guild, err := s.Guild(member.GuildID)
 		if err != nil {
-			guild, err = s.Guild(member.GuildID)
-			if err != nil {
-				return err
-			}
+			return err
 		}
 
 		msg = strings.ReplaceAll(msg, "{{GUILD}}", guild.Name)
@@ -92,7 +89,6 @@ func (e *MemberAddEvent) Trigger(s *discordgo.Session, member *discordgo.Member)
 		if member.User.Discriminator != "" {
 			username += "#" + member.User.Discriminator
 		}
-
 		msg = strings.ReplaceAll(msg, "{{USER}}", username)
 
 		img, err := e.generateImage(s, member, username, msg)
