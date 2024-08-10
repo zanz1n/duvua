@@ -27,6 +27,7 @@ import (
 	"github.com/zanz1n/duvua-bot/internal/utils"
 	"github.com/zanz1n/duvua-bot/internal/welcome"
 	embedsql "github.com/zanz1n/duvua-bot/sql"
+	staticembed "github.com/zanz1n/duvua-bot/static"
 )
 
 var (
@@ -94,7 +95,9 @@ func main() {
 		}
 	}
 
+	welcomeGen := welcomeImageGenerator()
 	welcomeRepo := welcome.NewPostgresWelcomeRepository(db)
+	welcomeEvt := events.NewMemberAddEvent(welcomeRepo, welcomeGen)
 
 	m := manager.NewManager()
 
@@ -102,14 +105,14 @@ func main() {
 	m.Add(commands.NewPingCommand())
 	m.Add(commands.NewAvatarCommand())
 	m.Add(commands.NewClearCommand())
-	m.Add(commands.NewWelcomeCommand(welcomeRepo))
+	m.Add(commands.NewWelcomeCommand(welcomeRepo, welcomeEvt))
 	m.Add(commands.NewCloneCommand())
 	m.Add(commands.NewFactsCommand())
 	m.Add(commands.NewShipCommand())
 
 	m.AutoHandle(s)
 	s.AddHandlerOnce(events.NewReadyEvent(m).Handle)
-	s.AddHandler(events.NewMemberAddEvent(welcomeRepo).Handle)
+	s.AddHandler(welcomeEvt.Handle)
 
 	if err = s.Open(); err != nil {
 		log.Fatalln("Failed to open discord session:", err)
@@ -132,6 +135,26 @@ func main() {
 	sig := <-endCh
 	log.Printf("Received signal %s: closing bot ...\n", sig.String())
 	utils.SetStatus(s, utils.StatusTypeStopping)
+}
+
+func welcomeImageGenerator() *welcome.ImageGenerator {
+	cfg := config.GetConfig()
+
+	template, err := welcome.LoadTemplate(staticembed.Assets, "welcomer.png")
+	if err != nil {
+		log.Fatalln("Failed to load welcomer image template:", err)
+	}
+
+	font, err := welcome.LoadFont(staticembed.Assets, "jetbrains-mono.ttf")
+	if err != nil {
+		log.Fatalln("Failed to load welcomer image font:", err)
+	}
+
+	return welcome.NewImageGenerator(
+		template,
+		font,
+		cfg.Welcomer.ImageQuality,
+	)
 }
 
 func connectToPostgres() *sql.DB {

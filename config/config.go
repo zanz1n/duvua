@@ -9,6 +9,7 @@ type Config struct {
 	LogLevel slog.Level     `env:"LOG_LEVEL, default=0"`
 	Discord  DiscordConfig  `env:", prefix=DISCORD_"`
 	Postgres PostgresConfig `env:", prefix=POSTGRES_"`
+	Welcomer WelcomerConfig `env:", prefix=WELCOMER_"`
 }
 
 type DiscordConfig struct {
@@ -29,6 +30,10 @@ type PostgresConfig struct {
 
 	MaxConns int32 `env:"MAX_CONNS, default=32"`
 	MinConns int32 `env:"MIN_CONNS, default=3"`
+}
+
+type WelcomerConfig struct {
+	ImageQuality float32 `env:"IMAGE_QUALITY, default=80.0"`
 }
 
 func (pc *PostgresConfig) IntoUri() string {

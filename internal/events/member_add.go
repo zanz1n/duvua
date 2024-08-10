@@ -1,21 +1,32 @@
 package events
 
 import (
+	"bytes"
+	"fmt"
+	"io"
 	"log/slog"
+	"math/rand"
+	"mime"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua-bot/internal/errors"
 	"github.com/zanz1n/duvua-bot/internal/welcome"
+	staticembed "github.com/zanz1n/duvua-bot/static"
 )
 
 type MemberAddEvent struct {
-	r welcome.WelcomeRepository
+	r   welcome.WelcomeRepository
+	gen *welcome.ImageGenerator
 }
 
-func NewMemberAddEvent(r welcome.WelcomeRepository) *MemberAddEvent {
-	return &MemberAddEvent{r: r}
+func NewMemberAddEvent(
+	r welcome.WelcomeRepository,
+	gen *welcome.ImageGenerator,
+) *MemberAddEvent {
+	return &MemberAddEvent{r: r, gen: gen}
 }
 
 func (e *MemberAddEvent) Trigger(s *discordgo.Session, member *discordgo.Member) error {
@@ -55,7 +66,7 @@ func (e *MemberAddEvent) Trigger(s *discordgo.Session, member *discordgo.Member)
 	var data discordgo.MessageSend
 
 	switch w.Kind {
-	case welcome.WelcomeTypeMessage, welcome.WelcomeTypeImage:
+	case welcome.WelcomeTypeMessage:
 		msg = strings.ReplaceAll(msg, "{{USER}}", "<@"+member.User.ID+">")
 
 		data = discordgo.MessageSend{
@@ -68,6 +79,33 @@ func (e *MemberAddEvent) Trigger(s *discordgo.Session, member *discordgo.Member)
 			Embeds: []*discordgo.MessageEmbed{{
 				Type:        discordgo.EmbedTypeArticle,
 				Description: msg,
+			}},
+		}
+	case welcome.WelcomeTypeImage:
+		var username string
+		if member.User.GlobalName != "" {
+			username = member.User.GlobalName
+		} else {
+			username = member.User.Username
+		}
+
+		if member.User.Discriminator != "" {
+			username += "#" + member.User.Discriminator
+		}
+
+		msg = strings.ReplaceAll(msg, "{{USER}}", username)
+
+		img, err := e.generateImage(s, member, username, msg)
+		if err != nil {
+			return err
+		}
+
+		data = discordgo.MessageSend{
+			Content: "<@" + member.User.ID + ">",
+			Files: []*discordgo.File{{
+				Name:        fmt.Sprintf("%s-%s-welcome.png", member.GuildID, member.User.ID),
+				ContentType: "image/webp",
+				Reader:      img,
 			}},
 		}
 	default:
@@ -94,6 +132,51 @@ func (e *MemberAddEvent) Trigger(s *discordgo.Session, member *discordgo.Member)
 	}
 
 	return nil
+}
+
+func (e *MemberAddEvent) fetchAvatar(s *discordgo.Session, member *discordgo.Member) (io.ReadCloser, error) {
+	var url string
+	if member.Avatar != "" {
+		url = discordgo.EndpointGuildMemberAvatar(member.GuildID, member.User.ID, member.Avatar)
+	} else if member.User.Avatar != "" {
+		url = discordgo.EndpointUserAvatar(member.User.ID, member.User.Avatar)
+	} else {
+		path := fmt.Sprintf("avatar/default-%v.png", rand.Intn(6))
+		return staticembed.Assets.Open(path)
+	}
+
+	res, err := s.Client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	mt, _, _ := mime.ParseMediaType(res.Header.Get("Content-Type"))
+
+	if res.StatusCode != http.StatusOK {
+		return nil, errors.Unexpected("fetch avatar: unexpected status code")
+	} else if mt != "image/png" {
+		return nil, errors.Unexpectedf("fetch avatar: unexpected image mime type `%s`", mt)
+	}
+
+	return res.Body, nil
+}
+
+func (e *MemberAddEvent) generateImage(
+	s *discordgo.Session,
+	member *discordgo.Member,
+	username, msg string,
+) (io.Reader, error) {
+	av, err := e.fetchAvatar(s, member)
+	if err != nil {
+		return nil, err
+	}
+	defer av.Close()
+
+	buf, err := e.gen.Generate(av, username, msg)
+	if err != nil {
+		return nil, errors.Unexpected("generate image: " + err.Error())
+	}
+
+	return bytes.NewReader(buf), err
 }
 
 func (e *MemberAddEvent) Handle(s *discordgo.Session, member *discordgo.GuildMemberAdd) {
