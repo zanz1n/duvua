@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua-bot/internal/errors"
@@ -112,6 +113,11 @@ func (c *ClearCommand) deleteMsgs(
 			continue
 		} else if interactionMsg != nil && interactionMsg.ID == msg.ID {
 			continue
+		}
+		if tt, err := discordgo.SnowflakeTimestamp(msg.ID); err == nil {
+			if time.Since(tt) > 13*24*time.Hour {
+				continue
+			}
 		}
 
 		deleteMsgs = append(deleteMsgs, msg.ID)
