@@ -9,7 +9,7 @@ import (
 func NewPostgresWelcomeRepository(pool *sql.DB) WelcomeRepository {
 	return &PostgresWelcomeRepository{
 		pool:      pool,
-		opTimeout: 5 * time.Second,
+		opTimeout: 2 * time.Second,
 	}
 }
 
@@ -153,9 +153,7 @@ func (r *PostgresWelcomeRepository) GetById(id string) (*Welcome, error) {
 
 // UpdateChannelId implements WelcomeRepository.
 func (r *PostgresWelcomeRepository) UpdateChannelId(id string, channelId string) error {
-	const Query string = "UPDATE welcome " +
-		"SET channel_id = $1, updated_at = CURRENT_TIMESTAMP " +
-		"WHERE id = $2"
+	const Query string = "UPDATE welcome SET channel_id = $1 WHERE id = $2"
 
 	id2, err := atoi(id)
 	if err != nil {
@@ -176,9 +174,7 @@ func (r *PostgresWelcomeRepository) UpdateChannelId(id string, channelId string)
 
 // UpdateEnabled implements WelcomeRepository.
 func (r *PostgresWelcomeRepository) UpdateEnabled(id string, enabled bool) error {
-	const Query string = "UPDATE welcome " +
-		"SET enabled = $1, updated_at = CURRENT_TIMESTAMP " +
-		"WHERE id = $2"
+	const Query string = "UPDATE welcome SET enabled = $1 WHERE id = $2"
 
 	id2, err := atoi(id)
 	if err != nil {
@@ -194,9 +190,7 @@ func (r *PostgresWelcomeRepository) UpdateEnabled(id string, enabled bool) error
 
 // UpdateMessage implements WelcomeRepository.
 func (r *PostgresWelcomeRepository) UpdateMessage(id string, message string, kind WelcomeType) error {
-	const Query string = "UPDATE welcome SET " +
-		"message = $1, kind = $2, updated_at = CURRENT_TIMESTAMP " +
-		"WHERE id = $3"
+	const Query string = "UPDATE welcome SET message = $1, kind = $2 WHERE id = $3"
 
 	id2, err := atoi(id)
 	if err != nil {
