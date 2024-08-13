@@ -51,6 +51,7 @@ type Welcome struct {
 	UpdatedAt time.Time
 	Enabled   bool
 	ChannelId *string
+	// The message template
 	Message   string
 	Kind      WelcomeType
 }

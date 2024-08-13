@@ -13,6 +13,7 @@ import (
 
 var welcomeCommandData = discordgo.ApplicationCommand{
 	Name:        "welcome",
+	Type:        discordgo.ChatApplicationCommand,
 	Description: "Comandos para configurar a funcionalidade de boas vindas",
 	DescriptionLocalizations: &map[discordgo.Locale]string{
 		discordgo.EnglishUS: "Commands to configure welcome functionality",
@@ -94,9 +95,10 @@ var welcomeCommandData = discordgo.ApplicationCommand{
 					},
 				},
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "message",
-					Description: "Placeholders: {{USER}} (o novo membro), {{GUILD}} (nome do servidor) podem ser usados",
+					Type: discordgo.ApplicationCommandOptionString,
+					Name: "message",
+					Description: "Placeholders: {{USER}} (o novo membro), " +
+						"{{GUILD}} (nome do servidor) podem ser usados",
 					DescriptionLocalizations: map[discordgo.Locale]string{
 						discordgo.EnglishUS: "Placeholders: {{USER}} (the new member) " +
 							"{{GUILD}} (the name of server) can be used",

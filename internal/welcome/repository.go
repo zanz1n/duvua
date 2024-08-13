@@ -9,8 +9,7 @@ type WelcomeRepository interface {
 	Create(
 		id string,
 		enabled bool,
-		channelId *string,
-		message *string,
+		channelId, message *string,
 		kind *WelcomeType,
 	) (*Welcome, error)
 	// The returned welcome must not be nil if err != nil
