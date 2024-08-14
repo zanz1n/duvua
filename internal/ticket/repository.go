@@ -1,0 +1,18 @@
+package ticket
+
+type TicketConfigRepository interface {
+	// The returned TicketConfig clould be nil
+	GetByGuildId(guildId string) (*TicketConfig, error)
+	// ExistsByGuildId(guildId string) (bool, error)
+
+	// The returned TicketConfig must not be nil if err != nil
+	Create(data TicketConfigCreateData) (*TicketConfig, error)
+	// The returned TicketConfig must not be nil if err != nil
+	CreateDefault(guildId string) (*TicketConfig, error)
+
+	UpdateEnabled(guildId string, enabled bool) error
+	UpdateAllowMultiple(guildId string, allowMultiple bool) error
+	UpdateChannelName(guildId string, channelName string) error
+	UpdateChannelCategory(guildId string, channelCategoryId string) error
+	UpdateLogsChannel(guildId string, logsChannelId string) error
+}
