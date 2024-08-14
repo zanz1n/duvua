@@ -118,11 +118,12 @@ func (r *PgTicketConfigRepository) UpdateChannelName(guildId string, channelName
 		return ErrInvalidGuildId
 	}
 
-	if channelName == "" {
-		channelName = DefaultChannelName
+	channelName2 := sql.NullString{Valid: false}
+	if channelName != "" {
+		channelName2.String = channelName
 	}
 
-	return r.exec(Query, channelName, guildId2)
+	return r.exec(Query, channelName2, guildId2)
 }
 
 // UpdateEnabled implements TicketConfigRepository.
