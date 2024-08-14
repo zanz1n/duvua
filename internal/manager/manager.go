@@ -99,6 +99,16 @@ func (m *Manager) handleButton(
 func (m *Manager) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	startTime := time.Now()
 
+	defer func() {
+		if err := recover(); err != nil {
+			slog.Error(
+				"Catched panic while executing command",
+				"error", err,
+				"took", time.Since(startTime),
+			)
+		}
+	}()
+
 	var (
 		name string
 		cmd  Command
