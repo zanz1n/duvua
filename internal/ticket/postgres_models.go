@@ -6,6 +6,59 @@ import (
 	"time"
 )
 
+type pgTicket struct {
+	ID        int32
+	Slug      string
+	CreatedAt time.Time
+	ChannelId int64
+	UserId    int64
+	GuildId   int64
+	DeletedAt sql.NullTime
+}
+
+func (t pgTicket) Into() Ticket {
+	return Ticket{
+		Slug:      t.Slug,
+		CreatedAt: t.CreatedAt,
+		ChannelId: itoa(t.ChannelId),
+		UserId:    itoa(t.UserId),
+		GuildId:   itoa(t.GuildId),
+	}
+}
+
+type pgCreateTicketData struct {
+	Slug      string
+	ChannelId int64
+	UserId    int64
+	GuildId   int64
+}
+
+func newPgCreateTicketData(
+	slug, channelId, userId, guildId string,
+) (*pgCreateTicketData, error) {
+	channelId2, err := atoi(channelId)
+	if err != nil {
+		return nil, ErrInvalidChannelId
+	}
+
+	userId2, err := atoi(userId)
+	if err != nil {
+		return nil, ErrInvalidUserId
+	}
+
+	guildId2, err := atoi(guildId)
+	if err != nil {
+		return nil, ErrInvalidGuildId
+	}
+
+	return &pgCreateTicketData{
+		Slug:      slug,
+		ChannelId: channelId2,
+		UserId:    userId2,
+		GuildId:   guildId2,
+	}, nil
+}
+
 type pgTicketConfig struct {
 	GuildId           int64
 	CreatedAt         time.Time

@@ -9,7 +9,22 @@ const (
 
 	DefaultConfigEnabled       bool = false
 	DefaultConfigAllowMultiple bool = true
+
+	TicketSlugLength   int    = 8
+	TicketSlugAlphabet string = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
+
+type Ticket struct {
+	// 8 Character long nanoid
+	Slug      string
+	CreatedAt time.Time
+	// Not null
+	ChannelId string
+	// Not null
+	UserId string
+	// Not null
+	GuildId string
+}
 
 type TicketConfig struct {
 	GuildId       string

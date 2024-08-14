@@ -1,5 +1,24 @@
 package ticket
 
+type TicketRepository interface {
+	// The returned Ticket clould be nil
+	GetBySlug(slug string) (*Ticket, error)
+	// The returned Ticket clould be nil
+	GetByChannelId(channelId string) (*Ticket, error)
+	// The returned Tickets clould be nil
+	GetByMember(guildId, userId string) ([]Ticket, error)
+
+	// The returned Ticket must not be nil if err != nil
+	Create(channelId, userId, guildId string) (*Ticket, error)
+
+	// The returned ticket clould be nil
+	DeleteBySlug(slug string) (*Ticket, error)
+	// The returned Ticket clould be nil
+	DeleteByChannelId(channelId string) (*Ticket, error)
+	// The returned Tickets clould be nil
+	DeleteByMember(guildId, userId string) ([]Ticket, error)
+}
+
 type TicketConfigRepository interface {
 	// The returned TicketConfig clould be nil
 	GetByGuildId(guildId string) (*TicketConfig, error)
