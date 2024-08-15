@@ -10,7 +10,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua-bot/internal/errors"
 	"github.com/zanz1n/duvua-bot/internal/manager"
-	"github.com/zanz1n/duvua-bot/internal/utils"
 )
 
 var shipCommandData = discordgo.ApplicationCommand{
@@ -71,11 +70,9 @@ func (c *ShipCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate)
 	user2 := user2Opt.UserValue(nil)
 
 	if user1.ID == s.State.User.ID || user2.ID == s.State.User.ID {
-		return s.InteractionRespond(i.Interaction, utils.BasicResponse("Sai pra lá!"))
+		return i.Replyf(s, "Sai pra lá!")
 	} else if user1.ID == user2.ID {
-		return s.InteractionRespond(i.Interaction, utils.BasicResponse(
-			"<@%v> já faz isso no banheiro todo dia!", user1.ID,
-		))
+		return i.Replyf(s, "<@%v> já faz isso no banheiro todo dia!", user1.ID)
 	}
 
 	user1Id, err := strconv.ParseUint(user1.ID, 10, 0)
