@@ -1,4 +1,4 @@
-package commands
+package funcmds
 
 import (
 	"github.com/bwmarrin/discordgo"

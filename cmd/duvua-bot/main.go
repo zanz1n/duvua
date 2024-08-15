@@ -20,7 +20,10 @@ import (
 	"github.com/jackc/pgx/v5/tracelog"
 	"github.com/joho/godotenv"
 	"github.com/zanz1n/duvua-bot/config"
-	"github.com/zanz1n/duvua-bot/internal/commands"
+	configcmds "github.com/zanz1n/duvua-bot/internal/commands/config"
+	funcmds "github.com/zanz1n/duvua-bot/internal/commands/fun"
+	infocmds "github.com/zanz1n/duvua-bot/internal/commands/info"
+	modcmds "github.com/zanz1n/duvua-bot/internal/commands/moderation"
 	"github.com/zanz1n/duvua-bot/internal/events"
 	"github.com/zanz1n/duvua-bot/internal/logger"
 	"github.com/zanz1n/duvua-bot/internal/manager"
@@ -101,14 +104,17 @@ func main() {
 
 	m := manager.NewManager()
 
-	m.Add(commands.NewHelpCommand(m))
-	m.Add(commands.NewPingCommand())
-	m.Add(commands.NewAvatarCommand())
-	m.Add(commands.NewClearCommand())
-	m.Add(commands.NewWelcomeCommand(welcomeRepo, welcomeEvt))
-	m.Add(commands.NewCloneCommand())
-	m.Add(commands.NewFactsCommand())
-	m.Add(commands.NewShipCommand())
+	m.Add(configcmds.NewWelcomeCommand(welcomeRepo, welcomeEvt))
+
+	m.Add(funcmds.NewAvatarCommand())
+	m.Add(funcmds.NewCloneCommand())
+	m.Add(funcmds.NewShipCommand())
+
+	m.Add(infocmds.NewFactsCommand())
+	m.Add(infocmds.NewHelpCommand(m))
+	m.Add(infocmds.NewPingCommand())
+
+	m.Add(modcmds.NewClearCommand())
 
 	m.AutoHandle(s)
 	s.AddHandlerOnce(events.NewReadyEvent(m).Handle)

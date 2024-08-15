@@ -1,4 +1,4 @@
-package commands
+package configcmds
 
 import (
 	"fmt"
@@ -172,9 +172,9 @@ func (c *WelcomeCommand) Handle(s *discordgo.Session, i *manager.InteractionCrea
 	case "disable":
 		response, err = c.handleSetEnabled(i.GuildID, false)
 	case "set-channel":
-		channelOpt, err := i.GetTypedOption("channel", true, discordgo.ApplicationCommandOptionChannel)
-		if err != nil {
-			return err
+		channelOpt, e := i.GetTypedOption("channel", true, discordgo.ApplicationCommandOptionChannel)
+		if e != nil {
+			return e
 		}
 		channel := channelOpt.ChannelValue(s)
 		if channel.Type != discordgo.ChannelTypeGuildText {
@@ -183,16 +183,19 @@ func (c *WelcomeCommand) Handle(s *discordgo.Session, i *manager.InteractionCrea
 
 		response, err = c.handleSetChannel(i.GuildID, channel.ID)
 	case "set-message":
-		typeOpt, err := i.GetTypedOption("type", true, discordgo.ApplicationCommandOptionString)
-		if err != nil {
-			return err
+		typeOpt, e := i.GetTypedOption("type", true, discordgo.ApplicationCommandOptionString)
+		if e != nil {
+			return e
 		}
 		kind, ok := welcome.WelcomeTypeFromString(typeOpt.StringValue())
 		if !ok {
 			return errors.New("opção `type` precisa ser (Mensagem, Imagem ou Embed)")
 		}
 
-		messageOpt, err := i.GetTypedOption("message", true, discordgo.ApplicationCommandOptionString)
+		messageOpt, e := i.GetTypedOption("message", true, discordgo.ApplicationCommandOptionString)
+		if e != nil {
+			return e
+		}
 		message := messageOpt.StringValue()
 
 		response, err = c.handleSetMessage(i.GuildID, kind, message)
@@ -200,7 +203,7 @@ func (c *WelcomeCommand) Handle(s *discordgo.Session, i *manager.InteractionCrea
 		i.Member.GuildID = i.GuildID
 		response, err = c.handleTest(s, i.Member)
 	default:
-		err = errors.New("opção `sub-command` inválida")
+		return errors.New("opção `sub-command` inválida")
 	}
 
 	if err != nil {
