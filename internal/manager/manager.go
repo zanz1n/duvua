@@ -28,7 +28,7 @@ func (m *Manager) Add(cmd Command) {
 
 func (m *Manager) handleCommand(
 	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
+	i *InteractionCreate,
 	startTime time.Time,
 	cmd *Command,
 ) {
@@ -47,11 +47,12 @@ func (m *Manager) handleCommand(
 			errorRes = "Algo deu errado!"
 		}
 
-		if cmd.NeedsDefer {
+		if i.Replied() {
 			_, err = s.InteractionResponseEdit(i.Interaction, utils.BasicResponseEdit(errorRes))
 		} else {
 			err = s.InteractionRespond(i.Interaction, utils.BasicEphemeralResponse(errorRes))
 		}
+
 		if err != nil {
 			slog.Error(
 				"Failed to set command response after error",
@@ -79,7 +80,7 @@ func (m *Manager) handleCommand(
 
 func (m *Manager) handleButton(
 	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
+	i *InteractionCreate,
 	startTime time.Time,
 ) {
 	if err := m.buttonHandler.Handle(s, i); err != nil {
@@ -145,8 +146,10 @@ func (m *Manager) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	}
 
+	interaction := newInteractionCreate(i.Interaction)
+
 	if btnH {
-		m.handleButton(s, i, startTime)
+		m.handleButton(s, interaction, startTime)
 		return
 	}
 	if !ok {
@@ -158,17 +161,7 @@ func (m *Manager) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	if cmd.NeedsDefer {
-		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-		})
-		if err != nil {
-			slog.Error("Failed to defer reply interaction", "error", err)
-			return
-		}
-	}
-
-	m.handleCommand(s, i, startTime, &cmd)
+	m.handleCommand(s, interaction, startTime, &cmd)
 }
 
 func (m *Manager) AutoHandle(s *discordgo.Session) {

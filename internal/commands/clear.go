@@ -62,10 +62,9 @@ func NewClearCommand() manager.Command {
 			Slash:  true,
 			Button: false,
 		},
-		Data:       &clearCommandData,
-		Category:   manager.CommandCategoryModeration,
-		NeedsDefer: true,
-		Handler:    &ClearCommand{},
+		Data:     &clearCommandData,
+		Category: manager.CommandCategoryModeration,
+		Handler:  &ClearCommand{},
 	}
 }
 
@@ -74,7 +73,7 @@ type ClearCommand struct {
 
 func (c *ClearCommand) deleteMsgs(
 	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
+	i *manager.InteractionCreate,
 	amount int,
 	channel string,
 	user *string,
@@ -145,18 +144,13 @@ func (c *ClearCommand) deleteMsgs(
 		"ammount", fmt.Sprintf("%v/%v", len(deleteMsgs), amount),
 	)
 
-	_, err = s.InteractionResponseEdit(
-		i.Interaction,
-		utils.BasicResponseEdit(
-			"%v/%v mensagens excluídas do canal <#%s>",
-			len(deleteMsgs), amount, channel,
-		),
+	return i.Replyf(s,
+		"%v/%v mensagens excluídas do canal <#%s>",
+		len(deleteMsgs), amount, channel,
 	)
-
-	return err
 }
 
-func (c *ClearCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) error {
+func (c *ClearCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate) error {
 	const MaxDeleteLimit int64 = 100
 
 	if i.Member == nil {
@@ -168,18 +162,9 @@ func (c *ClearCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCrea
 		return errors.New("você não tem permissão para usar esse comando")
 	}
 
-	if i.Type != discordgo.InteractionApplicationCommand &&
-		i.Type != discordgo.InteractionApplicationCommandAutocomplete {
-		return errors.New("interação de tipo inesperado")
-	}
-
-	data := i.ApplicationCommandData()
-
-	amount := utils.GetOption(data.Options, "amount")
-	if amount == nil {
-		return errors.New("opção `amount` é necessária")
-	} else if amount.Type != discordgo.ApplicationCommandOptionInteger {
-		return errors.New("opção `amount` precisa ser um número inteiro")
+	amount, err := i.GetTypedOption("amount", true, discordgo.ApplicationCommandOptionInteger)
+	if err != nil {
+		return err
 	}
 
 	amountI := amount.IntValue()
@@ -188,30 +173,27 @@ func (c *ClearCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCrea
 	}
 
 	var userFilter *string = nil
-	if opt := utils.GetOption(data.Options, "user"); opt != nil {
-		if opt.Type != discordgo.ApplicationCommandOptionUser {
-			return errors.New("opção `user` precisa ser um usuário válido")
-		}
-
-		userId := opt.UserValue(nil).ID
-		userFilter = &userId
+	userOpt, err := i.GetTypedOption("amount", false, discordgo.ApplicationCommandOptionInteger)
+	if err != nil {
+		return err
+	} else if userOpt != nil {
+		userFilter = &userOpt.UserValue(nil).ID
 	}
 
 	skipBots := false
-	if opt := utils.GetOption(data.Options, "skip_bots"); opt != nil {
-		if opt.Type != discordgo.ApplicationCommandOptionBoolean {
-			return errors.New("opção `skip_bots` precisa ser True ou False")
-		}
-
-		skipBots = opt.BoolValue()
+	skipBotsOpt, err := i.GetTypedOption("skip_bots", false, discordgo.ApplicationCommandOptionBoolean)
+	if err != nil {
+		return err
+	} else if skipBotsOpt != nil {
+		skipBots = skipBotsOpt.BoolValue()
 	}
 
 	channel := i.ChannelID
-	if opt := utils.GetOption(data.Options, "channel"); opt != nil {
-		if opt.Type != discordgo.ApplicationCommandOptionChannel {
-			return errors.New("opção `channel` precisa ser um canal de texto válido")
-		}
-		ch := opt.ChannelValue(s)
+	channelOpt, err := i.GetTypedOption("channel", false, discordgo.ApplicationCommandOptionChannel)
+	if err != nil {
+		return err
+	} else if channelOpt != nil {
+		ch := channelOpt.ChannelValue(s)
 		channel = ch.ID
 
 		if ch.GuildID == "" {
@@ -220,6 +202,10 @@ func (c *ClearCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCrea
 		if ch.Type != discordgo.ChannelTypeGuildText {
 			return errors.New("opção `channel` precisa ser um canal de texto válido")
 		}
+	}
+
+	if err = i.DeferReply(s, false); err != nil {
+		return err
 	}
 
 	return c.deleteMsgs(s, i, int(amountI), channel, userFilter, skipBots)

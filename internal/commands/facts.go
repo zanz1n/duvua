@@ -9,7 +9,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua-bot/internal/errors"
 	"github.com/zanz1n/duvua-bot/internal/manager"
-	"github.com/zanz1n/duvua-bot/internal/utils"
 )
 
 var factsNumberOpt = []*discordgo.ApplicationCommandOption{
@@ -67,34 +66,26 @@ func NewFactsCommand() manager.Command {
 			Slash:  true,
 			Button: false,
 		},
-		Data:       &factsCommandData,
-		Category:   manager.CommandCategoryInfo,
-		NeedsDefer: false,
-		Handler:    &FactsCommand{},
+		Data:     &factsCommandData,
+		Category: manager.CommandCategoryInfo,
+		Handler:  &FactsCommand{},
 	}
 }
 
 type FactsCommand struct {
 }
 
-func (c *FactsCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	if i.Type != discordgo.InteractionApplicationCommand &&
-		i.Type != discordgo.InteractionApplicationCommandAutocomplete {
-		return errors.New("interação de tipo inesperado")
-	}
-
-	data := i.ApplicationCommandData()
-
-	subCommand := utils.GetSubCommand(data.Options)
-	if subCommand == nil {
-		return errors.New("opção `sub-command` é necessária")
+func (c *FactsCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate) error {
+	subCommand, err := i.GetSubCommand()
+	if err != nil {
+		return err
 	}
 
 	number := "random"
-	if numberOpt := utils.GetOption(subCommand.Options, "number"); numberOpt != nil {
-		if numberOpt.Type != discordgo.ApplicationCommandOptionInteger {
-			return errors.New("opção `amount` precisa ser um número inteiro")
-		}
+	numberOpt, err := i.GetTypedOption("number", false, discordgo.ApplicationCommandOptionInteger)
+	if err != nil {
+		return err
+	} else if numberOpt != nil {
 		number = strconv.FormatInt(numberOpt.IntValue(), 10)
 	}
 
@@ -133,5 +124,5 @@ func (c *FactsCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCrea
 	}
 	bodyS := string(bodyBuf)
 
-	return s.InteractionRespond(i.Interaction, utils.BasicResponse(bodyS))
+	return i.Replyf(s, bodyS)
 }

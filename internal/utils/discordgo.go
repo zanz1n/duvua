@@ -34,6 +34,18 @@ func AvatarUrlFromInteraction(i *discordgo.Interaction, size string) string {
 	return avatarUrl
 }
 
+func GetSubCommandGroup(
+	opts []*discordgo.ApplicationCommandInteractionDataOption,
+) *discordgo.ApplicationCommandInteractionDataOption {
+	for _, opt := range opts {
+		if opt.Type == discordgo.ApplicationCommandOptionSubCommandGroup {
+			return opt
+		}
+	}
+
+	return nil
+}
+
 func GetSubCommand(
 	opts []*discordgo.ApplicationCommandInteractionDataOption,
 ) *discordgo.ApplicationCommandInteractionDataOption {
@@ -48,28 +60,6 @@ func GetSubCommand(
 
 func HasPerm(memberPerm int64, target int64) bool {
 	return memberPerm&target == target
-}
-
-func GetOption(
-	opts []*discordgo.ApplicationCommandInteractionDataOption,
-	name string,
-) *discordgo.ApplicationCommandInteractionDataOption {
-	for _, opt := range opts {
-		if opt.Name == name {
-			return opt
-		}
-	}
-
-	return nil
-}
-
-func BasicResponse(format string, args ...any) *discordgo.InteractionResponse {
-	return &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf(format, args...),
-		},
-	}
 }
 
 func BasicEphemeralResponse(format string, args ...any) *discordgo.InteractionResponse {

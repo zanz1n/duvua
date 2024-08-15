@@ -11,7 +11,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua-bot/internal/errors"
 	"github.com/zanz1n/duvua-bot/internal/manager"
-	"github.com/zanz1n/duvua-bot/internal/utils"
 )
 
 var cloneCommandData = discordgo.ApplicationCommand{
@@ -48,10 +47,9 @@ func NewCloneCommand() manager.Command {
 			Slash:  true,
 			Button: false,
 		},
-		Data:       &cloneCommandData,
-		Category:   manager.CommandCategoryFun,
-		NeedsDefer: false,
-		Handler:    &CloneCommand{},
+		Data:     &cloneCommandData,
+		Category: manager.CommandCategoryFun,
+		Handler:  &CloneCommand{},
 	}
 }
 
@@ -94,31 +92,20 @@ func (c *CloneCommand) getBase64Avatar(
 	return "data:image/png;base64," + base64d, nil
 }
 
-func (c *CloneCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) error {
+func (c *CloneCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate) error {
 	if i.Member == nil {
 		return errors.New("esse comando só pode ser utilizado dentro de um servidor")
 	}
 
-	if i.Type != discordgo.InteractionApplicationCommand &&
-		i.Type != discordgo.InteractionApplicationCommandAutocomplete {
-		return errors.New("interação de tipo inesperado")
-	}
-
-	data := i.ApplicationCommandData()
-
-	userOpt := utils.GetOption(data.Options, "user")
-	if userOpt == nil {
-		return errors.New("opção `user` é necessária")
-	} else if userOpt.Type != discordgo.ApplicationCommandOptionUser {
-		return errors.New("opção `user` precisa ser um usuário válido")
+	userOpt, err := i.GetTypedOption("user", true, discordgo.ApplicationCommandOptionUser)
+	if err != nil {
+		return err
 	}
 	userId := userOpt.UserValue(nil).ID
 
-	messageOpt := utils.GetOption(data.Options, "message")
-	if messageOpt == nil {
-		return errors.New("opção `message` é necessária")
-	} else if messageOpt.Type != discordgo.ApplicationCommandOptionString {
-		return errors.New("opção `user` precisa ser um texto")
+	messageOpt, err := i.GetTypedOption("message", true, discordgo.ApplicationCommandOptionString)
+	if err != nil {
+		return err
 	}
 	message := messageOpt.StringValue()
 
@@ -161,5 +148,5 @@ func (c *CloneCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCrea
 		return errors.New("não foi possível enviar a mensagem desejada")
 	}
 
-	return s.InteractionRespond(i.Interaction, utils.BasicResponse("Clone criado!"))
+	return i.Replyf(s, "Clone criado!")
 }

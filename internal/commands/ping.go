@@ -7,7 +7,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua-bot/internal/errors"
 	"github.com/zanz1n/duvua-bot/internal/manager"
-	"github.com/zanz1n/duvua-bot/internal/utils"
 )
 
 var pingCommandData = discordgo.ApplicationCommand{
@@ -25,9 +24,8 @@ func NewPingCommand() manager.Command {
 			Slash:  true,
 			Button: false,
 		},
-		Data:       &pingCommandData,
-		Category:   manager.CommandCategoryInfo,
-		NeedsDefer: false,
+		Data:     &pingCommandData,
+		Category: manager.CommandCategoryInfo,
 		Handler: &PingCommand{
 			total:  atomic.Int32{},
 			amount: atomic.Int32{},
@@ -40,7 +38,7 @@ type PingCommand struct {
 	amount atomic.Int32
 }
 
-func (c *PingCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) error {
+func (c *PingCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate) error {
 	var apiLatency int32
 	if am := c.amount.Load(); am >= 10 {
 		apiLatency = c.total.Load() / am
@@ -56,12 +54,9 @@ func (c *PingCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCreat
 		apiLatency = c.total.Add(int32(took)) / c.amount.Add(1)
 	}
 
-	return s.InteractionRespond(
-		i.Interaction,
-		utils.BasicResponse(
-			"🏓 **Pong!**\n🛜 Ping do websocket: %vms\n📡 Ping da api: %vms",
-			s.HeartbeatLatency().Milliseconds(),
-			apiLatency,
-		),
+	return i.Replyf(s,
+		"🏓 **Pong!**\n🛜 Ping do websocket: %vms\n📡 Ping da api: %vms",
+		s.HeartbeatLatency().Milliseconds(),
+		apiLatency,
 	)
 }

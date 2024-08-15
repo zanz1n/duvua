@@ -48,37 +48,25 @@ func NewShipCommand() manager.Command {
 			Slash:  true,
 			Button: false,
 		},
-		Data:       &shipCommandData,
-		Category:   manager.CommandCategoryFun,
-		NeedsDefer: false,
-		Handler:    &ShipCommand{},
+		Data:     &shipCommandData,
+		Category: manager.CommandCategoryFun,
+		Handler:  &ShipCommand{},
 	}
 }
 
 type ShipCommand struct {
 }
 
-func (c *ShipCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	if i.Type != discordgo.InteractionApplicationCommand &&
-		i.Type != discordgo.InteractionApplicationCommandAutocomplete {
-		return errors.New("interação de tipo inesperado")
-	}
-
-	data := i.ApplicationCommandData()
-
-	user1Opt := utils.GetOption(data.Options, "user1")
-	if user1Opt == nil {
-		return errors.New("opção `user1` é necessária")
-	} else if user1Opt.Type != discordgo.ApplicationCommandOptionUser {
-		return errors.New("opção `user1` precisa ser um usuário válido")
+func (c *ShipCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate) error {
+	user1Opt, err := i.GetTypedOption("user1", true, discordgo.ApplicationCommandOptionUser)
+	if err != nil {
+		return err
 	}
 	user1 := user1Opt.UserValue(nil)
 
-	user2Opt := utils.GetOption(data.Options, "user2")
-	if user2Opt == nil {
-		return errors.New("opção `user2` é necessária")
-	} else if user2Opt.Type != discordgo.ApplicationCommandOptionUser {
-		return errors.New("opção `user2` precisa ser um usuário válido")
+	user2Opt, err := i.GetTypedOption("user2", true, discordgo.ApplicationCommandOptionUser)
+	if err != nil {
+		return err
 	}
 	user2 := user2Opt.UserValue(nil)
 
@@ -103,10 +91,10 @@ func (c *ShipCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCreat
 
 	percentage := c.shipPercentage(user1Id, user2Id)
 
-	return s.InteractionRespond(i.Interaction, utils.BasicResponse(
+	return i.Replyf(s,
 		"<@%s> e <@%s> possuem um chance de %v%s de dar certo",
 		user1.ID, user2.ID, percentage, "%",
-	))
+	)
 }
 
 func (c *ShipCommand) shipPercentage(user1 uint64, user2 uint64) int8 {

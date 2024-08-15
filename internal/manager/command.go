@@ -13,15 +13,12 @@ const (
 )
 
 type InteractionHandler interface {
-	Handle(s *discordgo.Session, i *discordgo.InteractionCreate) error
+	Handle(s *discordgo.Session, i *InteractionCreate) error
 }
 
 type DefaultInteractionHandler struct{}
 
-func (h *DefaultInteractionHandler) Handle(
-	s *discordgo.Session,
-	i *discordgo.InteractionCreate,
-) error {
+func (h *DefaultInteractionHandler) Handle(s *discordgo.Session, i *InteractionCreate) error {
 	return nil
 }
 
@@ -34,6 +31,5 @@ type Command struct {
 	Accepts    CommandAccept
 	Data       *discordgo.ApplicationCommand
 	Category   CommandCategory
-	NeedsDefer bool
 	Handler    InteractionHandler
 }

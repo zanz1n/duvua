@@ -24,10 +24,9 @@ func NewHelpCommand(m *manager.Manager) manager.Command {
 			Slash:  true,
 			Button: true,
 		},
-		Data:       &helpCommandData,
-		Category:   manager.CommandCategoryInfo,
-		NeedsDefer: false,
-		Handler:    &HelpCommand{m: m},
+		Data:     &helpCommandData,
+		Category: manager.CommandCategoryInfo,
+		Handler:  &HelpCommand{m: m},
 	}
 }
 
@@ -35,7 +34,7 @@ type HelpCommand struct {
 	m *manager.Manager
 }
 
-func (c *HelpCommand) renderHome(i *discordgo.InteractionCreate) discordgo.MessageEmbed {
+func (c *HelpCommand) renderHome(i *manager.InteractionCreate) discordgo.MessageEmbed {
 	return discordgo.MessageEmbed{
 		Type:        discordgo.EmbedTypeArticle,
 		Title:       "Help",
@@ -94,7 +93,7 @@ func (c *HelpCommand) renderCategory(cat manager.CommandCategory) discordgo.Mess
 	return embed
 }
 
-func (c *HelpCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) error {
+func (c *HelpCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate) error {
 	if i.Type == discordgo.InteractionMessageComponent {
 		data := i.MessageComponentData()
 		if data.Values == nil || len(data.Values) != 1 {
@@ -131,9 +130,7 @@ func (c *HelpCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCreat
 			return err
 		}
 
-		return s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseDeferredMessageUpdate,
-		})
+		return i.DeferUpdate(s)
 	} else if i.Type == discordgo.InteractionApplicationCommand ||
 		i.Type == discordgo.InteractionApplicationCommandAutocomplete {
 		options := []discordgo.SelectMenuOption{
@@ -147,24 +144,21 @@ func (c *HelpCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCreat
 
 		embed := c.renderHome(i)
 
-		return s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Components: []discordgo.MessageComponent{
-					discordgo.ActionsRow{
-						Components: []discordgo.MessageComponent{
-							discordgo.SelectMenu{
-								CustomID:    "help",
-								Placeholder: "Selecione uma categoria!",
-								MenuType:    discordgo.StringSelectMenu,
-								MaxValues:   1,
-								Options:     options,
-							},
+		return i.Reply(s, &manager.InteractionResponse{
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{
+					Components: []discordgo.MessageComponent{
+						discordgo.SelectMenu{
+							CustomID:    "help",
+							Placeholder: "Selecione uma categoria!",
+							MenuType:    discordgo.StringSelectMenu,
+							MaxValues:   1,
+							Options:     options,
 						},
 					},
 				},
-				Embeds: []*discordgo.MessageEmbed{&embed},
 			},
+			Embeds: []*discordgo.MessageEmbed{&embed},
 		})
 	}
 

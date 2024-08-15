@@ -137,9 +137,8 @@ func NewWelcomeCommand(r welcome.WelcomeRepository, ev *events.MemberAddEvent) m
 			Slash:  true,
 			Button: false,
 		},
-		Data:       &welcomeCommandData,
-		Category:   manager.CommandCategoryConfig,
-		NeedsDefer: false,
+		Data:     &welcomeCommandData,
+		Category: manager.CommandCategoryConfig,
 		Handler: &WelcomeCommand{
 			r:   r,
 			evt: ev,
@@ -152,42 +151,31 @@ type WelcomeCommand struct {
 	evt *events.MemberAddEvent
 }
 
-func (c *WelcomeCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) error {
+func (c *WelcomeCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate) error {
 	if i.Member == nil || i.GuildID == "" {
 		return errors.New("esse comando só pode ser utilizado dentro de um servidor")
-	} else if i.Type != discordgo.InteractionApplicationCommand &&
-		i.Type != discordgo.InteractionApplicationCommandAutocomplete {
-		return errors.New("interação de tipo inesperado")
 	}
 
 	if !utils.HasPerm(i.Member.Permissions, discordgo.PermissionAdministrator) {
 		return errors.New("você não tem permissão para usar esse comando")
 	}
 
-	data := i.ApplicationCommandData()
-
-	subCommand := utils.GetSubCommand(data.Options)
-	if subCommand == nil {
-		return errors.New("opção `sub-command` é necessária")
+	subCommand, err := i.GetSubCommand()
+	if err != nil {
+		return err
 	}
 
-	var (
-		response string
-		err      error
-	)
+	var response string
 	switch subCommand.Name {
 	case "enable":
 		response, err = c.handleSetEnabled(i.GuildID, true)
 	case "disable":
 		response, err = c.handleSetEnabled(i.GuildID, false)
 	case "set-channel":
-		channelOpt := utils.GetOption(subCommand.Options, "channel")
-		if channelOpt == nil {
-			return errors.New("opção `channel` é necessária")
-		} else if channelOpt.Type != discordgo.ApplicationCommandOptionChannel {
-			return errors.New("opção `channel` precisa ser um canal de texto válido")
+		channelOpt, err := i.GetTypedOption("channel", true, discordgo.ApplicationCommandOptionChannel)
+		if err != nil {
+			return err
 		}
-
 		channel := channelOpt.ChannelValue(s)
 		if channel.Type != discordgo.ChannelTypeGuildText {
 			return errors.New("opção `channel` precisa ser um canal de texto válido")
@@ -195,25 +183,16 @@ func (c *WelcomeCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCr
 
 		response, err = c.handleSetChannel(i.GuildID, channel.ID)
 	case "set-message":
-		typeOpt := utils.GetOption(subCommand.Options, "type")
-		if typeOpt == nil {
-			return errors.New("opção `type` é necessária")
-		} else if typeOpt.Type != discordgo.ApplicationCommandOptionString {
-			return errors.New("opção `type` precisa ser (Mensagem, Imagem ou Embed)")
+		typeOpt, err := i.GetTypedOption("type", true, discordgo.ApplicationCommandOptionString)
+		if err != nil {
+			return err
 		}
-
 		kind, ok := welcome.WelcomeTypeFromString(typeOpt.StringValue())
 		if !ok {
 			return errors.New("opção `type` precisa ser (Mensagem, Imagem ou Embed)")
 		}
 
-		messageOpt := utils.GetOption(subCommand.Options, "message")
-		if messageOpt == nil {
-			return errors.New("opção `message` é necessária")
-		} else if messageOpt.Type != discordgo.ApplicationCommandOptionString {
-			return errors.New("opção `message` precisa ser um texto")
-		}
-
+		messageOpt, err := i.GetTypedOption("message", true, discordgo.ApplicationCommandOptionString)
 		message := messageOpt.StringValue()
 
 		response, err = c.handleSetMessage(i.GuildID, kind, message)
@@ -221,13 +200,13 @@ func (c *WelcomeCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCr
 		i.Member.GuildID = i.GuildID
 		response, err = c.handleTest(s, i.Member)
 	default:
-		return errors.New("opção `sub-command` inválida")
+		err = errors.New("opção `sub-command` inválida")
 	}
 
 	if err != nil {
 		return err
 	}
-	return s.InteractionRespond(i.Interaction, utils.BasicResponse(response))
+	return i.Replyf(s, response)
 }
 
 func (c *WelcomeCommand) handleSetEnabled(guildId string, enabled bool) (string, error) {

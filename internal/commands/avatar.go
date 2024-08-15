@@ -2,7 +2,6 @@ package commands
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/zanz1n/duvua-bot/internal/errors"
 	"github.com/zanz1n/duvua-bot/internal/manager"
 	"github.com/zanz1n/duvua-bot/internal/utils"
 )
@@ -32,33 +31,26 @@ func NewAvatarCommand() manager.Command {
 			Slash:  true,
 			Button: false,
 		},
-		Data:       &avatarCommandData,
-		Category:   manager.CommandCategoryFun,
-		NeedsDefer: false,
-		Handler:    &AvatarCommand{},
+		Data:     &avatarCommandData,
+		Category: manager.CommandCategoryFun,
+		Handler:  &AvatarCommand{},
 	}
 }
 
 type AvatarCommand struct {
 }
 
-func (c *AvatarCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	if i.Type != discordgo.InteractionApplicationCommand &&
-		i.Type != discordgo.InteractionApplicationCommandAutocomplete {
-		return errors.New("interação de tipo inesperado")
+func (c *AvatarCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate) error {
+	opt, err := i.GetTypedOption("user", false, discordgo.ApplicationCommandOptionUser)
+	if err != nil {
+		return err
 	}
-
-	data := i.ApplicationCommandData()
 
 	var (
 		name      string
 		avatarUrl string
 	)
-	if opt := utils.GetOption(data.Options, "user"); opt != nil {
-		if opt.Type != discordgo.ApplicationCommandOptionUser {
-			return errors.New("opção `user` precisa ser um usuário válido")
-		}
-
+	if opt != nil {
 		if i.Member != nil {
 			member, err := s.GuildMember(i.GuildID, opt.UserValue(nil).ID)
 			if err != nil {
@@ -86,10 +78,7 @@ func (c *AvatarCommand) Handle(s *discordgo.Session, i *discordgo.InteractionCre
 		Footer: utils.EmbedRequestedByFooter(i.Interaction),
 	}
 
-	return s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Embeds: []*discordgo.MessageEmbed{&embed},
-		},
+	return i.Reply(s, &manager.InteractionResponse{
+		Embeds: []*discordgo.MessageEmbed{&embed},
 	})
 }
