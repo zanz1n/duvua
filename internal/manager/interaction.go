@@ -209,11 +209,42 @@ func (i *InteractionCreate) GetSubCommand() (
 	}
 	data := i.ApplicationCommandData()
 
-	for _, opt := range data.Options {
-		if opt.Type == discordgo.ApplicationCommandOptionSubCommand {
-			return opt, nil
-		}
+	if len(data.Options) != 1 {
+		return nil, errors.New("opção `sub-command` é necessária")
 	}
 
-	return nil, errors.New("opção `sub-command` é necessária")
+	switch data.Options[0].Type {
+	case discordgo.ApplicationCommandOptionSubCommand:
+		return data.Options[0], nil
+
+	case discordgo.ApplicationCommandOptionSubCommandGroup:
+		if len(data.Options[0].Options) != 1 {
+			return nil, errors.New("opção `sub-command` é necessária")
+		}
+		t := data.Options[0].Options[0].Type
+		if t != discordgo.ApplicationCommandOptionSubCommand {
+			return nil, errors.New("opção `sub-command` é necessária")
+		}
+		return data.Options[0].Options[0], nil
+	default:
+		return nil, errors.New("opção `sub-command` é necessária")
+	}
+}
+
+func (i *InteractionCreate) GetSubCommandGroup() *discordgo.ApplicationCommandInteractionDataOption {
+	if i.Type != discordgo.InteractionApplicationCommand {
+		return nil
+	}
+	data := i.ApplicationCommandData()
+
+	if len(data.Options) != 1 {
+		return nil
+	}
+
+	t := data.Options[0].Type
+	if t != discordgo.ApplicationCommandOptionSubCommandGroup {
+		return nil
+	}
+
+	return data.Options[0]
 }
