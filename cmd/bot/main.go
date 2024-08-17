@@ -64,6 +64,9 @@ var endCh chan os.Signal
 
 func init() {
 	flag.Parse()
+	if !*jsonLogs && !*noBanner {
+		fmt.Printf(DuvuaBanner, time.Now().Year(), config.Version)
+	}
 }
 
 func init() {
@@ -89,10 +92,6 @@ func init() {
 
 func main() {
 	cfg := config.GetConfig()
-
-	if !*jsonLogs && !*noBanner {
-		fmt.Printf(DuvuaBanner, time.Now().Year(), config.Version)
-	}
 
 	s, err := discordgo.New("Bot " + cfg.Discord.Token)
 	if err != nil {
