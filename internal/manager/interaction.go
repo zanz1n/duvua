@@ -154,6 +154,8 @@ func (i *InteractionCreate) GetTypedOption(
 	opt, err := i.GetOption(name, required)
 	if err != nil {
 		return nil, err
+	} else if opt == nil {
+		return nil, nil
 	}
 
 	if opt.Type != kind {
