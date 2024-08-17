@@ -172,7 +172,23 @@ func (i *InteractionCreate) GetOption(
 	}
 	data := i.ApplicationCommandData()
 
-	for _, opt := range data.Options {
+	var opts []*discordgo.ApplicationCommandInteractionDataOption
+	if len(data.Options) == 1 {
+		switch data.Options[0].Type {
+		case discordgo.ApplicationCommandOptionSubCommand:
+			opts = data.Options[0].Options
+
+		case discordgo.ApplicationCommandOptionSubCommandGroup:
+			if len(data.Options[0].Options) != 1 {
+				return nil, errors.Newf("opção `%s` é necessária", name)
+			}
+			opts = data.Options[0].Options[0].Options
+		}
+	} else {
+		opts = data.Options
+	}
+
+	for _, opt := range opts {
 		if opt.Name == name {
 			return opt, nil
 		}
