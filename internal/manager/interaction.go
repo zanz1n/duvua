@@ -248,3 +248,74 @@ func (i *InteractionCreate) GetSubCommandGroup() *discordgo.ApplicationCommandIn
 
 	return data.Options[0]
 }
+
+func (i *InteractionCreate) GetStringOption(name string, required bool) (string, error) {
+	opt, err := i.GetTypedOption(name, required, discordgo.ApplicationCommandOptionString)
+	if err != nil {
+		return "", err
+	} else if opt == nil {
+		return "", nil
+	}
+
+	return opt.StringValue(), nil
+}
+
+func (i *InteractionCreate) GetIntegerOption(
+	name string,
+	required bool,
+	defaultValue ...int64,
+) (int64, error) {
+	opt, err := i.GetTypedOption(name, required, discordgo.ApplicationCommandOptionInteger)
+	if err != nil {
+		return 0, err
+	} else if opt == nil {
+		if len(defaultValue) > 1 {
+			return defaultValue[0], nil
+		}
+		return 0, nil
+	}
+
+	return opt.IntValue(), nil
+}
+
+func (i *InteractionCreate) GetBooleanOption(
+	name string,
+	required bool,
+	defaultValue ...bool,
+) (bool, error) {
+	opt, err := i.GetTypedOption(name, required, discordgo.ApplicationCommandOptionBoolean)
+	if err != nil {
+		return false, err
+	} else if opt == nil {
+		if len(defaultValue) > 1 {
+			return defaultValue[0], nil
+		}
+		return false, nil
+	}
+
+	return opt.BoolValue(), nil
+}
+
+func (i *InteractionCreate) GetUserOption(name string, required bool) (string, error) {
+	opt, err := i.GetTypedOption(name, required, discordgo.ApplicationCommandOptionUser)
+	if err != nil {
+		return "", err
+	} else if opt == nil {
+		return "", nil
+	}
+	userId := opt.Value.(string)
+
+	return userId, nil
+}
+
+func (i *InteractionCreate) GetChannelOption(name string, required bool) (string, error) {
+	opt, err := i.GetTypedOption(name, required, discordgo.ApplicationCommandOptionChannel)
+	if err != nil {
+		return "", err
+	} else if opt == nil {
+		return "", nil
+	}
+	channelId := opt.Value.(string)
+
+	return channelId, nil
+}
