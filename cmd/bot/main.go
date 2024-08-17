@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"flag"
+	"fmt"
 	"log"
 	"log/slog"
 	"os"
@@ -33,10 +34,28 @@ import (
 	staticembed "github.com/zanz1n/duvua-bot/static"
 )
 
+const DuvuaBanner = `
+ ____                          ____        _
+|  _ \ _   ___   ___   _  __ _| __ )  ___ | |_
+| | | | | | \ \ / / | | |/ _` + "`" + ` |  _ \ / _ \| __|
+| |_| | |_| |\ V /| |_| | (_| | |_) | (_) | |_
+|____/ \__,_| \_/  \__,_|\__,_|____/ \___/ \__|
+
+Copyright © 2022 - %d Izan Rodrigues
+
+Version: %s
+ Source: https://github.com/zanz1n/duvua-bot
+License: https://github.com/zanz1n/duvua-bot/blob/main/LICENSE
+
+This software is made available under the terms of the AGPL-3.0 license.
+
+`
+
 var (
 	migrate  = flag.Bool("migrate", false, "Migrates the database")
 	debug    = flag.Bool("debug", false, "Enables debug logs")
 	jsonLogs = flag.Bool("json-logs", false, "Enables json logs")
+	noBanner = flag.Bool("no-banner", false, "Disables the figlet banner")
 )
 
 var endCh chan os.Signal
@@ -68,6 +87,10 @@ func init() {
 
 func main() {
 	cfg := config.GetConfig()
+
+	if !*jsonLogs && !*noBanner {
+		fmt.Printf(DuvuaBanner, time.Now().Year(), config.Version)
+	}
 
 	s, err := discordgo.New("Bot " + cfg.Discord.Token)
 	if err != nil {

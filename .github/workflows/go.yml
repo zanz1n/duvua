@@ -46,10 +46,10 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 1
-          SRC_PATH: cmd/duvua-bot/main.go
+          SRC_PATH: github.com/zanz1n/duvua-bot
         run: |
-          go build -v -ldflags "-s -w" -o bin/duvua-bot ${SRC_PATH}
-          go build -v -o bin/duvua-bot-debug ${SRC_PATH}
+          go build -v -ldflags "-s -w -X ${SRC_PATH}/config.Version=release-${GIT_COMMIT:0:7}" -o bin/duvua-bot cmd/bot/main.go
+          go build -v -ldflags "-X ${SRC_PATH}/config.Version=debug-${GIT_COMMIT:0:7}" -o bin/duvua-bot-debug cmd/bot/main.go
 
       - name: Test
         env:
