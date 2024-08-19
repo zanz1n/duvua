@@ -100,6 +100,10 @@ func (i *InteractionCreate) Replyf(s *discordgo.Session, f string, a ...any) err
 	return i.Reply(s, &InteractionResponse{Content: fmt.Sprintf(f, a...)})
 }
 
+func (i *InteractionCreate) ReplyEphemeralf(s *discordgo.Session, f string, a ...any) error {
+	return i.ReplyEphemeral(s, &InteractionResponse{Content: fmt.Sprintf(f, a...)})
+}
+
 func (i *InteractionCreate) DeferReply(s *discordgo.Session, ephemeral bool) error {
 	i.State.Lock()
 	defer i.State.Unlock()
@@ -143,6 +147,20 @@ func (i *InteractionCreate) Reply(s *discordgo.Session, resp *InteractionRespons
 		return err
 	} else {
 		return s.InteractionRespond(i.Interaction, resp.toInterationResponse())
+	}
+}
+
+func (i *InteractionCreate) ReplyEphemeral(s *discordgo.Session, resp *InteractionResponse) error {
+	i.State.Lock()
+	defer i.State.Unlock()
+
+	if i.State.Replied {
+		_, err := s.InteractionResponseEdit(i.Interaction, resp.toWebhookEdit())
+		return err
+	} else {
+		res := resp.toInterationResponse()
+		res.Data.Flags = discordgo.MessageFlagsEphemeral
+		return s.InteractionRespond(i.Interaction, res)
 	}
 }
 
