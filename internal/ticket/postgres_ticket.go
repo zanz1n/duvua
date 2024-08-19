@@ -24,18 +24,23 @@ type PgTicketRepository struct {
 	nanoidSize int
 }
 
-func (r *PgTicketRepository) genSlug() string {
+// GenerateSlug implements TicketRepository.
+func (r *PgTicketRepository) GenerateSlug() string {
 	return gonanoid.MustGenerate(TicketSlugAlphabet, r.nanoidSize)
 }
 
 // Create implements TicketRepository.
-func (r *PgTicketRepository) Create(channelId, userId, guildId string) (*Ticket, error) {
+func (r *PgTicketRepository) Create(slug, channelId, userId, guildId string) (*Ticket, error) {
 	const Query string = "INSERT INTO ticket " +
 		"(slug, channel_id, user_id, guild_id) " +
 		"VALUES ($1, $2, $3, $4) " +
 		"RETURNING slug, created_at, channel_id, user_id, guild_id"
 
-	data, err := newPgCreateTicketData(r.genSlug(), channelId, userId, guildId)
+	if len(slug) != TicketSlugLength {
+		return nil, ErrInvalidSlug
+	}
+
+	data, err := newPgCreateTicketData(slug, channelId, userId, guildId)
 	if err != nil {
 		return nil, err
 	}

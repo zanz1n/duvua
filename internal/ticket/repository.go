@@ -1,6 +1,8 @@
 package ticket
 
 type TicketRepository interface {
+	GenerateSlug() string
+
 	// The returned Ticket clould be nil
 	GetBySlug(slug string) (*Ticket, error)
 	// The returned Ticket clould be nil
@@ -9,7 +11,7 @@ type TicketRepository interface {
 	GetByMember(guildId, userId string) ([]Ticket, error)
 
 	// The returned Ticket must not be nil if err != nil
-	Create(channelId, userId, guildId string) (*Ticket, error)
+	Create(slug, channelId, userId, guildId string) (*Ticket, error)
 
 	// The returned ticket clould be nil
 	DeleteBySlug(slug string) (*Ticket, error)
