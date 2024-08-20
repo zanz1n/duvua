@@ -144,6 +144,7 @@ func main() {
 	m.Add(modcmds.NewClearCommand())
 
 	m.Add(ticketcmds.NewTicketAdminCommand(ticketRepository, ticketConfigRepository))
+	m.Add(ticketcmds.NewTicketCommand(ticketRepository, ticketConfigRepository))
 
 	m.AutoHandle(s)
 	s.AddHandlerOnce(events.NewReadyEvent(m).Handle)
