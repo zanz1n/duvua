@@ -186,7 +186,7 @@ func (c *TicketAdminCommand) Handle(s *discordgo.Session, i *manager.Interaction
 				if e != nil {
 					return e
 				}
-				msg, err = c.handleDeleteById(id)
+				return c.handleDeleteById(s, i, id)
 
 			case "all":
 				userId, e := i.GetUserOption("user", true)
@@ -197,7 +197,7 @@ func (c *TicketAdminCommand) Handle(s *discordgo.Session, i *manager.Interaction
 				if e = i.DeferReply(s, false); e != nil {
 					return e
 				}
-				msg, err = c.handleDeleteAll(s, i.GuildID, userId)
+				return c.handleDeleteAll(s, i, userId)
 
 			default:
 				return errors.New("opção `sub-command` inválida")
@@ -205,7 +205,6 @@ func (c *TicketAdminCommand) Handle(s *discordgo.Session, i *manager.Interaction
 		default:
 			return errors.New("opção `sub-command-group` inválida")
 		}
-
 	} else {
 		switch subCommand.Name {
 		case "enable":
@@ -269,35 +268,65 @@ func (c *TicketAdminCommand) Handle(s *discordgo.Session, i *manager.Interaction
 	return i.Replyf(s, msg)
 }
 
-func (c *TicketAdminCommand) handleDeleteById(id string) (string, error) {
+func (c *TicketAdminCommand) handleDeleteById(
+	s *discordgo.Session,
+	i *manager.InteractionCreate,
+	id string,
+) error {
 	t, err := c.r.DeleteBySlug(id)
 	if err != nil {
-		return "", err
+		return err
+	}
+
+	if t == nil {
+		return errors.Newf("nenhum ticket `%s` encontrado", id)
+	}
+
+	comp := ""
+	if _, err = s.ChannelDelete(t.ChannelId); err != nil {
+		slog.Warn("Failed to delete ticket channel", "slug", t.Slug)
+		comp += fmt.Sprintf(
+			", mas não foi possível excluir o canal de texto <#%s>",
+			t.ChannelId,
+		)
 	}
 
 	// TODO: Dump ticket logs
 
-	return fmt.Sprintf(
-		"Ticket `%s` de <@%s> excluído com sucesso",
+	if t.ChannelId == i.ChannelID {
+		return nil
+	}
+
+	return i.Replyf(s,
+		"Ticket `%s` de <@%s> excluído com sucesso"+comp,
 		t.Slug, t.UserId,
-	), nil
+	)
 }
 
 func (c *TicketAdminCommand) handleDeleteAll(
 	s *discordgo.Session,
-	guildId, userId string,
-) (string, error) {
-	ts, err := c.r.DeleteByMember(guildId, userId)
+	i *manager.InteractionCreate,
+	userId string,
+) error {
+	ts, err := c.r.DeleteByMember(i.GuildID, userId)
 	if err != nil {
-		return "", err
+		return err
+	}
+
+	if len(ts) == 0 {
+		return errors.Newf("nenhum ticket de <@%s> encontrado", userId)
 	}
 
 	errc := []string{}
+	containsChannel := false
 	for _, t := range ts {
+		if t.ChannelId == i.ChannelID {
+			containsChannel = true
+		}
 		if _, err = s.ChannelDelete(t.ChannelId); err != nil {
 			slog.Warn(
 				"Failed to delete ticket channel",
-				"guild_id", guildId,
+				"guild_id", i.GuildID,
 				"channel_id", t.ChannelId,
 			)
 			errc = append(errc, t.Slug)
@@ -306,8 +335,11 @@ func (c *TicketAdminCommand) handleDeleteAll(
 
 	// TODO: Dump ticket logs
 
-	msg := fmt.Sprintf("%d tickets de <@%s> excluídos com sucesso", len(ts), userId)
+	if containsChannel {
+		return nil
+	}
 
+	msg := fmt.Sprintf("%d tickets de <@%s> excluídos com sucesso", len(ts), userId)
 	if len(errc) > 0 {
 		msg += fmt.Sprintf(
 			", mas %d canais de texto não puderam ser excluídos\n"+
@@ -323,7 +355,7 @@ func (c *TicketAdminCommand) handleDeleteAll(
 		}
 	}
 
-	return msg, nil
+	return i.Replyf(s, msg)
 }
 
 func (c *TicketAdminCommand) handleEnable(guildId string, enabled bool) (string, error) {
@@ -482,7 +514,7 @@ func (c *TicketAdminCommand) handleAddPermanent(
 				Label:    "Criar ticket",
 				Style:    discordgo.PrimaryButton,
 				Emoji:    emoji("🎫"),
-				CustomID: "ticket",
+				CustomID: "ticket/create",
 			}},
 		}},
 	}
