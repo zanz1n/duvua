@@ -104,6 +104,7 @@ func (r *PgTicketConfigRepository) UpdateChannelCategory(guildId string, channel
 		if channelCategoryId2.Int64, err = atoi(channelCategoryId); err != nil {
 			return ErrInvalidChannelId
 		}
+		channelCategoryId2.Valid = true
 	}
 
 	return r.exec(Query, channelCategoryId2, guildId2)
@@ -152,6 +153,7 @@ func (r *PgTicketConfigRepository) UpdateLogsChannel(guildId string, logsChannel
 		if logsChannelId2.Int64, err = atoi(logsChannelId); err != nil {
 			return ErrInvalidChannelId
 		}
+		logsChannelId2.Valid = true
 	}
 
 	return r.exec(Query, logsChannelId2, guildId2)
