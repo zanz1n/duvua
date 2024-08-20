@@ -11,7 +11,7 @@ const (
 	DefaultConfigAllowMultiple bool = true
 
 	TicketSlugLength   int    = 8
-	TicketSlugAlphabet string = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	TicketSlugAlphabet string = "0123456789abcdefghijklmnopqrstuvwxyz"
 )
 
 type Ticket struct {
