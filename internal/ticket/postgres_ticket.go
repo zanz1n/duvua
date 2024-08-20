@@ -71,7 +71,7 @@ func (r *PgTicketRepository) Create(slug, channelId, userId, guildId string) (*T
 // DeleteByChannelId implements TicketRepository.
 func (r *PgTicketRepository) DeleteByChannelId(channelId string) (*Ticket, error) {
 	const Query string = "UPDATE ticket SET deleted_at = CURRENT_TIMESTAMP " +
-		"WHERE channel_id = $1 AND deleted_at = NULL " +
+		"WHERE channel_id = $1 AND deleted_at IS NULL " +
 		"RETURNING slug, created_at, channel_id, user_id, guild_id"
 
 	channelId2, err := atoi(channelId)
@@ -85,7 +85,7 @@ func (r *PgTicketRepository) DeleteByChannelId(channelId string) (*Ticket, error
 // DeleteByMember implements TicketRepository.
 func (r *PgTicketRepository) DeleteByMember(guildId, userId string) ([]Ticket, error) {
 	const Query string = "UPDATE ticket SET deleted_at = CURRENT_TIMESTAMP " +
-		"WHERE guild_id = $1 AND user_id = $2 AND deleted_at = NULL " +
+		"WHERE guild_id = $1 AND user_id = $2 AND deleted_at IS NULL " +
 		"RETURNING slug, created_at, channel_id, user_id, guild_id"
 
 	guildId2, err := atoi(guildId)
@@ -103,7 +103,7 @@ func (r *PgTicketRepository) DeleteByMember(guildId, userId string) ([]Ticket, e
 // DeleteBySlug implements TicketRepository.
 func (r *PgTicketRepository) DeleteBySlug(slug string) (*Ticket, error) {
 	const Query string = "UPDATE ticket SET deleted_at = CURRENT_TIMESTAMP " +
-		"WHERE slug = $1 AND deleted_at = NULL " +
+		"WHERE slug = $1 AND deleted_at IS NULL " +
 		"RETURNING slug, created_at, channel_id, user_id, guild_id"
 
 	if len(slug) != r.nanoidSize {
@@ -116,7 +116,7 @@ func (r *PgTicketRepository) DeleteBySlug(slug string) (*Ticket, error) {
 // GetByChannelId implements TicketRepository.
 func (r *PgTicketRepository) GetByChannelId(channelId string) (*Ticket, error) {
 	const Query string = "SELECT slug, created_at, channel_id, user_id, guild_id " +
-		"FROM ticket WHERE channel_id = $1 AND deleted_at = NULL"
+		"FROM ticket WHERE channel_id = $1 AND deleted_at IS NULL"
 
 	channelId2, err := atoi(channelId)
 	if err != nil {
@@ -129,7 +129,7 @@ func (r *PgTicketRepository) GetByChannelId(channelId string) (*Ticket, error) {
 // GetByMember implements TicketRepository.
 func (r *PgTicketRepository) GetByMember(guildId, userId string) ([]Ticket, error) {
 	const Query string = "SELECT slug, created_at, channel_id, user_id, guild_id " +
-		"FROM ticket WHERE guild_id = $1 AND user_id = $2 AND deleted_at = NULL"
+		"FROM ticket WHERE guild_id = $1 AND user_id = $2 AND deleted_at IS NULL"
 
 	guildId2, err := atoi(guildId)
 	if err != nil {
@@ -146,7 +146,7 @@ func (r *PgTicketRepository) GetByMember(guildId, userId string) ([]Ticket, erro
 // GetBySlug implements TicketRepository.
 func (r *PgTicketRepository) GetBySlug(slug string) (*Ticket, error) {
 	const Query string = "SELECT slug, created_at, channel_id, user_id, guild_id " +
-		"FROM ticket WHERE slug = $1 AND deleted_at = NULL"
+		"FROM ticket WHERE slug = $1 AND deleted_at IS NULL"
 
 	if len(slug) != r.nanoidSize {
 		return nil, ErrInvalidSlug
