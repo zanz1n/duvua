@@ -179,7 +179,7 @@ func (c *HelpCommand) appendSubCommandFields(
 			})
 		} else if opt.Type == discordgo.ApplicationCommandOptionSubCommandGroup {
 			for _, subopt := range opt.Options {
-				if opt.Type == discordgo.ApplicationCommandOptionSubCommand {
+				if subopt.Type == discordgo.ApplicationCommandOptionSubCommand {
 					fields = append(fields, &discordgo.MessageEmbedField{
 						Name:   fmt.Sprintf("/%s %s %s", cmd.Name, opt.Name, subopt.Name),
 						Value:  subopt.Description,
