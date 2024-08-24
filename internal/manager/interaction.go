@@ -203,6 +203,8 @@ func (i *InteractionCreate) GetOption(
 				return nil, errors.Newf("opção `%s` é necessária", name)
 			}
 			opts = data.Options[0].Options[0].Options
+		default:
+			opts = data.Options
 		}
 	} else {
 		opts = data.Options
