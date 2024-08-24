@@ -99,7 +99,7 @@ func main() {
 		log.Fatalln("Failed to create discord session:", err)
 	}
 
-	s.Identify.Intents = discordgo.IntentsGuildMembers
+	s.Identify.Intents = discordgo.IntentsGuildMembers | discordgo.IntentsGuilds
 
 	s.LogLevel = logger.SlogLevelToDiscordgo(cfg.LogLevel + 4)
 
@@ -153,6 +153,7 @@ func main() {
 	m.AutoHandle(s)
 	s.AddHandlerOnce(events.NewReadyEvent(m).Handle)
 	s.AddHandler(welcomeEvt.Handle)
+	s.AddHandler(events.NewChannelDeleteEvent(ticketRepository).Handle)
 
 	if err = s.Open(); err != nil {
 		log.Fatalln("Failed to open discord session:", err)
