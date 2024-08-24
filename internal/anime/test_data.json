@@ -1,0 +1,112 @@
+{
+    "id": "11469",
+    "type": "anime",
+    "links": {
+        "self": "https://kitsu.io/api/edge/anime/11469"
+    },
+    "attributes": {
+        "createdAt": "2015-10-27T22:39:09.949Z",
+        "updatedAt": "2024-08-23T23:15:05.159Z",
+        "slug": "boku-no-hero-academia",
+        "synopsis": "What would the world be like if 80 percent of the population manifested extraordinary superpowers called “Quirks” at age four? Heroes and villains would be battling it out everywhere! Becoming a hero would mean learning to use your power, but where would you go to study? U.A. High's Hero Program of course! But what would you do if you were one of the 20 percent who were born Quirkless?\n\nMiddle school student Izuku Midoriya wants to be a hero more than anything, but he hasn't got an ounce of power in him. With no chance of ever getting into the prestigious U.A. High School for budding heroes, his life is looking more and more like a dead end. Then an encounter with All Might, the greatest hero of them all gives him a chance to change his destiny…\n\n(Source: Viz Media)",
+        "description": "What would the world be like if 80 percent of the population manifested extraordinary superpowers called “Quirks” at age four? Heroes and villains would be battling it out everywhere! Becoming a hero would mean learning to use your power, but where would you go to study? U.A. High's Hero Program of course! But what would you do if you were one of the 20 percent who were born Quirkless?\n\nMiddle school student Izuku Midoriya wants to be a hero more than anything, but he hasn't got an ounce of power in him. With no chance of ever getting into the prestigious U.A. High School for budding heroes, his life is looking more and more like a dead end. Then an encounter with All Might, the greatest hero of them all gives him a chance to change his destiny…\n\n(Source: Viz Media)",
+        "coverImageTopOffset": 200,
+        "titles": {
+            "en": "My Hero Academia",
+            "en_jp": "Boku no Hero Academia",
+            "en_us": "My Hero Academia",
+            "ja_jp": "僕のヒーローアカデミア"
+        },
+        "canonicalTitle": "Boku no Hero Academia",
+        "abbreviatedTitles": [],
+        "averageRating": "83.94",
+        "ratingFrequencies": {
+            "2": "11692",
+            "3": "324",
+            "4": "853",
+            "5": "215",
+            "6": "1066",
+            "7": "243",
+            "8": "17518",
+            "9": "379",
+            "10": "3334",
+            "11": "700",
+            "12": "5979",
+            "13": "1173",
+            "14": "64077",
+            "15": "2800",
+            "16": "24399",
+            "17": "3987",
+            "18": "18405",
+            "19": "2006",
+            "20": "190214"
+        },
+        "userCount": 517538,
+        "favoritesCount": 5633,
+        "startDate": "2016-04-03",
+        "endDate": "2016-06-26",
+        "nextRelease": null,
+        "popularityRank": 2,
+        "ratingRank": 36,
+        "ageRating": "PG",
+        "ageRatingGuide": "Teens 13 or older",
+        "subtype": "TV",
+        "status": "finished",
+        "tba": null,
+        "posterImage": {
+            "tiny": "https://media.kitsu.app/anime/poster_images/11469/tiny.jpg",
+            "large": "https://media.kitsu.app/anime/poster_images/11469/large.jpg",
+            "small": "https://media.kitsu.app/anime/poster_images/11469/small.jpg",
+            "medium": "https://media.kitsu.app/anime/poster_images/11469/medium.jpg",
+            "original": "https://media.kitsu.app/anime/poster_images/11469/original.png",
+            "meta": {
+                "dimensions": {
+                    "tiny": {
+                        "width": 110,
+                        "height": 156
+                    },
+                    "large": {
+                        "width": 550,
+                        "height": 780
+                    },
+                    "small": {
+                        "width": 284,
+                        "height": 402
+                    },
+                    "medium": {
+                        "width": 390,
+                        "height": 554
+                    }
+                }
+            }
+        },
+        "coverImage": {
+            "tiny": "https://media.kitsu.app/anime/cover_images/11469/tiny.jpg",
+            "large": "https://media.kitsu.app/anime/cover_images/11469/large.jpg",
+            "small": "https://media.kitsu.app/anime/cover_images/11469/small.jpg",
+            "original": "https://media.kitsu.app/anime/cover_images/11469/original.jpg",
+            "meta": {
+                "dimensions": {
+                    "tiny": {
+                        "width": 840,
+                        "height": 200
+                    },
+                    "large": {
+                        "width": 3360,
+                        "height": 800
+                    },
+                    "small": {
+                        "width": 1680,
+                        "height": 400
+                    }
+                }
+            }
+        },
+        "episodeCount": 13,
+        "episodeLength": 23,
+        "totalLength": 312,
+        "youtubeVideoId": "D5fYOnwYkj4",
+        "showType": "TV",
+        "nsfw": false
+    }
+}
