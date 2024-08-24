@@ -21,6 +21,7 @@ import (
 	"github.com/jackc/pgx/v5/tracelog"
 	"github.com/joho/godotenv"
 	"github.com/zanz1n/duvua-bot/config"
+	"github.com/zanz1n/duvua-bot/internal/anime"
 	configcmds "github.com/zanz1n/duvua-bot/internal/commands/config"
 	funcmds "github.com/zanz1n/duvua-bot/internal/commands/fun"
 	infocmds "github.com/zanz1n/duvua-bot/internal/commands/info"
@@ -129,6 +130,8 @@ func main() {
 	ticketRepository := ticket.NewPgTicketRepository(db)
 	ticketConfigRepository := ticket.NewPgTicketConfigRepository(db)
 
+	animeApi := anime.NewAnimeApi(nil)
+
 	m := manager.NewManager()
 
 	m.Add(configcmds.NewWelcomeCommand(welcomeRepo, welcomeEvt))
@@ -140,6 +143,7 @@ func main() {
 	m.Add(infocmds.NewFactsCommand())
 	m.Add(infocmds.NewHelpCommand(m))
 	m.Add(infocmds.NewPingCommand())
+	m.Add(infocmds.NewAnimeCommand(animeApi))
 
 	m.Add(modcmds.NewClearCommand())
 
