@@ -28,6 +28,7 @@ import (
 	modcmds "github.com/zanz1n/duvua-bot/internal/commands/moderation"
 	ticketcmds "github.com/zanz1n/duvua-bot/internal/commands/ticket"
 	"github.com/zanz1n/duvua-bot/internal/events"
+	"github.com/zanz1n/duvua-bot/internal/lang"
 	"github.com/zanz1n/duvua-bot/internal/logger"
 	"github.com/zanz1n/duvua-bot/internal/manager"
 	"github.com/zanz1n/duvua-bot/internal/ticket"
@@ -131,6 +132,7 @@ func main() {
 	ticketConfigRepository := ticket.NewPgTicketConfigRepository(db)
 
 	animeApi := anime.NewAnimeApi(nil)
+	translator := lang.NewGoogleTranslatorApi(nil)
 
 	m := manager.NewManager()
 
@@ -143,7 +145,7 @@ func main() {
 	m.Add(infocmds.NewFactsCommand())
 	m.Add(infocmds.NewHelpCommand(m))
 	m.Add(infocmds.NewPingCommand())
-	m.Add(infocmds.NewAnimeCommand(animeApi))
+	m.Add(infocmds.NewAnimeCommand(animeApi, translator))
 
 	m.Add(modcmds.NewClearCommand())
 

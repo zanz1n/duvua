@@ -2,12 +2,14 @@ package infocmds
 
 import (
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua-bot/internal/anime"
 	"github.com/zanz1n/duvua-bot/internal/errors"
+	"github.com/zanz1n/duvua-bot/internal/lang"
 	"github.com/zanz1n/duvua-bot/internal/manager"
 	"github.com/zanz1n/duvua-bot/internal/utils"
 )
@@ -30,7 +32,7 @@ var animeCommandData = discordgo.ApplicationCommand{
 	}},
 }
 
-func NewAnimeCommand(a *anime.AnimeApi) manager.Command {
+func NewAnimeCommand(a *anime.AnimeApi, t lang.Translator) manager.Command {
 	return manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
@@ -38,12 +40,13 @@ func NewAnimeCommand(a *anime.AnimeApi) manager.Command {
 		},
 		Data:     &animeCommandData,
 		Category: manager.CommandCategoryInfo,
-		Handler:  &AnimeCommand{a: a},
+		Handler:  &AnimeCommand{a: a, t: t},
 	}
 }
 
 type AnimeCommand struct {
 	a *anime.AnimeApi
+	t lang.Translator
 }
 
 func (c *AnimeCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate) error {
@@ -103,7 +106,7 @@ func (c *AnimeCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate
 			},
 			{
 				Name:   "⏲️ Duração dos episódios",
-				Value:  strconv.Itoa(int(a.Attributes.EpisodeLength)),
+				Value:  strconv.Itoa(int(a.Attributes.EpisodeLength)) + "m",
 				Inline: true,
 			},
 			{
@@ -113,7 +116,7 @@ func (c *AnimeCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate
 			},
 			{
 				Name:   "🔞 NSFW",
-				Value:  strconv.FormatBool(a.Attributes.NSFW),
+				Value:  fmtBoolPtBr(a.Attributes.NSFW),
 				Inline: true,
 			},
 			{
@@ -138,30 +141,53 @@ func (c *AnimeCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate
 			},
 		},
 	}
-	var components []discordgo.MessageComponent
 
 	if a.Attributes.Titles.JapanJapanese != "" && a.Attributes.Titles.English != "" {
 		embed.Title = a.Attributes.Titles.English +
 			" | " + a.Attributes.Titles.JapanJapanese
 	}
 
-	if len(a.Attributes.Synopsis) > 1023 {
-		a.Attributes.Synopsis = a.Attributes.Synopsis[0:1018] + "[...]"
-		components = []discordgo.MessageComponent{discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{discordgo.Button{
-				Label:    "Ver sinopse completa",
-				Emoji:    emoji("📰"),
-				Style:    discordgo.SecondaryButton,
-				CustomID: fmt.Sprintf("anime/%d", a.ID),
-			}},
-		}}
+	buttons := []discordgo.MessageComponent{}
+	synopsis := a.Attributes.Synopsis
+	synopsisLang := "EN_US"
 
+	if c.t != nil {
+		translated, err := anime.TranslateSynopsis(c.t, a)
+		if err != nil {
+			slog.Error("Failed to translate anime synopsis", "error", err)
+		} else {
+			synopsis = translated
+			synopsisLang = "PT_BR"
+			buttons = append(buttons, discordgo.Button{
+				Label:    "Ver original (EN_US)",
+				Emoji:    emoji("🕉️"),
+				Style:    discordgo.SecondaryButton,
+				CustomID: fmt.Sprintf("anime/original/%d", a.ID),
+			})
+		}
+	}
+
+	if len(synopsis) > 1023 {
+		synopsis = synopsis[0:1018] + "[...]"
+		buttons = append(buttons, discordgo.Button{
+			Label:    "Ver completo",
+			Emoji:    emoji("📰"),
+			Style:    discordgo.SecondaryButton,
+			CustomID: fmt.Sprintf("anime/translated/%d", a.ID),
+		})
 	}
 
 	embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
-		Name:  "Sinopse (EN_US)",
-		Value: a.Attributes.Synopsis,
+		Name:  "Sinopse (" + synopsisLang + ")",
+		Value: synopsis,
 	})
+
+	var components []discordgo.MessageComponent
+	if len(buttons) > 0 {
+		components = []discordgo.MessageComponent{discordgo.ActionsRow{
+			Components: buttons,
+		}}
+	}
 
 	return i.Reply(s, &manager.InteractionResponse{
 		Embeds:     []*discordgo.MessageEmbed{&embed},
@@ -173,11 +199,11 @@ func (c *AnimeCommand) handleComponent(s *discordgo.Session, i *manager.Interact
 	data := i.MessageComponentData()
 
 	split := strings.Split(data.CustomID, "/")
-	if len(split) != 2 {
+	if len(split) != 3 {
 		return errors.New("interação inválida")
 	}
 
-	id, err := strconv.ParseInt(split[1], 10, 0)
+	id, err := strconv.ParseInt(split[2], 10, 0)
 	if err != nil {
 		return errors.New("interação inválida")
 	}
@@ -187,5 +213,30 @@ func (c *AnimeCommand) handleComponent(s *discordgo.Session, i *manager.Interact
 		return err
 	}
 
-	return i.Replyf(s, a.Attributes.Synopsis)
+	switch split[1] {
+	case "translated":
+		if c.t == nil {
+			return errors.New("traduções não são suportadas")
+		}
+
+		synopsis, err := anime.TranslateSynopsis(c.t, a)
+		if err != nil {
+			return err
+		}
+		return i.Replyf(s, synopsis)
+
+	case "original":
+		return i.Replyf(s, a.Attributes.Synopsis)
+
+	default:
+		return errors.New("interação inválida")
+	}
+}
+
+func fmtBoolPtBr(v bool) string {
+	if v {
+		return "Sim"
+	} else {
+		return "Não"
+	}
 }
