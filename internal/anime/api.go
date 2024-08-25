@@ -7,10 +7,12 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/zanz1n/duvua-bot/internal/errors"
+	"github.com/zanz1n/duvua-bot/internal/lang"
 )
 
 func NewAnimeApi(client *http.Client) *AnimeApi {
@@ -151,4 +153,25 @@ func (a *AnimeApi) GetById(id int64) (*Anime, error) {
 	}
 
 	return &anime.Data, nil
+}
+
+func TranslateSynopsis(t lang.Translator, a *Anime) (string, error) {
+	srcText := a.Attributes.Synopsis
+	suffix := ""
+	if bf, aft, ok := strings.Cut(srcText, "(Source:"); ok {
+		srcText = bf
+		suffix = "\n\n(Fonte: Traduzido de" + aft
+
+		for srcText[len(srcText)-1] == '\n' {
+			srcText = srcText[:len(srcText)-1]
+		}
+	}
+
+	translated, err := t.Translate(lang.English, lang.Portuguese, srcText)
+	if err != nil {
+		return "", err
+	}
+
+	translated += suffix
+	return translated, nil
 }
