@@ -26,11 +26,13 @@ import (
 	funcmds "github.com/zanz1n/duvua-bot/internal/commands/fun"
 	infocmds "github.com/zanz1n/duvua-bot/internal/commands/info"
 	modcmds "github.com/zanz1n/duvua-bot/internal/commands/moderation"
+	musiccmds "github.com/zanz1n/duvua-bot/internal/commands/music"
 	ticketcmds "github.com/zanz1n/duvua-bot/internal/commands/ticket"
 	"github.com/zanz1n/duvua-bot/internal/events"
 	"github.com/zanz1n/duvua-bot/internal/lang"
 	"github.com/zanz1n/duvua-bot/internal/logger"
 	"github.com/zanz1n/duvua-bot/internal/manager"
+	"github.com/zanz1n/duvua-bot/internal/music"
 	"github.com/zanz1n/duvua-bot/internal/ticket"
 	"github.com/zanz1n/duvua-bot/internal/utils"
 	"github.com/zanz1n/duvua-bot/internal/welcome"
@@ -131,6 +133,8 @@ func main() {
 	ticketRepository := ticket.NewPgTicketRepository(db)
 	ticketConfigRepository := ticket.NewPgTicketConfigRepository(db)
 
+	musicRepository := music.NewPgMusicConfigRepository(db)
+
 	animeApi := anime.NewAnimeApi(nil)
 	translator := lang.NewGoogleTranslatorApi(nil)
 
@@ -151,6 +155,8 @@ func main() {
 
 	m.Add(ticketcmds.NewTicketAdminCommand(ticketRepository, ticketConfigRepository))
 	m.Add(ticketcmds.NewTicketCommand(ticketRepository, ticketConfigRepository))
+
+	m.Add(musiccmds.NewMusicAdminCommand(musicRepository))
 
 	m.AutoHandle(s)
 	s.AddHandlerOnce(events.NewReadyEvent(m).Handle)
