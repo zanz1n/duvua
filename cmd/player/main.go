@@ -87,11 +87,13 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	player.NewHttpServer(handler, "").Route(mux)
+	player.NewHttpServer(handler, cfg.Player.Password).Route(mux)
 
 	go func() {
-		slog.Info("HTTP: Listening for http connections", "port", 8080)
-		if err := http.ListenAndServe(":8080", mux); err != nil {
+		listenAddr := fmt.Sprintf("0.0.0.0:%d", cfg.Player.ListenPort)
+		slog.Info("HTTP: Listening for http connections", "addr", listenAddr)
+
+		if err := http.ListenAndServe(listenAddr, mux); err != nil {
 			log.Fatalln("Failed to listen http:", err)
 		}
 	}()

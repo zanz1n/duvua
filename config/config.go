@@ -10,6 +10,7 @@ type Config struct {
 	Discord  DiscordConfig  `env:", prefix=DISCORD_"`
 	Postgres PostgresConfig `env:", prefix=POSTGRES_"`
 	Welcomer WelcomerConfig `env:", prefix=WELCOMER_"`
+	Player   PlayerConfig   `env:", prefix=PLAYER_"`
 }
 
 type DiscordConfig struct {
@@ -34,6 +35,11 @@ type PostgresConfig struct {
 
 type WelcomerConfig struct {
 	ImageQuality float32 `env:"IMAGE_QUALITY, default=80.0"`
+}
+
+type PlayerConfig struct {
+	ListenPort uint16 `env:"LISTEN_PORT, default=8080"`
+	Password   string `env:"PASSWORD"`
 }
 
 func (pc *PostgresConfig) IntoUri() string {
