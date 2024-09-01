@@ -38,6 +38,7 @@ type WelcomerConfig struct {
 }
 
 type PlayerConfig struct {
+	ApiURL     string `env:"URL, required"`
 	ListenPort uint16 `env:"LISTEN_PORT, default=8080"`
 	Password   string `env:"PASSWORD"`
 }
