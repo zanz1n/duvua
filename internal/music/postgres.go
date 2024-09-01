@@ -77,9 +77,13 @@ func (r *PgMusicConfigRepository) UpdateDjRole(guildId string, djRole string) er
 	if err != nil {
 		return ErrInvalidGuildId
 	}
-	djRole2, err := atoi(djRole)
-	if err != nil {
-		return ErrInvalidRolelId
+
+	djRole2 := sql.NullInt64{}
+	if djRole != "" {
+		if djRole2.Int64, err = atoi(djRole); err != nil {
+			return ErrInvalidRolelId
+		}
+		djRole2.Valid = true
 	}
 
 	return r.exec(Query, djRole2, guildId2)

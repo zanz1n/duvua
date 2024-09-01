@@ -57,13 +57,22 @@ func newPgMusicConfigCreateData(data MusicConfigCreateData) (*pgMusicConfigCreat
 		djRole.Valid = true
 	}
 
-	return &pgMusicConfigCreateData{
+	pgData := pgMusicConfigCreateData{
 		GuildId:     guildId,
 		Enabled:     data.Enabled,
 		PlayMode:    data.PlayMode,
 		ControlMode: data.ControlMode,
 		DjRole:      djRole,
-	}, nil
+	}
+
+	if data.PlayMode == "" {
+		pgData.PlayMode = DefaultConfigPlayMode
+	}
+	if data.ControlMode == "" {
+		pgData.ControlMode = DefaultConfigControlMode
+	}
+
+	return &pgData, nil
 }
 
 func atoi(s string) (int64, error) {
