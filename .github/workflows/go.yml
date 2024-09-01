@@ -41,7 +41,7 @@ jobs:
       - name: Download packages
         run: go mod download
 
-      - name: Build
+      - name: Build bot
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
@@ -50,6 +50,16 @@ jobs:
         run: |
           go build -v -ldflags "-s -w -X ${SRC_PATH}/config.Version=release-${GIT_COMMIT:0:7}" -o bin/duvua-bot cmd/bot/main.go
           go build -v -ldflags "-X ${SRC_PATH}/config.Version=debug-${GIT_COMMIT:0:7}" -o bin/duvua-bot-debug cmd/bot/main.go
+
+      - name: Build player
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+          SRC_PATH: github.com/zanz1n/duvua-bot
+        run: |
+          go build -v -ldflags "-s -w -X ${SRC_PATH}/config.Version=release-${GIT_COMMIT:0:7}" -o bin/duvua-player cmd/player/main.go
+          go build -v -ldflags "-X ${SRC_PATH}/config.Version=debug-${GIT_COMMIT:0:7}" -o bin/duvua-player-debug cmd/player/main.go
 
       - name: Test
         env:
