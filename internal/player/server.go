@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -60,9 +62,11 @@ func (s *HttpServer) Route(m *http.ServeMux) {
 type handlerFunc = func(w http.ResponseWriter, r *http.Request) error
 
 func (s *HttpServer) m(h handlerFunc) http.HandlerFunc {
-	return s.errorMiddleware(
-		s.catchPanicMiddleware(
-			s.authMiddleware(h),
+	return s.loggerMiddleware(
+		s.errorMiddleware(
+			s.catchPanicMiddleware(
+				s.authMiddleware(h),
+			),
 		),
 	)
 }
@@ -101,6 +105,20 @@ func (s *HttpServer) errorMiddleware(h handlerFunc) http.HandlerFunc {
 		if err := h(w, r); err != nil {
 			handleErrRes(w, err)
 		}
+	}
+}
+
+func (s *HttpServer) loggerMiddleware(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		w2 := wrapResponseWriter(w)
+		h(w2, r)
+		slog.Info(
+			"HTTP: Incomming request",
+			"path", r.URL.Path,
+			"status_code", w2.Status(),
+			"took", time.Since(start).Round(10*time.Microsecond),
+		)
 	}
 }
 
@@ -191,4 +209,28 @@ func resJson[T any](w http.ResponseWriter, data T, message string) error {
 	w.Write(b)
 
 	return nil
+}
+
+type responseWriter struct {
+	http.ResponseWriter
+	status      int
+	wroteHeader bool
+}
+
+func wrapResponseWriter(w http.ResponseWriter) *responseWriter {
+	return &responseWriter{ResponseWriter: w}
+}
+
+func (rw *responseWriter) Status() int {
+	return rw.status
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	if rw.wroteHeader {
+		return
+	}
+
+	rw.status = code
+	rw.ResponseWriter.WriteHeader(code)
+	rw.wroteHeader = true
 }
