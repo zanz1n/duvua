@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -50,6 +51,7 @@ const DuvuaBanner = `
 Copyright © 2022 - %d Izan Rodrigues
 
 Version: %s
+     GO: %s
  Source: https://github.com/zanz1n/duvua-bot
 License: https://github.com/zanz1n/duvua-bot/blob/main/LICENSE
 
@@ -69,7 +71,12 @@ var endCh chan os.Signal
 func init() {
 	flag.Parse()
 	if !*jsonLogs && !*noBanner {
-		fmt.Printf(DuvuaBanner, time.Now().Year(), config.Version)
+		fmt.Printf(
+			DuvuaBanner,
+			time.Now().Year(),
+			config.Version,
+			runtime.Version(),
+		)
 	}
 }
 
