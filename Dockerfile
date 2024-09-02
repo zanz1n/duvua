@@ -14,6 +14,8 @@ RUN --mount=type=cache,target=/gomod-cache \
 
 FROM gcr.io/distroless/cc-debian12
 
-COPY --from=builder /build/bin/duvua-bot /bin/duvua-bot
+ARG SERVICE_NAME
 
-CMD [ "/bin/duvua-bot" ]
+COPY --from=builder /build/bin/${SERVICE_NAME} /bin/service
+
+CMD [ "/bin/service" ]

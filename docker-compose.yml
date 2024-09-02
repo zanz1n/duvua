@@ -13,18 +13,41 @@ x-common:
     POSTGRES_MIN_CONNS: 2
     POSTGRES_MAX_CONNS: 32
 
+  player: &player-env
+    PLAYER_LISTEN_PORT: 8080
+    PLAYER_PASSWORD: ""
+    PLAYER_URL: "http://player:8080/"
+
 services:
   bot:
-    build: .
-    command: ["/bin/duvua-bot", "--migrate"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: duvua-bot
+    command: ["/bin/service", "--migrate"]
     restart: always
     links:
+      - player
       - postgres
 
     environment:
-      <<: [*bot-env, *postgres-env]
+      <<: [*bot-env, *postgres-env, *player-env]
       POSTGRES_HOST: postgres
-      POSTGRES_PORT: "5432"
+      POSTGRES_PORT: 5432
+
+  player:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: duvua-player
+    restart: always
+
+    environment:
+      <<: [*bot-env, *postgres-env, *player-env]
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
 
   postgres:
     image: postgres:16
