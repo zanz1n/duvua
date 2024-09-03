@@ -126,7 +126,7 @@ func (m *PlayerMessenger) onQueueEnd(cid uint64) error {
 	}
 
 	return m.sendMessage(cid, &discordgo.MessageSend{
-		Content: "A fila (playlist) terminou!",
+		Content: "**A fila (playlist) terminou!**",
 	})
 }
 
