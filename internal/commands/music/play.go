@@ -97,18 +97,12 @@ func (c *PlayCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate)
 		return err
 	}
 
-	msg := fmt.Sprintf("Música **[%s](%s)** adicionada à fila\n\n**Duração: [%s]**",
+	msg := fmt.Sprintf("Música **[%s](%s) [%s]** adicionada à fila",
 		track.Data.Name, track.Data.URL, utils.FmtDuration(track.Data.Duration),
 	)
 
 	return i.Reply(s, &manager.InteractionResponse{
-		Embeds: []*discordgo.MessageEmbed{{
-			Thumbnail: &discordgo.MessageEmbedThumbnail{
-				URL: track.Data.Thumbnail,
-			},
-			Description: msg,
-			Footer:      utils.EmbedRequestedByFooter(i.Interaction),
-		}},
+		Content: msg,
 		Components: []discordgo.MessageComponent{discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{
 				discordgo.Button{
