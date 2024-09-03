@@ -10,6 +10,7 @@ const (
 	CommandCategoryFun
 	CommandCategoryTicket
 	CommandCategoryModeration
+	CommandCategoryMusic
 )
 
 type InteractionHandler interface {
@@ -28,8 +29,8 @@ type CommandAccept struct {
 }
 
 type Command struct {
-	Accepts    CommandAccept
-	Data       *discordgo.ApplicationCommand
-	Category   CommandCategory
-	Handler    InteractionHandler
+	Accepts  CommandAccept
+	Data     *discordgo.ApplicationCommand
+	Category CommandCategory
+	Handler  InteractionHandler
 }

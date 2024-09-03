@@ -49,12 +49,14 @@ func (c *HelpCommand) renderCategory(cat manager.CommandCategory) discordgo.Mess
 	switch cat {
 	case manager.CommandCategoryInfo:
 		catName = "Info"
+	case manager.CommandCategoryMusic:
+		catName = "Música"
 	case manager.CommandCategoryConfig:
 		catName = "Config"
 	case manager.CommandCategoryFun:
 		catName = "Fun"
 	case manager.CommandCategoryTicket:
-		catName = "Info"
+		catName = "Ticket"
 	case manager.CommandCategoryModeration:
 		catName = "Moderação"
 	}
@@ -109,6 +111,8 @@ func (c *HelpCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate)
 			embed = c.renderHome(i)
 		case "info":
 			embed = c.renderCategory(manager.CommandCategoryInfo)
+		case "music":
+			embed = c.renderCategory(manager.CommandCategoryMusic)
 		case "config":
 			embed = c.renderCategory(manager.CommandCategoryConfig)
 		case "fun":
@@ -136,10 +140,11 @@ func (c *HelpCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate)
 		options := []discordgo.SelectMenuOption{
 			// {Label: "Help", Value: "help", Description: "Informações sobre o bot", Emoji: emoji("🏡")},
 			{Label: "Info", Value: "info", Description: "Comandos de informação", Emoji: emoji("ℹ️")},
+			{Label: "Música", Value: "music", Description: "Comandos de música", Emoji: emoji("🎵")},
 			{Label: "Config", Value: "config", Description: "Comandos de configuração", Emoji: emoji("⚙️")},
 			{Label: "Fun", Value: "fun", Description: "Comandos para descontrair", Emoji: emoji("🎉")},
-			{Label: "Ticket", Value: "ticket", Description: "Comandos de ticket", Emoji: emoji("🎫")},
 			{Label: "Moderação", Value: "moderation", Description: "Comandos de moderação", Emoji: emoji("🔨")},
+			{Label: "Ticket", Value: "ticket", Description: "Comandos de ticket", Emoji: emoji("🎫")},
 		}
 
 		embed := c.renderHome(i)
