@@ -3,7 +3,6 @@ package musiccmds
 import (
 	"fmt"
 	"slices"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua-bot/internal/errors"
@@ -89,16 +88,17 @@ func (c *PlayCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate)
 	}
 
 	track, err := c.c.AddTrack(i.GuildID, player.AddTrackData{
-		UserId:    i.Member.User.ID,
-		ChannelId: vs.ChannelID,
-		Data:      trackData,
+		UserId:        i.Member.User.ID,
+		ChannelId:     vs.ChannelID,
+		TextChannelId: i.ChannelID,
+		Data:          trackData,
 	})
 	if err != nil {
 		return err
 	}
 
 	msg := fmt.Sprintf("Música **[%s](%s)** adicionada à fila\n\n**Duração: [%s]**",
-		track.Data.Name, track.Data.URL, fmtDuration(track.Data.Duration),
+		track.Data.Name, track.Data.URL, utils.FmtDuration(track.Data.Duration),
 	)
 
 	return i.Reply(s, &manager.InteractionResponse{
@@ -115,7 +115,7 @@ func (c *PlayCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate)
 					Label:    "Remover",
 					Emoji:    emoji("✖️"),
 					Style:    discordgo.DangerButton,
-					CustomID: "music/cancel/" + track.ID.String(),
+					CustomID: "music/remove/" + track.ID.String(),
 				},
 			},
 		}},

@@ -168,6 +168,10 @@ func (p *GuildPlayer) GetQueue() []player.Track {
 	return dst
 }
 
+func (p *GuildPlayer) GetMessageChannel() uint64 {
+	return p.textChannel.Load()
+}
+
 func (p *GuildPlayer) SetMessageChannel(id uint64) {
 	p.textChannel.Store(id)
 }

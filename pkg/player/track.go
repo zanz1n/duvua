@@ -42,8 +42,9 @@ type TrackData struct {
 }
 
 type AddTrackData struct {
-	UserId    string `json:"user_id" validate:"required,number"`
-	ChannelId string `json:"channel_id" validate:"required,number"`
+	UserId        string `json:"user_id" validate:"required,number"`
+	ChannelId     string `json:"channel_id" validate:"required,number"`
+	TextChannelId string `json:"text_channel_id" validate:"required,number"`
 
 	Data *TrackData `json:"data" validate:"required"`
 }

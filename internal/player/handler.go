@@ -26,8 +26,9 @@ func (h *Handler) FetchTrack(query string) (*player.TrackData, error) {
 func (h *Handler) AddTrack(guildId uint64, data player.AddTrackData) (player.Track, error) {
 	userId, _ := atoi(data.UserId)
 	channelId, _ := atoi(data.ChannelId)
+	textChannelId, _ := atoi(data.TextChannelId)
 
-	if userId == 0 || channelId == 0 {
+	if userId == 0 || channelId == 0 || textChannelId == 0 {
 		return player.Track{}, errors.New(
 			"`user_id` and `channel_id` must be valid uint64",
 		)
@@ -36,6 +37,8 @@ func (h *Handler) AddTrack(guildId uint64, data player.AddTrackData) (player.Tra
 	track := player.NewTrack(userId, channelId, data.Data)
 	p := h.m.GetOrCreate(guildId, channelId)
 	p.AddTrack(track)
+
+	p.SetMessageChannel(textChannelId)
 
 	slog.Info(
 		"Added track to queue",
