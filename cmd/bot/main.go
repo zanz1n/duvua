@@ -37,6 +37,7 @@ import (
 	"github.com/zanz1n/duvua-bot/internal/ticket"
 	"github.com/zanz1n/duvua-bot/internal/utils"
 	"github.com/zanz1n/duvua-bot/internal/welcome"
+	"github.com/zanz1n/duvua-bot/pkg/player"
 	embedsql "github.com/zanz1n/duvua-bot/sql"
 	staticembed "github.com/zanz1n/duvua-bot/static"
 )
@@ -109,7 +110,9 @@ func main() {
 		log.Fatalln("Failed to create discord session:", err)
 	}
 
-	s.Identify.Intents = discordgo.IntentsGuildMembers | discordgo.IntentsGuilds
+	s.Identify.Intents = discordgo.IntentsGuildMembers |
+		discordgo.IntentsGuilds |
+		discordgo.IntentGuildVoiceStates
 
 	s.LogLevel = logger.SlogLevelToDiscordgo(cfg.LogLevel + 4)
 
@@ -141,6 +144,7 @@ func main() {
 	ticketConfigRepository := ticket.NewPgTicketConfigRepository(db)
 
 	musicRepository := music.NewPgMusicConfigRepository(db)
+	musicClient := player.NewHttpClient(nil, cfg.Player.ApiURL, cfg.Player.Password)
 
 	animeApi := anime.NewAnimeApi(nil)
 	translator := lang.NewGoogleTranslatorApi(nil)
@@ -164,6 +168,7 @@ func main() {
 	m.Add(ticketcmds.NewTicketCommand(ticketRepository, ticketConfigRepository))
 
 	m.Add(musiccmds.NewMusicAdminCommand(musicRepository))
+	m.Add(musiccmds.NewPlayCommand(musicRepository, musicClient))
 
 	m.AutoHandle(s)
 	s.AddHandlerOnce(events.NewReadyEvent(m).Handle)
