@@ -85,6 +85,13 @@ func (m *PlayerManager) guildJobLaunch(p *GuildPlayer, channelId uint64) {
 		}
 	}()
 
+	defer func() {
+		m.Remove(p.GuildId)
+		if p.Interrupt != nil {
+			close(p.Interrupt)
+		}
+	}()
+
 	err := m.guildJob(p, channelId)
 	if err != nil {
 		slog.Error(
@@ -98,9 +105,6 @@ func (m *PlayerManager) guildJobLaunch(p *GuildPlayer, channelId uint64) {
 func (m *PlayerManager) guildJob(p *GuildPlayer, cId uint64) error {
 	const MaxPoolTries = 10
 	const PoolTryDelay = time.Second
-
-	defer m.Remove(p.GuildId)
-	defer close(p.Interrupt)
 
 	start := time.Now()
 
