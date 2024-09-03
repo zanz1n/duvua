@@ -169,6 +169,7 @@ func main() {
 
 	m.Add(musiccmds.NewMusicAdminCommand(musicRepository))
 	m.Add(musiccmds.NewPlayCommand(musicRepository, musicClient))
+	m.Add(musiccmds.NewSkipCommand(musicRepository, musicClient))
 
 	m.AutoHandle(s)
 	s.AddHandlerOnce(events.NewReadyEvent(m).Handle)
