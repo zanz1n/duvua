@@ -18,6 +18,7 @@ type PlayerManager struct {
 
 	s *discordgo.Session
 	f *TrackFetcher
+	m *PlayerMessenger
 }
 
 func NewPlayerManager(s *discordgo.Session, f *TrackFetcher) *PlayerManager {
@@ -26,6 +27,7 @@ func NewPlayerManager(s *discordgo.Session, f *TrackFetcher) *PlayerManager {
 		mu:      sync.RWMutex{},
 		s:       s,
 		f:       f,
+		m:       &PlayerMessenger{s: s},
 	}
 }
 
@@ -122,6 +124,8 @@ func (m *PlayerManager) guildJob(p *GuildPlayer, cId uint64) error {
 
 	slog.Info("Started queue", "guild_id", guildId, "channel_id", cId)
 
+	defer m.m.OnQueueEnd(p)
+
 	poolTries := 0
 	pausedTime := time.Duration(0)
 	track := (*player.Track)(nil)
@@ -148,9 +152,12 @@ func (m *PlayerManager) guildJob(p *GuildPlayer, cId uint64) error {
 			"queue_size", p.Size(),
 		)
 
+		m.m.OnTrackStart(p, track)
+
 		stream, err := m.f.Fetch(track.Data.PlayQuery)
 		if err != nil {
 			slog.Error("Failed to fetch track", "error", err)
+			m.m.OnTrackFailed(p, track)
 			continue
 		}
 
@@ -160,6 +167,7 @@ func (m *PlayerManager) guildJob(p *GuildPlayer, cId uint64) error {
 				break
 			} else if err == ErrVoiceConnectionClosed {
 				slog.Info("Queue voice connection closed", "guild_id", guildId)
+				m.m.OnQueueEnd(p)
 				break
 			} else {
 				slog.Error(
@@ -167,6 +175,7 @@ func (m *PlayerManager) guildJob(p *GuildPlayer, cId uint64) error {
 					"guild_id", guildId,
 					"error", err,
 				)
+				m.m.OnTrackFailed(p, track)
 			}
 		}
 		pausedTime += pt
