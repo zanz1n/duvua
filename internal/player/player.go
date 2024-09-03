@@ -123,16 +123,16 @@ func (p *GuildPlayer) Pool() *player.Track {
 	defer p.mu.Unlock()
 
 	if len(p.queue) == 0 {
-		return nil
-	}
+		p.current = nil
+	} else {
+		track := p.queue[0]
+		p.queue = p.queue[1:]
+		p.current = &track
 
-	track := p.queue[0]
-	p.queue = p.queue[1:]
-	p.current = &track
-
-	p.current.State = &player.TrackState{
-		Progress:     0,
-		PlayingStart: time.Now(),
+		p.current.State = &player.TrackState{
+			Progress:     0,
+			PlayingStart: time.Now(),
+		}
 	}
 
 	return p.current
@@ -191,10 +191,12 @@ func (p *GuildPlayer) SetLoop(v bool) {
 }
 
 func (p *GuildPlayer) Skip() *player.Track {
+	p.mu.Lock()
+
 	if p.current == nil {
+		p.mu.Unlock()
 		return nil
 	}
-	p.mu.Lock()
 	c := *p.current
 	p.mu.Unlock()
 

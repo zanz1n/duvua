@@ -129,6 +129,8 @@ func (m *PlayerManager) guildJob(p *GuildPlayer, cId uint64) error {
 	poolTries := 0
 	pausedTime := time.Duration(0)
 	track := (*player.Track)(nil)
+
+LOOP:
 	for {
 		if !p.IsLooping() {
 			if track = p.Pool(); track == nil {
@@ -136,7 +138,13 @@ func (m *PlayerManager) guildJob(p *GuildPlayer, cId uint64) error {
 				if poolTries >= MaxPoolTries {
 					break
 				}
-				time.Sleep(PoolTryDelay)
+				select {
+				case <-time.NewTimer(PoolTryDelay).C:
+				case evt := <-p.Interrupt:
+					if evt == InterruptStop {
+						break LOOP
+					}
+				}
 				continue
 			} else {
 				poolTries = 0
@@ -167,7 +175,6 @@ func (m *PlayerManager) guildJob(p *GuildPlayer, cId uint64) error {
 				break
 			} else if err == ErrVoiceConnectionClosed {
 				slog.Info("Queue voice connection closed", "guild_id", guildId)
-				m.m.OnQueueEnd(p)
 				break
 			} else {
 				slog.Error(
@@ -191,6 +198,8 @@ func (m *PlayerManager) guildJob(p *GuildPlayer, cId uint64) error {
 		"active_time", (time.Since(start) - pausedTime).Round(time.Millisecond),
 		"paused_time", pausedTime.Round(time.Millisecond),
 	)
+
+	time.Sleep(500 * time.Millisecond)
 
 	return nil
 }
