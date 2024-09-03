@@ -1,7 +1,9 @@
 package player
 
 import (
+	"errors"
 	"log/slog"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,9 +23,18 @@ func (h *Handler) FetchTrack(query string) (*player.TrackData, error) {
 	return h.f.Search(query)
 }
 
-func (h *Handler) AddTrack(guildId uint64, data player.AddTrackData) player.Track {
-	track := player.NewTrack(data.UserId, data.ChannelId, data.Data)
-	p := h.m.GetOrCreate(guildId, data.ChannelId)
+func (h *Handler) AddTrack(guildId uint64, data player.AddTrackData) (player.Track, error) {
+	userId, _ := atoi(data.UserId)
+	channelId, _ := atoi(data.ChannelId)
+
+	if userId == 0 || channelId == 0 {
+		return player.Track{}, errors.New(
+			"`user_id` and `channel_id` must be valid uint64",
+		)
+	}
+
+	track := player.NewTrack(userId, channelId, data.Data)
+	p := h.m.GetOrCreate(guildId, channelId)
 	p.AddTrack(track)
 
 	slog.Info(
@@ -34,7 +45,7 @@ func (h *Handler) AddTrack(guildId uint64, data player.AddTrackData) player.Trac
 		"duration", track.Data.Duration.Round(time.Millisecond),
 	)
 
-	return track
+	return track, nil
 }
 
 func (h *Handler) GetPlayingTrack(guildId uint64) (*player.Track, error) {
@@ -74,24 +85,22 @@ func (h *Handler) Stop(guildId uint64) error {
 	return nil
 }
 
-func (h *Handler) Pause(guildId uint64) error {
+func (h *Handler) Pause(guildId uint64) (bool, error) {
 	p, ok := h.m.Get(guildId)
 	if !ok {
-		return ErrNoActivePlayer
+		return false, ErrNoActivePlayer
 	}
 
-	p.Pause()
-	return nil
+	return p.Pause(), nil
 }
 
-func (h *Handler) Unpause(guildId uint64) error {
+func (h *Handler) Unpause(guildId uint64) (bool, error) {
 	p, ok := h.m.Get(guildId)
 	if !ok {
-		return ErrNoActivePlayer
+		return false, ErrNoActivePlayer
 	}
 
-	p.Unpause()
-	return nil
+	return p.Unpause(), nil
 }
 
 func (h *Handler) EnableLoop(guildId uint64, loop bool) (bool, error) {
@@ -148,4 +157,8 @@ func (h *Handler) RemoveTrack(guildId uint64, id uuid.UUID) (*player.Track, erro
 	}
 
 	return t, nil
+}
+
+func atoi(s string) (uint64, error) {
+	return strconv.ParseUint(s, 10, 0)
 }

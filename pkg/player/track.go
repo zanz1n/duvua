@@ -28,8 +28,9 @@ func NewTrack(userId, channelId uint64, data *TrackData) Track {
 }
 
 type TrackState struct {
-	Progress     time.Duration `json:"progress" validate:"required"`
+	Progress     time.Duration `json:"progress"`
 	PlayingStart time.Time     `json:"play_start" validate:"required"`
+	Looping      bool          `json:"looping"`
 }
 
 type TrackData struct {
@@ -41,8 +42,8 @@ type TrackData struct {
 }
 
 type AddTrackData struct {
-	UserId    uint64 `json:"user_id" validate:"required"`
-	ChannelId uint64 `json:"channel_id" validate:"required"`
+	UserId    string `json:"user_id" validate:"required,number"`
+	ChannelId string `json:"channel_id" validate:"required,number"`
 
 	Data *TrackData `json:"data" validate:"required"`
 }

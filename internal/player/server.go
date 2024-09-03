@@ -189,15 +189,17 @@ func handleErrRes(w http.ResponseWriter, err any) {
 	}
 }
 
-func resJson[T any](w http.ResponseWriter, data T, message string) error {
+func resJson[T any](w http.ResponseWriter, data T, message string, changed bool) error {
 	type dataBody[T any] struct {
 		Message string `json:"message"`
+		Changed bool   `json:"changed"`
 		Data    T      `json:"data"`
 	}
 
 	b, err := json.Marshal(dataBody[T]{
 		Message: message,
 		Data:    data,
+		Changed: changed,
 	})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

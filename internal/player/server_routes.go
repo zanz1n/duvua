@@ -9,6 +9,8 @@ import (
 	"github.com/zanz1n/duvua-bot/pkg/player"
 )
 
+var NILD = (*struct{})(nil)
+
 func (s *HttpServer) getTrack(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 
@@ -25,7 +27,7 @@ func (s *HttpServer) getTrack(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	return resJson(w, data, "success")
+	return resJson(w, data, "success", false)
 }
 
 func (s *HttpServer) getCurrentTrack(w http.ResponseWriter, r *http.Request) error {
@@ -43,7 +45,7 @@ func (s *HttpServer) getCurrentTrack(w http.ResponseWriter, r *http.Request) err
 		return err
 	}
 
-	return resJson(w, track, "track found")
+	return resJson(w, track, "track found", false)
 }
 
 func (s *HttpServer) getTrackById(w http.ResponseWriter, r *http.Request) error {
@@ -67,7 +69,7 @@ func (s *HttpServer) getTrackById(w http.ResponseWriter, r *http.Request) error 
 		return err
 	}
 
-	return resJson(w, track, "found track")
+	return resJson(w, track, "found track", false)
 }
 
 func (s *HttpServer) getAllTracks(w http.ResponseWriter, r *http.Request) error {
@@ -86,7 +88,7 @@ func (s *HttpServer) getAllTracks(w http.ResponseWriter, r *http.Request) error 
 	}
 
 	msg := fmt.Sprintf("%d tracks in queue", len(tracks))
-	return resJson(w, tracks, msg)
+	return resJson(w, tracks, msg, false)
 }
 
 func (s *HttpServer) postTrack(w http.ResponseWriter, r *http.Request) error {
@@ -104,8 +106,13 @@ func (s *HttpServer) postTrack(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	track := s.h.AddTrack(guildId, data)
-	return resJson(w, track, "added track to queue")
+	track, err := s.h.AddTrack(guildId, data)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return err
+	}
+
+	return resJson(w, track, "added track to queue", true)
 }
 
 func (s *HttpServer) putSkipTrack(w http.ResponseWriter, r *http.Request) error {
@@ -122,7 +129,7 @@ func (s *HttpServer) putSkipTrack(w http.ResponseWriter, r *http.Request) error 
 		w.WriteHeader(http.StatusNotFound)
 		return err
 	}
-	return resJson(w, track, "skipped track")
+	return resJson(w, track, "skipped track", track != nil)
 }
 
 func (s *HttpServer) putPauseQueue(w http.ResponseWriter, r *http.Request) error {
@@ -134,12 +141,13 @@ func (s *HttpServer) putPauseQueue(w http.ResponseWriter, r *http.Request) error
 		return err
 	}
 
-	if err = s.h.Pause(guildId); err != nil {
+	changed, err := s.h.Pause(guildId)
+	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return err
 	}
 
-	return resJson(w, (*struct{})(nil), "paused queue")
+	return resJson(w, NILD, "paused queue", changed)
 }
 
 func (s *HttpServer) putUnpauseQueue(w http.ResponseWriter, r *http.Request) error {
@@ -151,12 +159,13 @@ func (s *HttpServer) putUnpauseQueue(w http.ResponseWriter, r *http.Request) err
 		return err
 	}
 
-	if err = s.h.Unpause(guildId); err != nil {
+	changed, err := s.h.Unpause(guildId)
+	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return err
 	}
 
-	return resJson(w, (*struct{})(nil), "unpaused queue")
+	return resJson(w, NILD, "unpaused queue", changed)
 }
 
 func (s *HttpServer) putSetQueueLoop(w http.ResponseWriter, r *http.Request) error {
@@ -177,14 +186,14 @@ func (s *HttpServer) putSetQueueLoop(w http.ResponseWriter, r *http.Request) err
 		)
 	}
 
-	beforeEnable, err := s.h.EnableLoop(guildId, enable)
+	changed, err := s.h.EnableLoop(guildId, enable)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return err
 	}
 
 	msg := "loop "
-	if beforeEnable == enable {
+	if !changed {
 		msg += "already "
 	}
 	if enable {
@@ -193,7 +202,7 @@ func (s *HttpServer) putSetQueueLoop(w http.ResponseWriter, r *http.Request) err
 		msg += "disabled"
 	}
 
-	return resJson(w, (*struct{})(nil), msg)
+	return resJson(w, NILD, msg, changed)
 }
 
 func (s *HttpServer) putSetQueueVolume(w http.ResponseWriter, r *http.Request) error {
@@ -214,14 +223,15 @@ func (s *HttpServer) putSetQueueVolume(w http.ResponseWriter, r *http.Request) e
 		)
 	}
 
-	beforeVolume, err := s.h.SetVolume(guildId, uint8(volume))
+	newVolume := uint8(volume)
+	beforeVolume, err := s.h.SetVolume(guildId, newVolume)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return err
 	}
 
 	msg := fmt.Sprintf("volume set from %d to %d", beforeVolume, volume)
-	return resJson(w, (*struct{})(nil), msg)
+	return resJson(w, NILD, msg, beforeVolume != newVolume)
 }
 
 func (s *HttpServer) deleteQueue(w http.ResponseWriter, r *http.Request) error {
@@ -238,7 +248,7 @@ func (s *HttpServer) deleteQueue(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	return resJson(w, (*struct{})(nil), "queue stopped")
+	return resJson(w, NILD, "queue stopped and deleted", true)
 }
 
 func (s *HttpServer) deleteTrackById(w http.ResponseWriter, r *http.Request) error {
@@ -262,5 +272,5 @@ func (s *HttpServer) deleteTrackById(w http.ResponseWriter, r *http.Request) err
 		return err
 	}
 
-	return resJson(w, track, "track removed")
+	return resJson(w, track, "track removed", track != nil)
 }

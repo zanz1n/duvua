@@ -109,9 +109,7 @@ func (p *GuildPlayer) Size() int {
 }
 
 func (p *GuildPlayer) IsEmpty() bool {
-	empty := p.Size() == 0
-
-	return empty
+	return p.Size() == 0
 }
 
 func (p *GuildPlayer) AddTrack(track player.Track) {
@@ -180,6 +178,12 @@ func (p *GuildPlayer) IsLooping() bool {
 
 func (p *GuildPlayer) SetLoop(v bool) {
 	p.loop.Store(v)
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.current != nil && p.current.State != nil {
+		p.current.State.Looping = v
+	}
 }
 
 func (p *GuildPlayer) Skip() *player.Track {
@@ -203,16 +207,20 @@ func (p *GuildPlayer) Paused() bool {
 	return p.paused.Load()
 }
 
-func (p *GuildPlayer) Pause() {
+func (p *GuildPlayer) Pause() bool {
 	if !p.paused.Load() {
 		p.paused.Store(true)
 		p.Interrupt <- InterruptPause
+		return true
 	}
+	return false
 }
 
-func (p *GuildPlayer) Unpause() {
+func (p *GuildPlayer) Unpause() bool {
 	if p.paused.Load() {
 		p.paused.Store(false)
 		p.Interrupt <- InterruptUnpause
+		return true
 	}
+	return false
 }
