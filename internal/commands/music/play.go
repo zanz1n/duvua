@@ -2,7 +2,6 @@ package musiccmds
 
 import (
 	"fmt"
-	"slices"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua-bot/internal/errors"
@@ -64,7 +63,7 @@ func (c *PlayCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate)
 	}
 
 	if !canPlay(i.Member, cfg) {
-		return errors.New("você não ter permissão para tocar músicas no servidor")
+		return errors.New("você não tem permissão para tocar músicas no servidor")
 	}
 
 	vs, err := s.State.VoiceState(i.GuildID, i.Member.User.ID)
@@ -109,27 +108,9 @@ func (c *PlayCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate)
 					Label:    "Remover",
 					Emoji:    emoji("✖️"),
 					Style:    discordgo.DangerButton,
-					CustomID: "music/remove/" + track.ID.String(),
+					CustomID: "queue/remove/" + track.ID.String(),
 				},
 			},
 		}},
 	})
-}
-
-func canPlay(m *discordgo.Member, cfg *music.MusicConfig) bool {
-	switch cfg.PlayMode {
-	case music.MusicPermissionAll:
-		return true
-	case music.MusicPermissionAdm:
-		return utils.HasPerm(m.Permissions, discordgo.PermissionAdministrator)
-	case music.MusicPermissionDJ:
-		return utils.HasPerm(m.Permissions, discordgo.PermissionAdministrator) ||
-			slices.Contains(m.Roles, cfg.DjRole)
-	default:
-		return false
-	}
-}
-
-func emoji(name string) *discordgo.ComponentEmoji {
-	return &discordgo.ComponentEmoji{Name: name}
 }
