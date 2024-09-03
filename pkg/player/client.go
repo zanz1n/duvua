@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -245,13 +244,11 @@ func (h *HttpClient) request(
 
 	if resData != nil {
 		dataB := dataBody{Data: resData}
-		slog.Debug("Res data before serialization", "data", dataB)
 		if err = json.Unmarshal(resBuf, &dataB); err != nil {
 			return false, errors.Unexpected(
 				"track client: unmarshal response: " + err.Error(),
 			)
 		}
-		slog.Debug("Res data after serialization", "data", dataB)
 		if err = h.validate.Struct(&dataB); err != nil {
 			return false, errors.Unexpected(
 				"track client: validate response: " + err.Error(),
