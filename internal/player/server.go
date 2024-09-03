@@ -140,7 +140,7 @@ func (s *HttpServer) parseReqBody(body io.Reader, v any) error {
 
 func getUuidPathParam(r *http.Request, name string) (uuid.UUID, error) {
 	pv := r.PathValue(name)
-	if pv != "" {
+	if pv == "" {
 		return uuid.Nil, errors.Newf("path parameter `%s` is required", name)
 	}
 
@@ -154,7 +154,7 @@ func getUuidPathParam(r *http.Request, name string) (uuid.UUID, error) {
 
 func getUintPathParam(r *http.Request, name string) (uint64, error) {
 	pv := r.PathValue(name)
-	if pv != "" {
+	if pv == "" {
 		return 0, errors.Newf("path parameter `%s` is required", name)
 	}
 
