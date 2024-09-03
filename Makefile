@@ -4,9 +4,6 @@ run:
 run-player:
 	CGO_ENABLED=0 go run cmd/player/main.go
 
-run-player:
-	CGO_ENABLED=0 go run cmd/player/main.go
-
 build:
 	CGO_ENABLED=1 go build \
 		-ldflags "-s -w -X github.com/zanz1n/duvua-bot/config.Version=release-$(shell git rev-parse --short HEAD)" \
