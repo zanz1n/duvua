@@ -54,6 +54,29 @@ func (r *PgMusicConfigRepository) GetByGuildId(guildId string) (*MusicConfig, er
 	return r.fetch(Query, guildId2)
 }
 
+// GetOrDefault implements MusicConfigRepository.
+func (r *PgMusicConfigRepository) GetOrDefault(guildId string) (*MusicConfig, error) {
+	c, err := r.GetByGuildId(guildId)
+	if err != nil {
+		return nil, err
+	}
+
+	if c == nil {
+		now := time.Now()
+		c = &MusicConfig{
+			GuildId:     guildId,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+			Enabled:     DefaultConfigEnabled,
+			PlayMode:    DefaultConfigPlayMode,
+			ControlMode: DefaultConfigControlMode,
+			DjRole:      "",
+		}
+	}
+
+	return c, nil
+}
+
 // UpdateControlMode implements MusicConfigRepository.
 func (r *PgMusicConfigRepository) UpdateControlMode(
 	guildId string,

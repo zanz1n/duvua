@@ -3,6 +3,8 @@ package music
 type MusicConfigRepository interface {
 	// The returned MusicConfig clould be nil
 	GetByGuildId(guildId string) (*MusicConfig, error)
+	// The returned MusicConfig must not be nil if err != nil
+	GetOrDefault(guildId string) (*MusicConfig, error)
 
 	// The returned MusicConfig must not be nil if err != nil
 	Create(data MusicConfigCreateData) (*MusicConfig, error)
