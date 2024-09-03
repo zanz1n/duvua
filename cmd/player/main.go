@@ -49,7 +49,7 @@ func init() {
 	flag.Parse()
 	if !*jsonLogs && !*noBanner {
 		fmt.Printf(
-			DuvuaBanner,
+			DuvuaBanner[1:],
 			time.Now().Year(),
 			config.Version,
 			runtime.Version(),
