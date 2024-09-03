@@ -136,25 +136,6 @@ func canPlay(m *discordgo.Member, cfg *music.MusicConfig) bool {
 	}
 }
 
-func fmtDuration(d time.Duration) string {
-	if 0 > d {
-		return "0s"
-	}
-
-	hour := d / time.Hour
-	minute := (d - (hour * time.Hour)) / time.Minute
-	second := (d - (hour * time.Hour) - (minute * time.Minute)) / time.Second
-
-	switch {
-	case hour == 0 && minute == 0:
-		return fmt.Sprintf("%ds", second)
-	case hour == 0:
-		return fmt.Sprintf("%dm:%ds", minute, second)
-	default:
-		return fmt.Sprintf("%dh:%dm:%ds", hour, minute, second)
-	}
-}
-
 func emoji(name string) *discordgo.ComponentEmoji {
 	return &discordgo.ComponentEmoji{Name: name}
 }
