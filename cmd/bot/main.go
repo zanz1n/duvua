@@ -171,6 +171,7 @@ func main() {
 	m.Add(musiccmds.NewPlayCommand(musicRepository, musicClient))
 	m.Add(musiccmds.NewSkipCommand(musicRepository, musicClient))
 	m.Add(musiccmds.NewStopCommand(musicRepository, musicClient))
+	m.Add(musiccmds.NewQueueCommand(musicRepository, musicClient))
 
 	m.AutoHandle(s)
 	s.AddHandlerOnce(events.NewReadyEvent(m).Handle)
