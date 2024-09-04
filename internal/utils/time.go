@@ -6,7 +6,7 @@ import (
 )
 
 func FmtDuration(d time.Duration) string {
-	if 0 > d {
+	if 0 >= d {
 		return "0s"
 	}
 
