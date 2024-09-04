@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/zanz1n/duvua-bot/pkg/player"
+	uatomic "go.uber.org/atomic"
 )
 
 type InterruptType uint8
@@ -130,7 +131,7 @@ func (p *GuildPlayer) Pool() *player.Track {
 		p.current = &track
 
 		p.current.State = &player.TrackState{
-			Progress:     0,
+			Progress:     uatomic.NewDuration(0),
 			PlayingStart: time.Now(),
 		}
 	}
@@ -140,6 +141,16 @@ func (p *GuildPlayer) Pool() *player.Track {
 
 func (p *GuildPlayer) RemoveTrack(id uuid.UUID) (*player.Track, bool) {
 	p.mu.Lock()
+
+	if p.current != nil {
+		if p.current.ID == id {
+			c := *p.current
+			p.mu.Unlock()
+
+			p.Skip()
+			return &c, true
+		}
+	}
 	defer p.mu.Unlock()
 
 	index := -1
@@ -162,10 +173,18 @@ func (p *GuildPlayer) GetQueue() []player.Track {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	dst := make([]player.Track, len(p.queue))
-	copy(dst, p.queue)
-
-	return dst
+	if p.current == nil {
+		dst := make([]player.Track, len(p.queue))
+		copy(dst, p.queue)
+		return dst
+	} else {
+		dst := make([]player.Track, len(p.queue)+1)
+		dst[0] = *p.current
+		for i, track := range p.queue {
+			dst[i+1] = track
+		}
+		return dst
+	}
 }
 
 func (p *GuildPlayer) GetMessageChannel() uint64 {

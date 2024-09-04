@@ -169,7 +169,7 @@ LOOP:
 			continue
 		}
 
-		interrupt, pt, err := m.playTrack(vc, p, stream)
+		interrupt, pt, err := m.playTrack(vc, p, track, stream)
 		if err != nil {
 			if err == ErrTooMuchTimePaused {
 				break
@@ -207,6 +207,7 @@ LOOP:
 func (m *PlayerManager) playTrack(
 	vc *discordgo.VoiceConnection,
 	p *GuildPlayer,
+	track *player.Track,
 	stream Streamer,
 ) (InterruptType, time.Duration, error) {
 	const MaxPausedTime = 5 * 60 * time.Second
@@ -217,7 +218,9 @@ func (m *PlayerManager) playTrack(
 	timeout := time.NewTicker(time.Second)
 	defer timeout.Stop()
 
+	var readStart time.Time
 	for {
+		readStart = time.Now()
 		packet, err := stream.ReadOpus()
 		if err != nil {
 			if err == io.EOF {
@@ -231,6 +234,7 @@ func (m *PlayerManager) playTrack(
 		select {
 		case vc.OpusSend <- packet:
 			timeout.Reset(time.Second)
+			track.State.Progress.Add(time.Since(readStart))
 
 		case evt := <-p.Interrupt:
 			timeout.Reset(time.Second)

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.uber.org/atomic"
 )
 
 type Track struct {
@@ -28,9 +29,9 @@ func NewTrack(userId, channelId uint64, data *TrackData) Track {
 }
 
 type TrackState struct {
-	Progress     time.Duration `json:"progress"`
-	PlayingStart time.Time     `json:"play_start" validate:"required"`
-	Looping      bool          `json:"looping"`
+	Progress     *atomic.Duration `json:"progress"`
+	PlayingStart time.Time        `json:"play_start" validate:"required"`
+	Looping      bool             `json:"looping"`
 }
 
 type TrackData struct {
