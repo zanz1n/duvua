@@ -215,8 +215,6 @@ func (m *PlayerManager) playTrack(
 	defer stream.Close()
 
 	pausedTime := time.Duration(0)
-	timeout := time.NewTicker(time.Second)
-	defer timeout.Stop()
 
 	var readStart time.Time
 	for {
@@ -233,11 +231,9 @@ func (m *PlayerManager) playTrack(
 
 		select {
 		case vc.OpusSend <- packet:
-			timeout.Reset(time.Second)
 			track.State.Progress.Add(time.Since(readStart))
 
 		case evt := <-p.Interrupt:
-			timeout.Reset(time.Second)
 			if evt != InterruptPause {
 				return evt, pausedTime, nil
 			}
@@ -255,7 +251,7 @@ func (m *PlayerManager) playTrack(
 				return InterruptNone, pausedTime, ErrTooMuchTimePaused
 			}
 
-		case <-timeout.C:
+		case <-time.NewTimer(time.Second).C:
 			return InterruptNone, pausedTime, ErrVoiceConnectionClosed
 		}
 	}
