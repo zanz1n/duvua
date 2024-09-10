@@ -57,6 +57,11 @@ func (c *PlayCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate)
 		return errors.New("esse comando só pode ser utilizado dentro de um servidor")
 	}
 
+	query, err := i.GetStringOption("query", true)
+	if err != nil {
+		return err
+	}
+
 	cfg, err := c.r.GetOrDefault(i.GuildID)
 	if err != nil {
 		return err
@@ -73,11 +78,6 @@ func (c *PlayCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate)
 				"você precisa estar em um canal de voz para usar esse comando",
 			)
 		}
-		return err
-	}
-
-	query, err := i.GetStringOption("query", true)
-	if err != nil {
 		return err
 	}
 
