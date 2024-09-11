@@ -89,6 +89,8 @@ func main() {
 	manager := player.NewPlayerManager(s, fetcher)
 	handler := player.NewHandler(manager, fetcher)
 
+	defer manager.Close()
+
 	mux := http.NewServeMux()
 
 	player.NewHttpServer(handler, cfg.Player.Password).Route(mux)

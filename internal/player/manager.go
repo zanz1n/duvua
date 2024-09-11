@@ -61,6 +61,15 @@ func (m *PlayerManager) GetOrCreate(id, channelId uint64) *GuildPlayer {
 	return p
 }
 
+func (m *PlayerManager) Close() {
+	m.mu.Lock()
+	for id, p := range m.players {
+		p.Stop()
+		delete(m.players, id)
+	}
+	defer m.mu.Unlock()
+}
+
 func (m *PlayerManager) Remove(id uint64) {
 	m.mu.Lock()
 	delete(m.players, id)
