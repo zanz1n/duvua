@@ -5,8 +5,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/jogramming/dca"
 	"github.com/zanz1n/duvua-bot/internal/errors"
+	"github.com/zanz1n/duvua-bot/internal/player/encoder"
 	"github.com/zanz1n/duvua-bot/pkg/player"
 )
 
@@ -90,43 +90,11 @@ func (f *TrackFetcher) Fetch(query string) (Streamer, error) {
 var _ Streamer = &readerStreamer{}
 
 type readerStreamer struct {
-	rc   io.ReadCloser
-	sess *dca.EncodeSession
+	*encoder.Session
 }
 
 func newReaderStreamer(r io.ReadCloser) (*readerStreamer, error) {
-	opts := &dca.EncodeOptions{
-		Volume:           256,
-		Channels:         2,
-		FrameRate:        48000,
-		FrameDuration:    20,
-		Bitrate:          64,
-		Application:      dca.AudioApplicationAudio,
-		CompressionLevel: 10,
-		PacketLoss:       1,
-		BufferedFrames:   100, // At 20ms frames that's 2s
-		VBR:              true,
-		StartTime:        0,
-		Threads:          1,
-	}
-
-	ess, err := dca.EncodeMem(r, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	return &readerStreamer{rc: r, sess: ess}, nil
-}
-
-// Close implements Streamer.
-func (s *readerStreamer) Close() error {
-	s.sess.Cleanup()
-	return s.rc.Close()
-}
-
-// ReadOpus implements Streamer.
-func (s *readerStreamer) ReadOpus() ([]byte, error) {
-	return s.sess.OpusFrame()
+	return &readerStreamer{encoder.NewSession(r, nil)}, nil
 }
 
 // SetSpeed implements Streamer.
