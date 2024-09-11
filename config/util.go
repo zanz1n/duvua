@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/sethvargo/go-envconfig"
 )
 
@@ -21,6 +22,8 @@ func GetConfig() *Config {
 }
 
 func InitConfig() error {
+	godotenv.Load()
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 

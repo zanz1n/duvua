@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/joho/godotenv"
 	"github.com/zanz1n/duvua-bot/config"
 	"github.com/zanz1n/duvua-bot/internal/player"
 )
@@ -65,8 +64,6 @@ func init() {
 }
 
 func init() {
-	godotenv.Load()
-
 	config := config.GetConfig()
 	if *debug {
 		config.LogLevel = slog.LevelDebug

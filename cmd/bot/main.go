@@ -20,7 +20,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jackc/pgx/v5/tracelog"
-	"github.com/joho/godotenv"
 	"github.com/zanz1n/duvua-bot/config"
 	"github.com/zanz1n/duvua-bot/internal/anime"
 	configcmds "github.com/zanz1n/duvua-bot/internal/commands/config"
@@ -89,8 +88,6 @@ func init() {
 }
 
 func init() {
-	godotenv.Load()
-
 	config := config.GetConfig()
 	if *debug {
 		config.LogLevel = slog.LevelDebug
