@@ -89,7 +89,7 @@ func (m *PlayerManager) guildJobLaunch(p *GuildPlayer, channelId uint64) {
 	defer func() {
 		if err := recover(); err != nil {
 			slog.Error(
-				"Panic catched while handling queue",
+				"PANIC: Catched while handling queue",
 				"guild_id", p.GuildId,
 				"error", err,
 			)

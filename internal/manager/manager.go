@@ -103,7 +103,7 @@ func (m *Manager) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	defer func() {
 		if err := recover(); err != nil {
 			slog.Error(
-				"Catched panic while executing command",
+				"PANIC: Catched while executing command",
 				"error", err,
 				"took", time.Since(startTime),
 			)
