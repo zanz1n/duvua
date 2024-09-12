@@ -24,28 +24,21 @@ jobs:
 
       - name: Build bot
         env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 1
-          SRC_PATH: github.com/zanz1n/duvua-bot
+          REF: ${{ github.ref }}
         run: |
-          GOARCH=amd64 make build-bot
-          mv bin/duvua-bot bin/duvua-bot-amd64
+          GOARCH=amd64 go build -o bin/duvua-bot-amd64 -ldflags "-s -w -X github.com/zanz1n/duvua-bot/config.Version=${REF}" cmd/bot/main.go
           chmod 755 bin/duvua-bot-amd64
 
       - name: Build player
         env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
-          SRC_PATH: github.com/zanz1n/duvua-bot
+          REF: ${{ github.ref }}
         run: |
-          GOARCH=amd64 make build-player
-          mv bin/duvua-player bin/duvua-player-amd64
+          GOARCH=amd64 go build -o bin/duvua-player-amd64 -ldflags "-s -w -X github.com/zanz1n/duvua-bot/config.Version=${REF}" cmd/player/main.go
           chmod 755 bin/duvua-player-amd64
 
-          GOARCH=arm64 make build-player
-          mv bin/duvua-player bin/duvua-player-arm64
+          GOARCH=arm64 go build -o bin/duvua-player-arm64 -ldflags "-s -w -X github.com/zanz1n/duvua-bot/config.Version=${REF}" cmd/player/main.go
           chmod 755 bin/duvua-player-arm64
 
       - name: Create checksum
@@ -56,27 +49,13 @@ jobs:
           echo -e "\n#### SHA256 Checksum\n\`\`\`\n$SUM1\n$SUM2\n$SUM3\n\`\`\`\n" >> ./RELEASE_CHANGELOG
           echo -e "$SUM1\n$SUM2\n$SUM3" > checksums.txt
 
-      - name: Create release branch
-        env:
-          REF: ${{ github.ref }}
-        run: |
-          BRANCH=release/${REF:10}
-          git config --local user.email "ci@duvua.izan.com.br"
-          git config --local user.name "Duvua CI"
-          git checkout -b $BRANCH
-          git push -u origin $BRANCH
-          sed -i "s/var Version = \".*\"/var Version = \"${REF:11}\"/" config/const.go
-          git add config/const.go
-          git commit -m "bump version for release"
-          git push
-
       - name: Create release
         id: create_release
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          draft: true
+          draft: false
           prerelease: ${{ contains(github.ref, 'rc') || contains(github.ref, 'beta') || contains(github.ref, 'alpha') }}
           body_path: ./RELEASE_CHANGELOG
 
