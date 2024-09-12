@@ -2,8 +2,8 @@ package funcmds
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/zanz1n/duvua-bot/internal/manager"
-	"github.com/zanz1n/duvua-bot/internal/utils"
+	"github.com/zanz1n/duvua/internal/manager"
+	"github.com/zanz1n/duvua/internal/utils"
 )
 
 var avatarCommandData = discordgo.ApplicationCommand{

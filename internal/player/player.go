@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/zanz1n/duvua-bot/pkg/player"
+	"github.com/zanz1n/duvua/pkg/player"
 	uatomic "go.uber.org/atomic"
 )
 

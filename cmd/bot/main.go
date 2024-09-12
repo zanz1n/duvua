@@ -20,25 +20,25 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jackc/pgx/v5/tracelog"
-	"github.com/zanz1n/duvua-bot/config"
-	"github.com/zanz1n/duvua-bot/internal/anime"
-	configcmds "github.com/zanz1n/duvua-bot/internal/commands/config"
-	funcmds "github.com/zanz1n/duvua-bot/internal/commands/fun"
-	infocmds "github.com/zanz1n/duvua-bot/internal/commands/info"
-	modcmds "github.com/zanz1n/duvua-bot/internal/commands/moderation"
-	musiccmds "github.com/zanz1n/duvua-bot/internal/commands/music"
-	ticketcmds "github.com/zanz1n/duvua-bot/internal/commands/ticket"
-	"github.com/zanz1n/duvua-bot/internal/events"
-	"github.com/zanz1n/duvua-bot/internal/lang"
-	"github.com/zanz1n/duvua-bot/internal/logger"
-	"github.com/zanz1n/duvua-bot/internal/manager"
-	"github.com/zanz1n/duvua-bot/internal/music"
-	"github.com/zanz1n/duvua-bot/internal/ticket"
-	"github.com/zanz1n/duvua-bot/internal/utils"
-	"github.com/zanz1n/duvua-bot/internal/welcome"
-	"github.com/zanz1n/duvua-bot/pkg/player"
-	embedsql "github.com/zanz1n/duvua-bot/sql"
-	staticembed "github.com/zanz1n/duvua-bot/static"
+	"github.com/zanz1n/duvua/config"
+	"github.com/zanz1n/duvua/internal/anime"
+	configcmds "github.com/zanz1n/duvua/internal/commands/config"
+	funcmds "github.com/zanz1n/duvua/internal/commands/fun"
+	infocmds "github.com/zanz1n/duvua/internal/commands/info"
+	modcmds "github.com/zanz1n/duvua/internal/commands/moderation"
+	musiccmds "github.com/zanz1n/duvua/internal/commands/music"
+	ticketcmds "github.com/zanz1n/duvua/internal/commands/ticket"
+	"github.com/zanz1n/duvua/internal/events"
+	"github.com/zanz1n/duvua/internal/lang"
+	"github.com/zanz1n/duvua/internal/logger"
+	"github.com/zanz1n/duvua/internal/manager"
+	"github.com/zanz1n/duvua/internal/music"
+	"github.com/zanz1n/duvua/internal/ticket"
+	"github.com/zanz1n/duvua/internal/utils"
+	"github.com/zanz1n/duvua/internal/welcome"
+	"github.com/zanz1n/duvua/pkg/player"
+	embedsql "github.com/zanz1n/duvua/sql"
+	staticembed "github.com/zanz1n/duvua/static"
 )
 
 const DuvuaBanner = `
@@ -52,8 +52,8 @@ Copyright © 2022 - %d Izan Rodrigues
 
 Version: %s
      GO: %s
- Source: https://github.com/zanz1n/duvua-bot
-License: https://github.com/zanz1n/duvua-bot/blob/main/LICENSE
+ Source: https://github.com/zanz1n/duvua
+License: https://github.com/zanz1n/duvua/blob/main/LICENSE
 
 This software is made available under the terms of the AGPL-3.0 license.
 

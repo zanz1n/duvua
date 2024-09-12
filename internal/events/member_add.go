@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/zanz1n/duvua-bot/internal/errors"
-	"github.com/zanz1n/duvua-bot/internal/welcome"
-	staticembed "github.com/zanz1n/duvua-bot/static"
+	"github.com/zanz1n/duvua/internal/errors"
+	"github.com/zanz1n/duvua/internal/welcome"
+	staticembed "github.com/zanz1n/duvua/static"
 )
 
 type MemberAddEvent struct {

@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/zanz1n/duvua-bot/config"
-	"github.com/zanz1n/duvua-bot/internal/logger"
-	"github.com/zanz1n/duvua-bot/internal/player"
+	"github.com/zanz1n/duvua/config"
+	"github.com/zanz1n/duvua/internal/logger"
+	"github.com/zanz1n/duvua/internal/player"
 )
 
 const DuvuaBanner = `
@@ -30,8 +30,8 @@ Copyright © 2022 - %d Izan Rodrigues
 
 Version: %s
      GO: %s
- Source: https://github.com/zanz1n/duvua-bot
-License: https://github.com/zanz1n/duvua-bot/blob/main/LICENSE
+ Source: https://github.com/zanz1n/duvua
+License: https://github.com/zanz1n/duvua/blob/main/LICENSE
 
 This software is made available under the terms of the AGPL-3.0 license.
 

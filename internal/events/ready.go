@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/zanz1n/duvua-bot/config"
-	"github.com/zanz1n/duvua-bot/internal/manager"
-	"github.com/zanz1n/duvua-bot/internal/utils"
+	"github.com/zanz1n/duvua/config"
+	"github.com/zanz1n/duvua/internal/manager"
+	"github.com/zanz1n/duvua/internal/utils"
 )
 
 type ReadyEvent struct {

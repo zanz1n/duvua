@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/zanz1n/duvua-bot/internal/errors"
-	"github.com/zanz1n/duvua-bot/pkg/player"
+	"github.com/zanz1n/duvua/internal/errors"
+	"github.com/zanz1n/duvua/pkg/player"
 )
 
 var NILD = (*struct{})(nil)

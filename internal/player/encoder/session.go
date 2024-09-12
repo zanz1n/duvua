@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/jonas747/ogg"
-	"github.com/zanz1n/duvua-bot/internal/errors"
+	"github.com/zanz1n/duvua/internal/errors"
 )
 
 type Session struct {

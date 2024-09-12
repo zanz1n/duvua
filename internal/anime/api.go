@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/zanz1n/duvua-bot/internal/errors"
-	"github.com/zanz1n/duvua-bot/internal/lang"
+	"github.com/zanz1n/duvua/internal/errors"
+	"github.com/zanz1n/duvua/internal/lang"
 )
 
 func NewAnimeApi(client *http.Client) *AnimeApi {

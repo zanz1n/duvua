@@ -14,7 +14,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/zanz1n/duvua-bot/internal/errors"
+	"github.com/zanz1n/duvua/internal/errors"
 )
 
 type dataBody struct {

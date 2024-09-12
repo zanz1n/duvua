@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/zanz1n/duvua-bot/internal/errors"
-	"github.com/zanz1n/duvua-bot/internal/utils"
-	"github.com/zanz1n/duvua-bot/pkg/player"
+	"github.com/zanz1n/duvua/internal/errors"
+	"github.com/zanz1n/duvua/internal/utils"
+	"github.com/zanz1n/duvua/pkg/player"
 )
 
 type PlayerMessenger struct {

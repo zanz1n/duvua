@@ -3,7 +3,7 @@ package encoder
 import (
 	"fmt"
 
-	"github.com/zanz1n/duvua-bot/config"
+	"github.com/zanz1n/duvua/config"
 )
 
 var DefaultEncodeOptions = &EncodeOptions{

@@ -27,7 +27,7 @@ jobs:
           CGO_ENABLED: 1
           REF: ${{ github.ref }}
         run: |
-          GOARCH=amd64 go build -o bin/duvua-bot-amd64 -ldflags "-s -w -X github.com/zanz1n/duvua-bot/config.Version=${REF:11}" cmd/bot/main.go
+          GOARCH=amd64 go build -o bin/duvua-bot-amd64 -ldflags "-s -w -X github.com/zanz1n/duvua/config.Version=${REF:11}" cmd/bot/main.go
           chmod 755 bin/duvua-bot-amd64
 
       - name: Build player
@@ -35,10 +35,10 @@ jobs:
           CGO_ENABLED: 0
           REF: ${{ github.ref }}
         run: |
-          GOARCH=amd64 go build -o bin/duvua-player-amd64 -ldflags "-s -w -X github.com/zanz1n/duvua-bot/config.Version=${REF:11}" cmd/player/main.go
+          GOARCH=amd64 go build -o bin/duvua-player-amd64 -ldflags "-s -w -X github.com/zanz1n/duvua/config.Version=${REF:11}" cmd/player/main.go
           chmod 755 bin/duvua-player-amd64
 
-          GOARCH=arm64 go build -o bin/duvua-player-arm64 -ldflags "-s -w -X github.com/zanz1n/duvua-bot/config.Version=${REF:11}" cmd/player/main.go
+          GOARCH=arm64 go build -o bin/duvua-player-arm64 -ldflags "-s -w -X github.com/zanz1n/duvua/config.Version=${REF:11}" cmd/player/main.go
           chmod 755 bin/duvua-player-arm64
 
       - name: Create checksum

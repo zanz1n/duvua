@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/zanz1n/duvua-bot/internal/errors"
-	"github.com/zanz1n/duvua-bot/internal/ticket"
+	"github.com/zanz1n/duvua/internal/errors"
+	"github.com/zanz1n/duvua/internal/ticket"
 )
 
 type ChannelDeleteEvent struct {

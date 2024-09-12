@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/zanz1n/duvua-bot/internal/kv"
+	"github.com/zanz1n/duvua/internal/kv"
 )
 
 func TestSetValue(t *testing.T) {

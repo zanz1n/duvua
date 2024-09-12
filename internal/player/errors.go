@@ -1,6 +1,6 @@
 package player
 
-import "github.com/zanz1n/duvua-bot/internal/errors"
+import "github.com/zanz1n/duvua/internal/errors"
 
 var (
 	ErrTooMuchTimePaused     = errors.New("too much time paused")

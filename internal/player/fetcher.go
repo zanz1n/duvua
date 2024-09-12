@@ -5,9 +5,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/zanz1n/duvua-bot/internal/errors"
-	"github.com/zanz1n/duvua-bot/internal/player/encoder"
-	"github.com/zanz1n/duvua-bot/pkg/player"
+	"github.com/zanz1n/duvua/internal/errors"
+	"github.com/zanz1n/duvua/internal/player/encoder"
+	"github.com/zanz1n/duvua/pkg/player"
 )
 
 type TrackSpeed int8

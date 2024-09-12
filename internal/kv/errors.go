@@ -1,6 +1,6 @@
 package kv
 
-import "github.com/zanz1n/duvua-bot/internal/errors"
+import "github.com/zanz1n/duvua/internal/errors"
 
 var (
 	ErrNotStringValue = errors.Unexpected("stored value is not of string type")

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/zanz1n/duvua-bot/internal/errors"
+	"github.com/zanz1n/duvua/internal/errors"
 )
 
 type StringInt int64

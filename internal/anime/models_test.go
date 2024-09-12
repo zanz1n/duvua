@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/assert"
-	"github.com/zanz1n/duvua-bot/internal/anime"
+	"github.com/zanz1n/duvua/internal/anime"
 )
 
 //go:embed *.json

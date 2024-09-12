@@ -1,6 +1,6 @@
 package welcome
 
-import "github.com/zanz1n/duvua-bot/internal/errors"
+import "github.com/zanz1n/duvua/internal/errors"
 
 var (
 	ErrInvalidId        = errors.Unexpected("welcome: id is not a valid int64")

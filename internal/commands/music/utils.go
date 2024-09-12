@@ -4,9 +4,9 @@ import (
 	"slices"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/zanz1n/duvua-bot/internal/errors"
-	"github.com/zanz1n/duvua-bot/internal/music"
-	"github.com/zanz1n/duvua-bot/internal/utils"
+	"github.com/zanz1n/duvua/internal/errors"
+	"github.com/zanz1n/duvua/internal/music"
+	"github.com/zanz1n/duvua/internal/utils"
 )
 
 func canPlay(m *discordgo.Member, cfg *music.MusicConfig) bool {

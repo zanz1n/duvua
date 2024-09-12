@@ -1,6 +1,6 @@
 package music
 
-import "github.com/zanz1n/duvua-bot/internal/errors"
+import "github.com/zanz1n/duvua/internal/errors"
 
 var (
 	ErrInvalidRolelId = errors.Unexpected("music: roleId is not a valid int64")

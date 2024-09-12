@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zanz1n/duvua-bot/internal/errors"
+	"github.com/zanz1n/duvua/internal/errors"
 )
 
 var errParseInvalidData = errors.Unexpected("translator parse: invalid data")

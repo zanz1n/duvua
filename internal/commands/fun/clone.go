@@ -9,8 +9,8 @@ import (
 	"net/http"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/zanz1n/duvua-bot/internal/errors"
-	"github.com/zanz1n/duvua-bot/internal/manager"
+	"github.com/zanz1n/duvua/internal/errors"
+	"github.com/zanz1n/duvua/internal/manager"
 )
 
 var cloneCommandData = discordgo.ApplicationCommand{

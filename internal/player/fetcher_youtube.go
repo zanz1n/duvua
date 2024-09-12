@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kkdai/youtube/v2"
-	"github.com/zanz1n/duvua-bot/internal/errors"
-	"github.com/zanz1n/duvua-bot/pkg/player"
+	"github.com/zanz1n/duvua/internal/errors"
+	"github.com/zanz1n/duvua/pkg/player"
 )
 
 var _ PlatformFetcher = &YoutubeFetcher{}

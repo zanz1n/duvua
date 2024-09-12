@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/zanz1n/duvua-bot/internal/errors"
+	"github.com/zanz1n/duvua/internal/errors"
 )
 
 type postgresWelcome struct {

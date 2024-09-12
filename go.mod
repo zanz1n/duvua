@@ -1,4 +1,4 @@
-module github.com/zanz1n/duvua-bot
+module github.com/zanz1n/duvua
 
 go 1.23.0
 
