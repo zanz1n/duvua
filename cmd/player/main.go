@@ -14,6 +14,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua-bot/config"
+	"github.com/zanz1n/duvua-bot/internal/logger"
 	"github.com/zanz1n/duvua-bot/internal/player"
 )
 
@@ -84,6 +85,8 @@ func main() {
 	}
 
 	s.Identify.Intents = discordgo.IntentGuildVoiceStates
+
+	s.LogLevel = logger.SlogLevelToDiscordgo(cfg.LogLevel + 4)
 
 	fetcher := player.NewTrackFetcher(player.NewYoutubeFetcher(nil, 1))
 	manager := player.NewPlayerManager(s, fetcher)
