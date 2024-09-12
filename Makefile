@@ -1,3 +1,7 @@
+.PHONY: default
+
+default: build build-dev
+
 run:
 	go run cmd/bot/main.go --migrate
 
