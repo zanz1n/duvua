@@ -16,6 +16,7 @@ import (
 	"github.com/zanz1n/duvua/config"
 	"github.com/zanz1n/duvua/internal/logger"
 	"github.com/zanz1n/duvua/internal/player"
+	"github.com/zanz1n/duvua/internal/player/platform"
 )
 
 const DuvuaBanner = `
@@ -88,7 +89,7 @@ func main() {
 
 	s.LogLevel = logger.SlogLevelToDiscordgo(cfg.LogLevel + 4)
 
-	fetcher := player.NewTrackFetcher(player.NewYoutubeFetcher(nil, 1))
+	fetcher := platform.NewFetcher(platform.NewYoutube(nil, 1))
 	manager := player.NewPlayerManager(s, fetcher)
 	handler := player.NewHandler(manager, fetcher)
 

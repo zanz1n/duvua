@@ -1,4 +1,4 @@
-package player
+package platform
 
 import (
 	"io"
@@ -10,46 +10,18 @@ import (
 	"github.com/zanz1n/duvua/pkg/player"
 )
 
-type TrackSpeed int8
-
-const (
-	TrackSpeed_0_25X TrackSpeed = iota - 3
-	TrackSpeed_0_5X
-	TrackSpeed_0_75X
-	// Default speed
-	TrackSpeed_1X
-	TrackSpeed_1_25X
-	TrackSpeed_1_5X
-	TrackSpeed_1_75X
-	TrackSpeed_2X
-)
-
-type Streamer interface {
-	ReadOpus() ([]byte, error)
-	SetSpeed(speed TrackSpeed) error
-	SetVolume(volume uint8) error
-
-	io.Closer
+type Fetcher struct {
+	yt Platform
 }
 
-type PlatformFetcher interface {
-	SearchString(s string) (*player.TrackData, error)
-	SearchUrl(url string) (*player.TrackData, error)
-	Fetch(url string) (Streamer, error)
-}
-
-type TrackFetcher struct {
-	yt PlatformFetcher
-}
-
-func NewTrackFetcher(ytf *YoutubeFetcher) *TrackFetcher {
+func NewFetcher(ytf *Youtube) *Fetcher {
 	if ytf == nil {
-		ytf = NewYoutubeFetcher(nil, 1)
+		ytf = NewYoutube(nil, 1)
 	}
-	return &TrackFetcher{yt: ytf}
+	return &Fetcher{yt: ytf}
 }
 
-func (f *TrackFetcher) Search(query string) (*player.TrackData, error) {
+func (f *Fetcher) Search(query string) (*player.TrackData, error) {
 	if strings.HasPrefix(query, "https://") {
 		u, err := url.Parse(query)
 		if err != nil {
@@ -70,7 +42,7 @@ func (f *TrackFetcher) Search(query string) (*player.TrackData, error) {
 	return f.yt.SearchString(query)
 }
 
-func (f *TrackFetcher) Fetch(query string) (Streamer, error) {
+func (f *Fetcher) Fetch(query string) (Streamer, error) {
 	platform, url, ok := strings.Cut(query, ":")
 	if !ok {
 		return nil, errors.New("invalid music format")

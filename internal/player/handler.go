@@ -7,15 +7,17 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/zanz1n/duvua/internal/player/errcodes"
+	"github.com/zanz1n/duvua/internal/player/platform"
 	"github.com/zanz1n/duvua/pkg/player"
 )
 
 type Handler struct {
 	m *PlayerManager
-	f *TrackFetcher
+	f *platform.Fetcher
 }
 
-func NewHandler(manager *PlayerManager, f *TrackFetcher) *Handler {
+func NewHandler(manager *PlayerManager, f *platform.Fetcher) *Handler {
 	return &Handler{m: manager, f: f}
 }
 
@@ -54,12 +56,12 @@ func (h *Handler) AddTrack(guildId uint64, data player.AddTrackData) (player.Tra
 func (h *Handler) GetPlayingTrack(guildId uint64) (*player.Track, error) {
 	p, ok := h.m.Get(guildId)
 	if !ok {
-		return nil, ErrNoActivePlayer
+		return nil, errcodes.ErrNoActivePlayer
 	}
 
 	current, ok := p.GetCurrent()
 	if !ok {
-		return nil, ErrTrackNotFoundInQueue
+		return nil, errcodes.ErrTrackNotFoundInQueue
 	}
 	return current, nil
 }
@@ -67,12 +69,12 @@ func (h *Handler) GetPlayingTrack(guildId uint64) (*player.Track, error) {
 func (h *Handler) Skip(guildId uint64) (*player.Track, error) {
 	p, ok := h.m.Get(guildId)
 	if !ok {
-		return nil, ErrNoActivePlayer
+		return nil, errcodes.ErrNoActivePlayer
 	}
 
 	t := p.Skip()
 	if t == nil {
-		return nil, ErrNoActivePlayer
+		return nil, errcodes.ErrNoActivePlayer
 	}
 
 	return t, nil
@@ -81,7 +83,7 @@ func (h *Handler) Skip(guildId uint64) (*player.Track, error) {
 func (h *Handler) Stop(guildId uint64) error {
 	p, ok := h.m.Get(guildId)
 	if !ok {
-		return ErrNoActivePlayer
+		return errcodes.ErrNoActivePlayer
 	}
 
 	p.Stop()
@@ -91,7 +93,7 @@ func (h *Handler) Stop(guildId uint64) error {
 func (h *Handler) Pause(guildId uint64) (bool, error) {
 	p, ok := h.m.Get(guildId)
 	if !ok {
-		return false, ErrNoActivePlayer
+		return false, errcodes.ErrNoActivePlayer
 	}
 
 	return p.Pause(), nil
@@ -100,7 +102,7 @@ func (h *Handler) Pause(guildId uint64) (bool, error) {
 func (h *Handler) Unpause(guildId uint64) (bool, error) {
 	p, ok := h.m.Get(guildId)
 	if !ok {
-		return false, ErrNoActivePlayer
+		return false, errcodes.ErrNoActivePlayer
 	}
 
 	return p.Unpause(), nil
@@ -109,7 +111,7 @@ func (h *Handler) Unpause(guildId uint64) (bool, error) {
 func (h *Handler) EnableLoop(guildId uint64, loop bool) (bool, error) {
 	p, ok := h.m.Get(guildId)
 	if !ok {
-		return false, ErrNoActivePlayer
+		return false, errcodes.ErrNoActivePlayer
 	}
 
 	is := p.IsLooping()
@@ -128,12 +130,12 @@ func (h *Handler) SetVolume(guildId uint64, volume uint8) (uint8, error) {
 func (h *Handler) GetTrackById(guildId uint64, id uuid.UUID) (*player.Track, error) {
 	p, ok := h.m.Get(guildId)
 	if !ok {
-		return nil, ErrNoActivePlayer
+		return nil, errcodes.ErrNoActivePlayer
 	}
 
 	t, ok := p.GetById(id)
 	if !ok {
-		return nil, ErrTrackNotFoundInQueue
+		return nil, errcodes.ErrTrackNotFoundInQueue
 	}
 
 	return t, nil
@@ -142,7 +144,7 @@ func (h *Handler) GetTrackById(guildId uint64, id uuid.UUID) (*player.Track, err
 func (h *Handler) GetTracks(guildId uint64) ([]player.Track, error) {
 	p, ok := h.m.Get(guildId)
 	if !ok {
-		return nil, ErrNoActivePlayer
+		return nil, errcodes.ErrNoActivePlayer
 	}
 
 	return p.GetQueue(), nil
@@ -151,12 +153,12 @@ func (h *Handler) GetTracks(guildId uint64) ([]player.Track, error) {
 func (h *Handler) RemoveTrack(guildId uint64, id uuid.UUID) (*player.Track, error) {
 	p, ok := h.m.Get(guildId)
 	if !ok {
-		return nil, ErrNoActivePlayer
+		return nil, errcodes.ErrNoActivePlayer
 	}
 
 	t, ok := p.RemoveTrack(id)
 	if !ok {
-		return nil, ErrTrackNotFoundInQueue
+		return nil, errcodes.ErrTrackNotFoundInQueue
 	}
 
 	return t, nil

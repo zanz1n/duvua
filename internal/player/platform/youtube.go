@@ -1,4 +1,4 @@
-package player
+package platform
 
 import (
 	"net/http"
@@ -7,24 +7,25 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/kkdai/youtube/v2"
 	"github.com/zanz1n/duvua/internal/errors"
+	"github.com/zanz1n/duvua/internal/player/errcodes"
 	"github.com/zanz1n/duvua/pkg/player"
 )
 
-var _ PlatformFetcher = &YoutubeFetcher{}
+var _ Platform = &Youtube{}
 
-type YoutubeFetcher struct {
+type Youtube struct {
 	c        *youtube.Client
 	hc       *http.Client
 	validate *validator.Validate
 }
 
 // if client == nil, it will be defaulted to http.DefaultClient
-func NewYoutubeFetcher(client *http.Client, maxDlRoutines int) *YoutubeFetcher {
+func NewYoutube(client *http.Client, maxDlRoutines int) *Youtube {
 	if client == nil {
 		client = http.DefaultClient
 	}
 
-	return &YoutubeFetcher{
+	return &Youtube{
 		c: &youtube.Client{
 			HTTPClient:  client,
 			MaxRoutines: maxDlRoutines,
@@ -34,14 +35,14 @@ func NewYoutubeFetcher(client *http.Client, maxDlRoutines int) *YoutubeFetcher {
 	}
 }
 
-func (f *YoutubeFetcher) SearchString(s string) (*player.TrackData, error) {
+func (f *Youtube) SearchString(s string) (*player.TrackData, error) {
 	panic("unimplemented")
 }
 
-func (f *YoutubeFetcher) SearchUrl(url string) (*player.TrackData, error) {
+func (f *Youtube) SearchUrl(url string) (*player.TrackData, error) {
 	v, err := f.c.GetVideo(url)
 	if err != nil {
-		return nil, ErrTrackSearchFailed
+		return nil, errcodes.ErrTrackSearchFailed
 	}
 	yturl := "https://www.youtube.com/watch?v=" + v.ID
 
@@ -59,7 +60,7 @@ func (f *YoutubeFetcher) SearchUrl(url string) (*player.TrackData, error) {
 	}, nil
 }
 
-func (f *YoutubeFetcher) Fetch(url string) (Streamer, error) {
+func (f *Youtube) Fetch(url string) (Streamer, error) {
 	v, err := f.c.GetVideo(url)
 	if err != nil {
 		return nil, errors.Unexpected(
@@ -69,7 +70,7 @@ func (f *YoutubeFetcher) Fetch(url string) (Streamer, error) {
 
 	format := filterYtVideos(v.Formats)
 	if format == nil {
-		return nil, ErrTrackSearchFailed
+		return nil, errcodes.ErrTrackSearchFailed
 	}
 
 	r, _, err := f.c.GetStream(v, format)

@@ -1,4 +1,4 @@
-package player
+package errcodes
 
 import "github.com/zanz1n/duvua/internal/errors"
 
@@ -20,7 +20,7 @@ const (
 	ErrNoActivePlayerCode
 )
 
-func errToErrCode(err error) uint8 {
+func ErrToErrCode(err error) uint8 {
 	switch err {
 	case ErrTooMuchTimePaused:
 		return ErrTooMuchTimePausedCode

@@ -9,6 +9,8 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua/internal/errors"
+	"github.com/zanz1n/duvua/internal/player/errcodes"
+	"github.com/zanz1n/duvua/internal/player/platform"
 	"github.com/zanz1n/duvua/pkg/player"
 )
 
@@ -17,11 +19,11 @@ type PlayerManager struct {
 	mu      sync.RWMutex
 
 	s *discordgo.Session
-	f *TrackFetcher
+	f *platform.Fetcher
 	m *PlayerMessenger
 }
 
-func NewPlayerManager(s *discordgo.Session, f *TrackFetcher) *PlayerManager {
+func NewPlayerManager(s *discordgo.Session, f *platform.Fetcher) *PlayerManager {
 	return &PlayerManager{
 		players: map[uint64]*GuildPlayer{},
 		mu:      sync.RWMutex{},
@@ -180,9 +182,9 @@ LOOP:
 
 		interrupt, pt, err := m.playTrack(vc, p, track, stream)
 		if err != nil {
-			if err == ErrTooMuchTimePaused {
+			if err == errcodes.ErrTooMuchTimePaused {
 				break
-			} else if err == ErrVoiceConnectionClosed {
+			} else if err == errcodes.ErrVoiceConnectionClosed {
 				slog.Info("Queue voice connection closed", "guild_id", guildId)
 				break
 			} else {
@@ -217,7 +219,7 @@ func (m *PlayerManager) playTrack(
 	vc *discordgo.VoiceConnection,
 	p *GuildPlayer,
 	track *player.Track,
-	stream Streamer,
+	stream platform.Streamer,
 ) (InterruptType, time.Duration, error) {
 	const MaxPausedTime = 5 * 60 * time.Second
 
@@ -257,11 +259,11 @@ func (m *PlayerManager) playTrack(
 
 			case <-time.NewTimer(MaxPausedTime).C:
 				pausedTime += time.Since(pauseStart)
-				return InterruptNone, pausedTime, ErrTooMuchTimePaused
+				return InterruptNone, pausedTime, errcodes.ErrTooMuchTimePaused
 			}
 
 		case <-time.NewTimer(time.Second).C:
-			return InterruptNone, pausedTime, ErrVoiceConnectionClosed
+			return InterruptNone, pausedTime, errcodes.ErrVoiceConnectionClosed
 		}
 	}
 }
