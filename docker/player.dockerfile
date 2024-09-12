@@ -1,7 +1,7 @@
 FROM golang:1 AS builder
 
 WORKDIR /build
-ENV CGO_ENABLED=1
+ENV CGO_ENABLED=0
 
 RUN go env -w GOCACHE=/go-cache
 RUN go env -w GOMODCACHE=/gomod-cache
@@ -10,12 +10,14 @@ COPY . .
 
 RUN --mount=type=cache,target=/gomod-cache \
     --mount=type=cache,target=/go-cache \
-    make build
+    make build-player
 
-FROM gcr.io/distroless/cc-debian12
+FROM alpine
 
-ARG SERVICE_NAME
+RUN apk update
+RUN apk upgrade
+RUN apk add --no-cache ffmpeg
 
-COPY --from=builder /build/bin/${SERVICE_NAME} /bin/service
+COPY --from=builder /build/bin/duvua-player /bin/duvua-player
 
-CMD [ "/bin/service" ]
+CMD [ "/bin/duvua-player" ]

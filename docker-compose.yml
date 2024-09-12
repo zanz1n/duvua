@@ -22,10 +22,8 @@ services:
   bot:
     build:
       context: .
-      dockerfile: Dockerfile
-      args:
-        SERVICE_NAME: duvua-bot
-    command: ["/bin/service", "--migrate"]
+      dockerfile: docker/bot.dockerfile
+    command: ["/bin/duvua-bot", "--migrate"]
     restart: always
     links:
       - player
@@ -39,9 +37,7 @@ services:
   player:
     build:
       context: .
-      dockerfile: Dockerfile
-      args:
-        SERVICE_NAME: duvua-player
+      dockerfile: docker/player.dockerfile
     restart: always
 
     environment:
