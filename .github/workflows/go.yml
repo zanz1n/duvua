@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: ["1.22"]
+        go: ["1.23"]
         goos: [linux]
         goarch: [amd64]
 
@@ -48,8 +48,8 @@ jobs:
           CGO_ENABLED: 1
           SRC_PATH: github.com/zanz1n/duvua-bot
         run: |
-          go build -v -ldflags "-s -w -X ${SRC_PATH}/config.Version=release-${GIT_COMMIT:0:7}" -o bin/duvua-bot cmd/bot/main.go
-          go build -v -ldflags "-X ${SRC_PATH}/config.Version=debug-${GIT_COMMIT:0:7}" -o bin/duvua-bot-debug cmd/bot/main.go
+          make build-bot
+          make build-dev-bot
 
       - name: Build player
         env:
@@ -58,10 +58,10 @@ jobs:
           CGO_ENABLED: 0
           SRC_PATH: github.com/zanz1n/duvua-bot
         run: |
-          go build -v -ldflags "-s -w -X ${SRC_PATH}/config.Version=release-${GIT_COMMIT:0:7}" -o bin/duvua-player cmd/player/main.go
-          go build -v -ldflags "-X ${SRC_PATH}/config.Version=debug-${GIT_COMMIT:0:7}" -o bin/duvua-player-debug cmd/player/main.go
+          make build-player
+          make build-dev-player
 
       - name: Test
         env:
           CGO_ENABLED: 1
-        run: go test ./... -v --race
+        run: make test
