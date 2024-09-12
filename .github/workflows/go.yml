@@ -27,6 +27,11 @@ jobs:
 
       - name: Code checkout
         uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Checkout LFS objects
+        run: git lfs checkout
 
       - name: Setup Go cache
         uses: actions/cache@v4
