@@ -92,6 +92,12 @@ func (s *HttpServer) catchPanicMiddleware(h handlerFunc) handlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		defer func() {
 			if err := recover(); err != nil {
+				slog.Error(
+					"PANIC: Catched while handling http request",
+					"error", err,
+				)
+
+				w.WriteHeader(http.StatusInternalServerError)
 				handleErrRes(w, err)
 			}
 		}()
