@@ -4,7 +4,7 @@ run:
 run-player:
 	go run cmd/player/main.go
 
-build: build build-player
+build: build-bot build-player
 
 build-bot:
 	go build \
