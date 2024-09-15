@@ -1,15 +1,15 @@
 name: Docker
 
 on:
+  push:
+    branches: [main]
   release:
-    types:
-      - published
+    types: [published]
 
 jobs:
   build-and-publish:
     name: Build and publish
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, 'skip docker') && !contains(github.event.head_commit.message, 'docker skip')"
     permissions:
       contents: read
       packages: write
@@ -66,8 +66,9 @@ jobs:
           echo "version_tag=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_OUTPUT
           echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Build and Push bot
+      - name: Build and Push bot (tag)
         uses: docker/build-push-action@v5
+        if: "github.event_name == 'release' && github.event.action == 'published'"
         with:
           context: .
           file: ./docker/bot.dockerfile
@@ -78,8 +79,24 @@ jobs:
           labels: ${{ steps.docker_bot_meta.outputs.labels }}
           tags: ${{ steps.docker_bot_meta.outputs.tags }}
 
-      - name: Build and Push player
+      - name: Build and Push bot (main)
         uses: docker/build-push-action@v5
+        if: "github.event_name == 'push' && contains(github.ref, 'main')"
+        with:
+          context: .
+          file: ./docker/bot.dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          platforms: linux/amd64
+          build-args: |
+            VERSION=dev-${{ steps.build_info.outputs.short_sha }}
+          labels: ${{ steps.docker_bot_meta.outputs.labels }}
+          tags: ${{ steps.docker_bot_meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and Push player (tag)
+        uses: docker/build-push-action@v5
+        if: "github.event_name == 'release' && github.event.action == 'published'"
         with:
           context: .
           file: ./docker/player.dockerfile
@@ -89,3 +106,18 @@ jobs:
             VERSION=${{ steps.build_info.outputs.version_tag }}
           labels: ${{ steps.docker_player_meta.outputs.labels }}
           tags: ${{ steps.docker_player_meta.outputs.tags }}
+
+      - name: Build and Push player (main)
+        uses: docker/build-push-action@v5
+        if: "github.event_name == 'push' && contains(github.ref, 'main')"
+        with:
+          context: .
+          file: ./docker/player.dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          platforms: linux/amd64
+          build-args: |
+            VERSION=dev-${{ steps.build_info.outputs.short_sha }}
+          labels: ${{ steps.docker_player_meta.outputs.labels }}
+          tags: ${{ steps.docker_player_meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
