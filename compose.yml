@@ -23,7 +23,7 @@ services:
     build:
       context: .
       dockerfile: docker/bot.dockerfile
-    command: ["/bin/duvua-bot", "--migrate"]
+    command: ["--migrate"]
     restart: always
     links:
       - player

@@ -1,0 +1,56 @@
+x-common:
+  bot: &bot-env
+    LOG_LEVEL: info
+
+    DISCORD_TOKEN: ""
+    DISCORD_GUILD: ""
+
+  postgres: &postgres-env
+    POSTGRES_DB: duvua
+    POSTGRES_USER: docker
+    POSTGRES_PASSWORD: ""
+
+    POSTGRES_MIN_CONNS: 2
+    POSTGRES_MAX_CONNS: 32
+
+  player: &player-env
+    PLAYER_LISTEN_PORT: 8080
+    PLAYER_PASSWORD: ""
+    PLAYER_URL: "http://player:8080/"
+
+services:
+  bot:
+    image: ghcr.io/zanz1n/duvua-bot:latest
+    command: ["--migrate"]
+    restart: always
+    links:
+      - player
+      - postgres
+
+    environment:
+      <<: [*bot-env, *postgres-env, *player-env]
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+
+  player:
+    image: ghcr.io/zanz1n/duvua-player:latest
+    restart: always
+
+    environment:
+      <<: [*bot-env, *postgres-env, *player-env]
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+
+  postgres:
+    image: postgres:16
+    restart: always
+
+    environment:
+      <<: *postgres-env
+
+    volumes:
+      - .docker-volumes/postgres-data:/var/lib/postgresql/data
+
+networks:
+  default:
+    driver: bridge
