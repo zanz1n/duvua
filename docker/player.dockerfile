@@ -12,12 +12,14 @@ RUN --mount=type=cache,target=/gomod-cache \
     --mount=type=cache,target=/go-cache \
     make build-player
 
-FROM alpine
+FROM alpine:3
 
 RUN apk update
 RUN apk upgrade
 RUN apk add --no-cache ffmpeg
 
-COPY --from=builder /build/bin/duvua-player /bin/duvua-player
+COPY --from=builder /build/bin/duvua-player /usr/bin/duvua-player
 
-CMD [ "/bin/duvua-player" ]
+ENTRYPOINT [ "/usr/bin/duvua-player" ]
+
+EXPOSE 8080

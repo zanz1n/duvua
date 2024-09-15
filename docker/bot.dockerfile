@@ -14,6 +14,6 @@ RUN --mount=type=cache,target=/gomod-cache \
 
 FROM gcr.io/distroless/cc-debian12
 
-COPY --from=builder /build/bin/duvua-bot /bin/duvua-bot
+COPY --from=builder /build/bin/duvua-bot /usr/bin/duvua-bot
 
-CMD [ "/bin/duvua-bot" ]
+ENTRYPOINT [ "/usr/bin/duvua-bot" ]
