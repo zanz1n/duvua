@@ -1,5 +1,7 @@
 FROM golang:1 AS builder
 
+ARG VERSION=""
+
 WORKDIR /build
 ENV CGO_ENABLED=1
 
@@ -10,7 +12,14 @@ COPY . .
 
 RUN --mount=type=cache,target=/gomod-cache \
     --mount=type=cache,target=/go-cache \
-    make build-bot
+    if [ -z ${VERSION} ]; then \
+    VERSION_TAG=release-`git rev-parse --short HEAD`; \
+    else \
+    VERSION_TAG=${VERSION}; \
+    fi; \
+    go build \
+    -ldflags "-s -w -X github.com/zanz1n/duvua/config.Version=${VERSION_TAG}" \
+    -o bin/duvua-bot cmd/bot/main.go
 
 FROM gcr.io/distroless/cc-debian12
 

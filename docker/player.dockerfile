@@ -1,5 +1,7 @@
 FROM golang:1 AS builder
 
+ARG VERSION=""
+
 WORKDIR /build
 ENV CGO_ENABLED=0
 
@@ -10,7 +12,14 @@ COPY . .
 
 RUN --mount=type=cache,target=/gomod-cache \
     --mount=type=cache,target=/go-cache \
-    make build-player
+    if [ -z ${VERSION} ]; then \
+    VERSION_TAG=release-`git rev-parse --short HEAD`; \
+    else \
+    VERSION_TAG=${VERSION}; \
+    fi; \
+    go build \
+    -ldflags "-s -w -X github.com/zanz1n/duvua/config.Version=${VERSION_TAG}" \
+    -o bin/duvua-player cmd/player/main.go
 
 FROM alpine:3
 
