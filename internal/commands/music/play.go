@@ -81,36 +81,42 @@ func (c *PlayCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate)
 		return err
 	}
 
-	trackData, err := c.c.FetchTrack(query)
+	tracksData, err := c.c.FetchTrack(query)
 	if err != nil {
 		return err
 	}
 
-	track, err := c.c.AddTrack(i.GuildID, player.AddTrackData{
+	tracks, err := c.c.AddTrack(i.GuildID, player.AddTrackData{
 		UserId:        i.Member.User.ID,
 		ChannelId:     vs.ChannelID,
 		TextChannelId: i.ChannelID,
-		Data:          trackData,
+		Data:          tracksData,
 	})
 	if err != nil {
 		return err
 	}
 
-	msg := fmt.Sprintf("Música **[%s](%s) [%s]** adicionada à fila",
-		track.Data.Name, track.Data.URL, utils.FmtDuration(track.Data.Duration),
-	)
+	if len(tracks) == 1 {
+		track := tracks[0]
 
-	return i.Reply(s, &manager.InteractionResponse{
-		Content: msg,
-		Components: []discordgo.MessageComponent{discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.Button{
-					Label:    "Remover",
-					Emoji:    emoji("✖️"),
-					Style:    discordgo.DangerButton,
-					CustomID: "queue/remove/" + track.ID.String(),
+		msg := fmt.Sprintf("Música **[%s](%s) [%s]** adicionada à fila",
+			track.Data.Name, track.Data.URL, utils.FmtDuration(track.Data.Duration),
+		)
+
+		return i.Reply(s, &manager.InteractionResponse{
+			Content: msg,
+			Components: []discordgo.MessageComponent{discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						Label:    "Remover",
+						Emoji:    emoji("✖️"),
+						Style:    discordgo.DangerButton,
+						CustomID: "queue/remove/" + track.ID.String(),
+					},
 				},
-			},
-		}},
-	})
+			}},
+		})
+	}
+
+	return i.Replyf(s, "%d músicas adicionadas à fila", len(tracks))
 }

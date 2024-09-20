@@ -21,36 +21,42 @@ func NewHandler(manager *PlayerManager, f *platform.Fetcher) *Handler {
 	return &Handler{m: manager, f: f}
 }
 
-func (h *Handler) FetchTrack(query string) (*player.TrackData, error) {
+func (h *Handler) FetchTrack(query string) ([]player.TrackData, error) {
 	return h.f.Search(query)
 }
 
-func (h *Handler) AddTrack(guildId uint64, data player.AddTrackData) (player.Track, error) {
+func (h *Handler) AddTrack(guildId uint64, data player.AddTrackData) ([]player.Track, error) {
 	userId, _ := atoi(data.UserId)
 	channelId, _ := atoi(data.ChannelId)
 	textChannelId, _ := atoi(data.TextChannelId)
 
 	if userId == 0 || channelId == 0 || textChannelId == 0 {
-		return player.Track{}, errors.New(
+		return nil, errors.New(
 			"`user_id` and `channel_id` must be valid uint64",
 		)
 	}
 
-	track := player.NewTrack(userId, channelId, data.Data)
 	p := h.m.GetOrCreate(guildId, channelId)
-	p.AddTrack(track)
+
+	tracks := make([]player.Track, len(data.Data))
+	for i, track := range data.Data {
+		track := player.NewTrack(userId, channelId, &track)
+		p.AddTrack(track)
+
+		tracks[i] = track
+
+		slog.Info(
+			"Added track to queue",
+			"guild_id", guildId,
+			"user_id", data.UserId,
+			"url", track.Data.PlayQuery,
+			"duration", track.Data.Duration.Round(time.Millisecond),
+		)
+	}
 
 	p.SetMessageChannel(textChannelId)
 
-	slog.Info(
-		"Added track to queue",
-		"guild_id", guildId,
-		"user_id", data.UserId,
-		"url", track.Data.PlayQuery,
-		"duration", track.Data.Duration.Round(time.Millisecond),
-	)
-
-	return track, nil
+	return tracks, nil
 }
 
 func (h *Handler) GetPlayingTrack(guildId uint64) (*player.Track, error) {

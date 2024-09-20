@@ -21,7 +21,7 @@ func NewFetcher(ytf *Youtube) *Fetcher {
 	return &Fetcher{yt: ytf}
 }
 
-func (f *Fetcher) Search(query string) (*player.TrackData, error) {
+func (f *Fetcher) Search(query string) ([]player.TrackData, error) {
 	if strings.HasPrefix(query, "https://") {
 		u, err := url.Parse(query)
 		if err != nil {
@@ -32,14 +32,21 @@ func (f *Fetcher) Search(query string) (*player.TrackData, error) {
 		case strings.Contains(u.Host, "youtu"):
 			return f.yt.SearchUrl(query)
 
-		// case strings.Contains(u.Host, "soundcloud"):
 		// case strings.Contains(u.Host, "spotify"):
+		// 	return f.sp.SearchUrl(query)
+
+		// case strings.Contains(u.Host, "soundcloud"):
 		default:
 			return nil, errors.Newf("invalid url host `%s`", u.Host)
 		}
 	}
 
-	return f.yt.SearchString(query)
+	track, err := f.yt.SearchString(query)
+	if err != nil {
+		return nil, err
+	}
+
+	return []player.TrackData{*track}, nil
 }
 
 func (f *Fetcher) Fetch(query string) (Streamer, error) {

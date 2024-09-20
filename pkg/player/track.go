@@ -47,5 +47,5 @@ type AddTrackData struct {
 	ChannelId     string `json:"channel_id" validate:"required,number"`
 	TextChannelId string `json:"text_channel_id" validate:"required,number"`
 
-	Data *TrackData `json:"data" validate:"required"`
+	Data []TrackData `json:"data" validate:"required"`
 }

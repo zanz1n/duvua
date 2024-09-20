@@ -53,22 +53,22 @@ func NewHttpClient(client *http.Client, baseUrl string, password string) *HttpCl
 	}
 }
 
-func (h *HttpClient) FetchTrack(query string) (*TrackData, error) {
+func (h *HttpClient) FetchTrack(query string) ([]TrackData, error) {
 	q := url.Values{}
 	q.Add("query", query)
 
-	var resData TrackData
+	var resData []TrackData
 
 	_, err := h.request(http.MethodGet, "track/search", q, nil, &resData)
 	if err != nil {
 		return nil, err
 	}
 
-	return &resData, nil
+	return resData, nil
 }
 
-func (h *HttpClient) AddTrack(guildId string, data AddTrackData) (*Track, error) {
-	var resData Track
+func (h *HttpClient) AddTrack(guildId string, data AddTrackData) ([]Track, error) {
+	var resData []Track
 
 	url := fmt.Sprintf("guild/%s/track", guildId)
 	_, err := h.request(http.MethodPost, url, nil, data, &resData)
@@ -76,7 +76,7 @@ func (h *HttpClient) AddTrack(guildId string, data AddTrackData) (*Track, error)
 		return nil, err
 	}
 
-	return &resData, nil
+	return resData, nil
 }
 
 func (h *HttpClient) GetPlayingTrack(guildId string) (*Track, error) {

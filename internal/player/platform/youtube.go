@@ -35,33 +35,64 @@ func NewYoutube(client *http.Client, maxDlRoutines int) *Youtube {
 	}
 }
 
+// SearchString implements Platform.
 func (f *Youtube) SearchString(s string) (*player.TrackData, error) {
 	panic("unimplemented")
 }
 
-func (f *Youtube) SearchUrl(url string) (*player.TrackData, error) {
-	v, err := f.c.GetVideo(url)
-	if err != nil {
-		return nil, errcodes.ErrTrackSearchFailed
-	}
-	yturl := "https://www.youtube.com/watch?v=" + v.ID
+// SearchUrl implements Platform.
+func (f *Youtube) SearchUrl(url string) ([]player.TrackData, error) {
+	if !strings.Contains(url, "&list") && !strings.Contains(url, "?list") {
+		video, err := f.c.GetVideo(url)
+		if err != nil {
+			return nil, errcodes.ErrTrackSearchFailed
+		}
 
-	thumbnailUrl := "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRd2NAjCcjjk7ac57mKCQvgWVTmP0ysxnzQnQ&s"
-	if thumbnail := filterYtThumbnails(v.Thumbnails); thumbnail != nil {
-		thumbnailUrl = thumbnail.URL
-	}
+		thumbnailUrl := defaultThumbUrl
+		if thumbnail := filterYtThumbnails(video.Thumbnails); thumbnail != nil {
+			thumbnailUrl = thumbnail.URL
+		}
 
-	return &player.TrackData{
-		Name:      v.Title,
-		URL:       yturl,
-		PlayQuery: "youtube:" + yturl,
-		Thumbnail: thumbnailUrl,
-		Duration:  v.Duration,
-	}, nil
+		return []player.TrackData{{
+			Name:      video.Title,
+			URL:       "https://youtu.be/" + video.ID,
+			PlayQuery: "youtube:" + video.ID,
+			Thumbnail: thumbnailUrl,
+			Duration:  video.Duration,
+		}}, nil
+	} else {
+		playlist, err := f.c.GetPlaylist(url)
+		if err != nil {
+			return nil, errcodes.ErrTrackSearchFailed
+		}
+
+		tracks := make([]player.TrackData, len(playlist.Videos))
+		for i, video := range playlist.Videos {
+			thumbnailUrl := defaultThumbUrl
+			if thumbnail := filterYtThumbnails(video.Thumbnails); thumbnail != nil {
+				thumbnailUrl = thumbnail.URL
+			}
+
+			tracks[i] = player.TrackData{
+				Name:      video.Title,
+				URL:       "https://youtu.be/" + video.ID,
+				PlayQuery: "youtube:" + video.ID,
+				Thumbnail: thumbnailUrl,
+				Duration:  video.Duration,
+			}
+		}
+
+		if len(tracks) == 0 {
+			return nil, errcodes.ErrTrackSearchFailed
+		}
+
+		return tracks, nil
+	}
 }
 
-func (f *Youtube) Fetch(url string) (Streamer, error) {
-	v, err := f.c.GetVideo(url)
+// Fetch implements Platform.
+func (f *Youtube) Fetch(id string) (Streamer, error) {
+	v, err := f.c.GetVideo("https://www.youtube.com/watch?v=" + id)
 	if err != nil {
 		return nil, errors.Unexpected(
 			"failed to fetch youtube video: " + err.Error(),
