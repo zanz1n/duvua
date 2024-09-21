@@ -86,7 +86,7 @@ func (c *HelpCommand) renderCategory(cat manager.CommandCategory) discordgo.Mess
 		fields = append(fields, &discordgo.MessageEmbedField{
 			Name:   fmt.Sprintf("/" + cmd.Name),
 			Value:  cmd.Description,
-			Inline: true,
+			Inline: false,
 		})
 	}
 
@@ -180,7 +180,7 @@ func (c *HelpCommand) appendSubCommandFields(
 			fields = append(fields, &discordgo.MessageEmbedField{
 				Name:   fmt.Sprintf("/%s %s", cmd.Name, opt.Name),
 				Value:  opt.Description,
-				Inline: true,
+				Inline: false,
 			})
 		} else if opt.Type == discordgo.ApplicationCommandOptionSubCommandGroup {
 			for _, subopt := range opt.Options {
@@ -188,7 +188,7 @@ func (c *HelpCommand) appendSubCommandFields(
 					fields = append(fields, &discordgo.MessageEmbedField{
 						Name:   fmt.Sprintf("/%s %s %s", cmd.Name, opt.Name, subopt.Name),
 						Value:  subopt.Description,
-						Inline: true,
+						Inline: false,
 					})
 				}
 			}
