@@ -118,5 +118,17 @@ func (c *PlayCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate)
 		})
 	}
 
-	return i.Replyf(s, "%d músicas adicionadas à fila", len(tracks))
+	return i.Reply(s, &manager.InteractionResponse{
+		Content: fmt.Sprintf("%d músicas adicionadas à fila", len(tracks)),
+		Components: []discordgo.MessageComponent{discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Label:    "Ver fila",
+					Emoji:    emoji("📜"),
+					Style:    discordgo.PrimaryButton,
+					CustomID: "queue/list",
+				},
+			},
+		}},
+	})
 }
