@@ -202,13 +202,25 @@ func (s *HttpServer) getAllTracks(w http.ResponseWriter, r *http.Request) error 
 		return err
 	}
 
-	tracks, err := s.h.GetTracks(guildId)
+	q := r.URL.Query()
+
+	offset, err := strconv.Atoi(q.Get("offset"))
+	if err != nil {
+		return errors.Newf("invalid query string arg `offset`")
+	}
+
+	limit, err := strconv.Atoi(q.Get("limit"))
+	if err != nil {
+		return errors.Newf("invalid query string arg `limit`")
+	}
+
+	tracks, err := s.h.GetTracks(guildId, offset, limit)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return err
 	}
 
-	msg := fmt.Sprintf("%d tracks in queue", len(tracks))
+	msg := fmt.Sprintf("%d tracks returned", len(tracks.Tracks))
 	return resJson(w, tracks, msg, false)
 }
 

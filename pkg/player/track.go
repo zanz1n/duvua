@@ -49,3 +49,11 @@ type AddTrackData struct {
 
 	Data []TrackData `json:"data" validate:"required"`
 }
+
+type GetTracksData struct {
+	TotalSize     int           `json:"total_size"`
+	TotalDuration time.Duration `json:"total_duration"`
+
+	Playing *Track  `json:"playing"`
+	Tracks  []Track `json:"tracks"`
+}

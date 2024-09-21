@@ -147,13 +147,23 @@ func (h *Handler) GetTrackById(guildId uint64, id uuid.UUID) (*player.Track, err
 	return t, nil
 }
 
-func (h *Handler) GetTracks(guildId uint64) ([]player.Track, error) {
+func (h *Handler) GetTracks(guildId uint64, offset int, limit int) (*player.GetTracksData, error) {
 	p, ok := h.m.Get(guildId)
 	if !ok {
 		return nil, errcodes.ErrNoActivePlayer
 	}
 
-	return p.GetQueue(), nil
+	d := p.QueueDuration()
+	playing, tracks, totalsize := p.GetQueue(offset, limit)
+
+	data := player.GetTracksData{
+		TotalSize:     totalsize,
+		TotalDuration: d,
+		Playing:       playing,
+		Tracks:        tracks,
+	}
+
+	return &data, nil
 }
 
 func (h *Handler) RemoveTrack(guildId uint64, id uuid.UUID) (*player.Track, error) {

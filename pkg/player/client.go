@@ -120,8 +120,9 @@ func (h *HttpClient) Unpause(guildId string) (bool, error) {
 }
 
 func (h *HttpClient) EnableLoop(guildId string, enable bool) (bool, error) {
-	q := url.Values{}
-	q.Add("enable", strconv.FormatBool(enable))
+	q := url.Values{
+		"enable": {strconv.FormatBool(enable)},
+	}
 
 	url := fmt.Sprintf("guild/%s/loop", guildId)
 	return h.request(http.MethodPut, url, q, nil, nil)
@@ -147,16 +148,21 @@ func (h *HttpClient) GetTrackById(guildId string, id uuid.UUID) (*Track, error) 
 	return &resData, nil
 }
 
-func (h *HttpClient) GetTracks(guildId string) ([]Track, error) {
-	var resData []Track
+func (h *HttpClient) GetTracks(guildId string, offset, limit int) (*GetTracksData, error) {
+	var resData GetTracksData
+
+	q := url.Values{
+		"offset": {strconv.Itoa(offset)},
+		"limit":  {strconv.Itoa(limit)},
+	}
 
 	url := fmt.Sprintf("guild/%s/tracks", guildId)
-	_, err := h.request(http.MethodGet, url, nil, nil, &resData)
+	_, err := h.request(http.MethodGet, url, q, nil, &resData)
 	if err != nil {
 		return nil, err
 	}
 
-	return resData, nil
+	return &resData, nil
 }
 
 func (h *HttpClient) RemoveTrack(guildId string, id uuid.UUID) (*Track, error) {

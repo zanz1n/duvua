@@ -169,22 +169,53 @@ func (p *GuildPlayer) RemoveTrack(id uuid.UUID) (*player.Track, bool) {
 	return &track, true
 }
 
-func (p *GuildPlayer) GetQueue() []player.Track {
+func (p *GuildPlayer) QueueDuration() time.Duration {
+	d := time.Duration(0)
+
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	if p.current == nil {
-		dst := make([]player.Track, len(p.queue))
-		copy(dst, p.queue)
-		return dst
-	} else {
-		dst := make([]player.Track, len(p.queue)+1)
-		dst[0] = *p.current
-		for i, track := range p.queue {
-			dst[i+1] = track
-		}
-		return dst
+	for _, track := range p.queue {
+		d += track.Data.Duration
 	}
+
+	if p.current != nil {
+		d += p.current.Data.Duration
+		if p.current.State != nil {
+			d -= p.current.State.Progress.Load()
+		}
+	}
+
+	return d
+}
+
+func (p *GuildPlayer) GetQueue(
+	offset, limit int,
+) (current *player.Track, tracks []player.Track, size int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.current != nil {
+		c := *p.current
+		current = &c
+	}
+
+	size = len(p.queue)
+	if offset >= size || 0 > offset || 0 > limit {
+		return
+	}
+
+	finish := len(p.queue)
+	if size-offset > limit {
+		finish = offset + limit
+	}
+
+	tracks = make([]player.Track, finish-offset)
+	for i := range finish - offset {
+		tracks[i] = p.queue[offset+i]
+	}
+
+	return
 }
 
 func (p *GuildPlayer) GetMessageChannel() uint64 {
