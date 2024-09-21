@@ -242,7 +242,7 @@ func (c *QueueCommand) handleRemove(
 	}
 
 	return i.Replyf(s,
-		"Música **[%s](%s)** removida da fila",
+		"Música **[%s](<%s>)** removida da fila",
 		track.Data.Name,
 		track.Data.URL,
 	)

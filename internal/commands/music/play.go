@@ -99,7 +99,7 @@ func (c *PlayCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate)
 	if len(tracks) == 1 {
 		track := tracks[0]
 
-		msg := fmt.Sprintf("Música **[%s](%s) [%s]** adicionada à fila",
+		msg := fmt.Sprintf("Música **[%s](<%s>) [%s]** adicionada à fila",
 			track.Data.Name, track.Data.URL, utils.FmtDuration(track.Data.Duration),
 		)
 

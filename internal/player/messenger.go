@@ -160,7 +160,7 @@ func (m *PlayerMessenger) onTrackFailed(cid uint64, t *player.Track) error {
 
 	return m.sendMessage(cid, &discordgo.MessageSend{
 		Content: fmt.Sprintf(
-			"Não foi possível tocar a música **[%s](%s)**",
+			"Não foi possível tocar a música **[%s](<%s>)**",
 			t.Data.Name,
 			t.Data.URL,
 		),
