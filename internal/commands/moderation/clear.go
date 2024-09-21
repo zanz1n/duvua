@@ -162,39 +162,45 @@ func (c *ClearCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate
 		return errors.New("você não tem permissão para usar esse comando")
 	}
 
-	amount, err := i.GetTypedOption("amount", true, discordgo.ApplicationCommandOptionInteger)
+	amount, err := i.GetIntegerOption("amount", true)
 	if err != nil {
 		return err
 	}
 
-	amountI := amount.IntValue()
-	if amountI > MaxDeleteLimit || amountI < 1 {
+	if amount > MaxDeleteLimit || amount < 1 {
 		return errors.New("opção `amount` precisa ser um número entre 1 e 100")
 	}
 
 	var userFilter *string = nil
-	userOpt, err := i.GetTypedOption("amount", false, discordgo.ApplicationCommandOptionInteger)
+	userId, err := i.GetUserOption("user", false)
 	if err != nil {
 		return err
-	} else if userOpt != nil {
-		userFilter = &userOpt.UserValue(nil).ID
+	} else if userId != "" {
+		userFilter = &userId
 	}
 
-	skipBots := false
-	skipBotsOpt, err := i.GetTypedOption("skip_bots", false, discordgo.ApplicationCommandOptionBoolean)
+	skipBots, err := i.GetBooleanOption("skip_bots", false)
 	if err != nil {
 		return err
-	} else if skipBotsOpt != nil {
-		skipBots = skipBotsOpt.BoolValue()
 	}
 
-	channel := i.ChannelID
-	channelOpt, err := i.GetTypedOption("channel", false, discordgo.ApplicationCommandOptionChannel)
+	channel, err := i.GetChannelOption("channel", false)
 	if err != nil {
 		return err
-	} else if channelOpt != nil {
-		ch := channelOpt.ChannelValue(s)
-		channel = ch.ID
+	}
+
+	if channel != "" {
+		ch, err := s.State.Channel(channel)
+		if err != nil {
+			if err != discordgo.ErrStateNotFound {
+				return err
+			}
+
+			ch, err = s.Channel(channel)
+			if err != nil {
+				return err
+			}
+		}
 
 		if ch.GuildID == "" {
 			return errors.New("não foi possível verificar o canal fornecido")
@@ -202,11 +208,13 @@ func (c *ClearCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate
 		if ch.Type != discordgo.ChannelTypeGuildText {
 			return errors.New("opção `channel` precisa ser um canal de texto válido")
 		}
+	} else {
+		channel = i.ChannelID
 	}
 
 	if err = i.DeferReply(s, false); err != nil {
 		return err
 	}
 
-	return c.deleteMsgs(s, i, int(amountI), channel, userFilter, skipBots)
+	return c.deleteMsgs(s, i, int(amount), channel, userFilter, skipBots)
 }
