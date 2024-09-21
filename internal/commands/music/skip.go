@@ -54,7 +54,7 @@ func (c *SkipCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate)
 	}
 
 	return i.Replyf(s,
-		"Música **[%s](%s)** pulada",
+		"Música **[%s](<%s>)** pulada",
 		track.Data.Name,
 		track.Data.URL,
 	)
