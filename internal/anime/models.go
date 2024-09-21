@@ -2,6 +2,8 @@ package anime
 
 import (
 	"time"
+
+	"github.com/zanz1n/duvua/internal/utils"
 )
 
 type AnimeResourceResponse struct {
@@ -22,8 +24,8 @@ type AnimeCollectionResponse struct {
 }
 
 type Anime struct {
-	ID    StringInt `json:"id" validate:"required"`
-	Type  string    `json:"type" validate:"required"`
+	ID    utils.StringInt `json:"id" validate:"required"`
+	Type  string          `json:"type" validate:"required"`
 	Links struct {
 		Self string `json:"self" validate:"required"`
 	} `json:"links"`
