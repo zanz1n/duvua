@@ -1,8 +1,14 @@
 package platform
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
+	"log/slog"
 	"net/http"
+	"net/url"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kkdai/youtube/v2"
@@ -36,14 +42,56 @@ func NewYoutube(client *http.Client, maxDlRoutines int) *Youtube {
 }
 
 // SearchString implements Platform.
-func (f *Youtube) SearchString(s string) (*player.TrackData, error) {
-	panic("unimplemented")
+// The youtube search is extremely unstable and may break on any youtube update.
+//
+// The data is extracted from html youtube responses.
+func (y *Youtube) SearchString(s string) (*player.TrackData, error) {
+	start := time.Now()
+	defer func() {
+		slog.Debug(
+			"Youtube string search: finished search",
+			"took", time.Since(start).Round(time.Microsecond),
+		)
+	}()
+
+	searchUrl := "https://www.youtube.com/results?search_query=" +
+		url.QueryEscape(s)
+
+	req, err := http.NewRequest(http.MethodGet, searchUrl, nil)
+	if err != nil {
+		return nil, errors.Unexpected("youtube search: request: " + err.Error())
+	}
+
+	req.Header.Add("Accept-Language", "en")
+
+	res, err := y.c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, errors.Unexpected("youtube search: request: " + err.Error())
+	}
+
+	if res.StatusCode != 200 {
+		return nil, errors.Unexpected(
+			"youtube search: response status: " + res.Status,
+		)
+	}
+	defer res.Body.Close()
+
+	data, err := ytParseSearchBody(res.Body, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(data) == 0 {
+		return nil, errcodes.ErrTrackSearchFailed
+	}
+
+	return &data[0], nil
 }
 
 // SearchUrl implements Platform.
-func (f *Youtube) SearchUrl(url string) ([]player.TrackData, error) {
+func (y *Youtube) SearchUrl(url string) ([]player.TrackData, error) {
 	if !strings.Contains(url, "&list") && !strings.Contains(url, "?list") {
-		video, err := f.c.GetVideo(url)
+		video, err := y.c.GetVideo(url)
 		if err != nil {
 			return nil, errcodes.ErrTrackSearchFailed
 		}
@@ -61,7 +109,7 @@ func (f *Youtube) SearchUrl(url string) ([]player.TrackData, error) {
 			Duration:  video.Duration,
 		}}, nil
 	} else {
-		playlist, err := f.c.GetPlaylist(url)
+		playlist, err := y.c.GetPlaylist(url)
 		if err != nil {
 			return nil, errcodes.ErrTrackSearchFailed
 		}
@@ -91,11 +139,11 @@ func (f *Youtube) SearchUrl(url string) ([]player.TrackData, error) {
 }
 
 // Fetch implements Platform.
-func (f *Youtube) Fetch(id string) (Streamer, error) {
-	v, err := f.c.GetVideo("https://www.youtube.com/watch?v=" + id)
+func (y *Youtube) Fetch(id string) (Streamer, error) {
+	v, err := y.c.GetVideo("https://www.youtube.com/watch?v=" + id)
 	if err != nil {
 		return nil, errors.Unexpected(
-			"failed to fetch youtube video: " + err.Error(),
+			"fetch youtube video: " + err.Error(),
 		)
 	}
 
@@ -104,10 +152,10 @@ func (f *Youtube) Fetch(id string) (Streamer, error) {
 		return nil, errcodes.ErrTrackSearchFailed
 	}
 
-	r, _, err := f.c.GetStream(v, format)
+	r, _, err := y.c.GetStream(v, format)
 	if err != nil {
 		return nil, errors.Unexpected(
-			"failed to fetch youtube audio stream: " + err.Error(),
+			"fetch youtube audio stream: " + err.Error(),
 		)
 	}
 
@@ -145,4 +193,51 @@ func filterYtThumbnails(thumbnails []youtube.Thumbnail) *youtube.Thumbnail {
 		return &thumbnails[0]
 	}
 	return nil
+}
+
+func ytParseSearchBody(r io.Reader, limit int) ([]player.TrackData, error) {
+	start := time.Now()
+	defer func() {
+		slog.Debug(
+			"Youtube string search: finished parsing data",
+			"took", time.Since(start).Round(time.Microsecond),
+		)
+	}()
+
+	body, err := io.ReadAll(r)
+	if err != nil {
+		return nil, errors.Unexpected(
+			"youtube search: response read: " + err.Error(),
+		)
+	}
+
+	var ok bool
+
+	if bytes.Contains(body, []byte(`var ytInitialData = `)) {
+		_, body, ok = bytes.Cut(body, []byte(`var ytInitialData = `))
+	} else {
+		_, body, ok = bytes.Cut(body, []byte(`window["ytInitialData"] = `))
+	}
+
+	if !ok {
+		return nil, errors.Unexpected(
+			"youtube search: response parse: invalid data",
+		)
+	}
+
+	dec := json.NewDecoder(bytes.NewReader(body))
+
+	var data ytJsonSearchResult
+	if err := dec.Decode(&data); err != nil {
+		return nil, errors.Unexpected(
+			"youtube search: response parse: " + err.Error(),
+		)
+	}
+
+	parsed, err := data.Into(limit)
+	if err != nil {
+		return nil, err
+	}
+
+	return parsed, nil
 }
