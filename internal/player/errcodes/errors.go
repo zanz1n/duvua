@@ -1,38 +1,42 @@
 package errcodes
 
-import "github.com/zanz1n/duvua/internal/errors"
+import (
+	"github.com/zanz1n/duvua/internal/errors"
+	"github.com/zanz1n/duvua/pkg/player"
+)
 
 var (
 	ErrTooMuchTimePaused     = errors.New("too much time paused")
 	ErrVoiceConnectionClosed = errors.New("voice connection closed")
 	ErrTrackSearchFailed     = errors.New("couldn't find track")
+	ErrTrackSearchInvalidUrl = errors.New("the provided search url is invalid")
+	ErrTrackSearchUnsuported = errors.New("the url is of an unsuported platform")
 
 	ErrTrackNotFoundInQueue = errors.New("the track could not be found in the queue")
 	ErrNoActivePlayer       = errors.New("there is not an active player")
-)
 
-const (
-	ErrAnyCode uint8 = iota
-	ErrTooMuchTimePausedCode
-	ErrVoiceConnectionClosedCode
-	ErrTrackSearchFailedCode
-	ErrTrackNotFoundInQueueCode
-	ErrNoActivePlayerCode
+	ErrSpotifyPlaylistsNotSupported = errors.New("spotify playlist are not supported")
 )
 
 func ErrToErrCode(err error) uint8 {
 	switch err {
 	case ErrTooMuchTimePaused:
-		return ErrTooMuchTimePausedCode
+		return player.ErrTooMuchTimePausedCode
 	case ErrVoiceConnectionClosed:
-		return ErrVoiceConnectionClosedCode
+		return player.ErrVoiceConnectionClosedCode
 	case ErrTrackSearchFailed:
-		return ErrTrackSearchFailedCode
+		return player.ErrTrackSearchFailedCode
+	case ErrTrackSearchInvalidUrl:
+		return player.ErrTrackSearchInvalidUrlCode
+	case ErrTrackSearchUnsuported:
+		return player.ErrTrackSearchUnsuportedCode
 	case ErrTrackNotFoundInQueue:
-		return ErrTrackNotFoundInQueueCode
+		return player.ErrTrackNotFoundInQueueCode
 	case ErrNoActivePlayer:
-		return ErrNoActivePlayerCode
+		return player.ErrNoActivePlayerCode
+	case ErrSpotifyPlaylistsNotSupported:
+		return player.ErrSpotifyPlaylistsNotSupportedCode
 	default:
-		return ErrAnyCode
+		return player.ErrAnyCode
 	}
 }

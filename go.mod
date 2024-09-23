@@ -16,15 +16,17 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/sethvargo/go-envconfig v1.1.0
 	github.com/stretchr/testify v1.9.0
+	github.com/zmb3/spotify/v2 v2.4.2
 	go.uber.org/atomic v1.11.0
 	golang.org/x/image v0.20.0
+	golang.org/x/oauth2 v0.23.0
 )
 
 require (
 	github.com/bitly/go-simplejson v0.5.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2 v1.11.4 // indirect
-	github.com/dop251/goja v0.0.0-20240828124009-016eb7256539 // indirect
+	github.com/dop251/goja v0.0.0-20240919115326-6c7d1df7ff05 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.5 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect

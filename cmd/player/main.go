@@ -89,7 +89,17 @@ func main() {
 
 	s.LogLevel = logger.SlogLevelToDiscordgo(cfg.LogLevel + 4)
 
-	fetcher := platform.NewFetcher(platform.NewYoutube(nil, 1))
+	ytFetcher := platform.NewYoutube(nil, 1)
+	spotifyFetcher, err := platform.NewSpotify(
+		cfg.Spotify.ClientId,
+		cfg.Spotify.ClientSecret,
+		ytFetcher,
+	)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	fetcher := platform.NewFetcher(ytFetcher, spotifyFetcher)
+
 	manager := player.NewPlayerManager(s, fetcher)
 	handler := player.NewHandler(manager, fetcher)
 

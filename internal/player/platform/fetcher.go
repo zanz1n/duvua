@@ -7,37 +7,39 @@ import (
 
 	"github.com/zanz1n/duvua/internal/errors"
 	"github.com/zanz1n/duvua/internal/player/encoder"
+	"github.com/zanz1n/duvua/internal/player/errcodes"
 	"github.com/zanz1n/duvua/pkg/player"
 )
 
 type Fetcher struct {
 	yt Platform
+	sp Platform
 }
 
-func NewFetcher(ytf *Youtube) *Fetcher {
+func NewFetcher(ytf *Youtube, spf *Spotify) *Fetcher {
 	if ytf == nil {
 		ytf = NewYoutube(nil, 1)
 	}
-	return &Fetcher{yt: ytf}
+	return &Fetcher{yt: ytf, sp: spf}
 }
 
 func (f *Fetcher) Search(query string) ([]player.TrackData, error) {
 	if strings.HasPrefix(query, "https://") {
 		u, err := url.Parse(query)
 		if err != nil {
-			return nil, errors.New("invalid url: " + err.Error())
+			return nil, errcodes.ErrTrackSearchInvalidUrl
 		}
 
 		switch {
 		case strings.Contains(u.Host, "youtu"):
 			return f.yt.SearchUrl(query)
 
-		// case strings.Contains(u.Host, "spotify"):
-		// 	return f.sp.SearchUrl(query)
+		case strings.Contains(u.Host, "spotify"):
+			return f.sp.SearchUrl(query)
 
 		// case strings.Contains(u.Host, "soundcloud"):
 		default:
-			return nil, errors.Newf("invalid url host `%s`", u.Host)
+			return nil, errcodes.ErrTrackSearchUnsuported
 		}
 	}
 
@@ -50,14 +52,14 @@ func (f *Fetcher) Search(query string) ([]player.TrackData, error) {
 }
 
 func (f *Fetcher) Fetch(query string) (Streamer, error) {
-	platform, url, ok := strings.Cut(query, ":")
+	platform, id, ok := strings.Cut(query, ":")
 	if !ok {
 		return nil, errors.New("invalid music format")
 	}
 
 	switch platform {
 	case "youtube":
-		return f.yt.Fetch(url)
+		return f.yt.Fetch(id)
 
 	// case "spotify":
 	// case "soundcloud":

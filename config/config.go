@@ -11,6 +11,7 @@ type Config struct {
 	Postgres PostgresConfig `env:", prefix=POSTGRES_"`
 	Welcomer WelcomerConfig `env:", prefix=WELCOMER_"`
 	Player   PlayerConfig   `env:", prefix=PLAYER_"`
+	Spotify  SpotifyConfig  `env:", prefix=SPOTIFY_"`
 }
 
 type DiscordConfig struct {
@@ -42,6 +43,11 @@ type PlayerConfig struct {
 	ListenPort uint16 `env:"LISTEN_PORT, default=8080"`
 	Password   string `env:"PASSWORD"`
 	FFmpegExec string `env:"FFMPEG_EXEC"`
+}
+
+type SpotifyConfig struct {
+	ClientId     string `env:"CLIENT_ID, required"`
+	ClientSecret string `env:"CLIENT_SECRET, required"`
 }
 
 func (pc *PostgresConfig) IntoUri() string {
