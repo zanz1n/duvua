@@ -18,6 +18,9 @@ x-common:
     PLAYER_PASSWORD: ""
     PLAYER_URL: "http://player:8080/"
 
+    SPOTIFY_CLIENT_ID: ""
+    SPOTIFY_CLIENT_SECRET: ""
+
 services:
   bot:
     build:
