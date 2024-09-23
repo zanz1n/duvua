@@ -154,10 +154,17 @@ func (y *Youtube) Fetch(id string) (Streamer, error) {
 
 	r, _, err := y.c.GetStream(v, format)
 	if err != nil {
+		slog.Warn("Youtube: Failed to get audio stream", "error", err)
 		return nil, errors.Unexpected(
 			"fetch youtube audio stream: " + err.Error(),
 		)
 	}
+
+	slog.Debug(
+		"Youtube: Created audio streamer",
+		"input_codec", format.MimeType,
+		"input_bitrate", format.Bitrate,
+	)
 
 	return newReaderStreamer(r)
 }
@@ -167,7 +174,7 @@ func filterYtVideos(formats []youtube.Format) *youtube.Format {
 	for i, f := range formats {
 		if f.AudioQuality == "AUDIO_QUALITY_MEDIUM" &&
 			strings.Contains(f.MimeType, "audio") &&
-			strings.Contains(f.MimeType, "opus") {
+			strings.Contains(f.MimeType, "mp4") {
 			find = i
 		}
 	}
@@ -176,7 +183,7 @@ func filterYtVideos(formats []youtube.Format) *youtube.Format {
 		for i, f := range formats {
 			if f.AudioQuality == "AUDIO_QUALITY_MEDIUM" &&
 				strings.Contains(f.MimeType, "audio") &&
-				strings.Contains(f.MimeType, "mp4") {
+				strings.Contains(f.MimeType, "opus") {
 				find = i
 			}
 		}

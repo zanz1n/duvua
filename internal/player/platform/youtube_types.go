@@ -84,7 +84,7 @@ func (v *ytVideo) Into() (player.TrackData, bool) {
 	return player.TrackData{
 		Name:      title,
 		URL:       "https://youtu.be/" + v.VideoId,
-		PlayQuery: "youtube:" + "https://www.youtube.com/watch?v=" + v.VideoId,
+		PlayQuery: "youtube:" + v.VideoId,
 		Thumbnail: thumbnail,
 		Duration:  duration,
 	}, ok
