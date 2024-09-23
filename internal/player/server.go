@@ -125,6 +125,7 @@ func (s *HttpServer) loggerMiddleware(h http.HandlerFunc) http.HandlerFunc {
 		h(w2, r)
 		slog.Info(
 			"HTTP: Incomming request",
+			"method", r.Method,
 			"path", r.URL.Path,
 			"status_code", w2.Status(),
 			"took", time.Since(start).Round(10*time.Microsecond),
