@@ -247,22 +247,22 @@ func (h *HttpClient) request(
 			"track client: error response: " + errb.Error,
 		)
 	}
+	dataB := dataBody{Data: &struct{}{}}
 
 	if resData != nil {
-		dataB := dataBody{Data: resData}
-		if err = json.Unmarshal(resBuf, &dataB); err != nil {
-			return false, errors.Unexpected(
-				"track client: unmarshal response: " + err.Error(),
-			)
-		}
-		if err = h.validate.Struct(&dataB); err != nil {
-			return false, errors.Unexpected(
-				"track client: validate response: " + err.Error(),
-			)
-		}
-
-		return dataB.Changed, nil
+		dataB.Data = resData
 	}
 
-	return false, nil
+	if err = json.Unmarshal(resBuf, &dataB); err != nil {
+		return false, errors.Unexpected(
+			"track client: unmarshal response: " + err.Error(),
+		)
+	}
+	if err = h.validate.Struct(&dataB); err != nil {
+		return false, errors.Unexpected(
+			"track client: validate response: " + err.Error(),
+		)
+	}
+
+	return dataB.Changed, nil
 }
