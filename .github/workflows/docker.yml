@@ -68,7 +68,7 @@ jobs:
 
       - name: Build and Push bot (tag)
         uses: docker/build-push-action@v5
-        if: "github.event_name == 'release' && github.event.action == 'published'"
+        if: github.event_name == 'release' && github.event.action == 'published'
         with:
           context: .
           file: ./docker/bot.dockerfile
@@ -81,7 +81,7 @@ jobs:
 
       - name: Build and Push bot (main)
         uses: docker/build-push-action@v5
-        if: "github.event_name == 'push' && contains(github.ref, 'main')"
+        if: github.event_name == 'push' && contains(github.ref, 'main')
         with:
           context: .
           file: ./docker/bot.dockerfile
@@ -96,7 +96,7 @@ jobs:
 
       - name: Build and Push player (tag)
         uses: docker/build-push-action@v5
-        if: "github.event_name == 'release' && github.event.action == 'published'"
+        if: github.event_name == 'release' && github.event.action == 'published'
         with:
           context: .
           file: ./docker/player.dockerfile
@@ -109,7 +109,7 @@ jobs:
 
       - name: Build and Push player (main)
         uses: docker/build-push-action@v5
-        if: "github.event_name == 'push' && contains(github.ref, 'main')"
+        if: github.event_name == 'push' && contains(github.ref, 'main')
         with:
           context: .
           file: ./docker/player.dockerfile
