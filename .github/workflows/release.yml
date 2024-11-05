@@ -14,7 +14,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go }}
+          go-version: "1.23"
 
       - name: Code checkout
         uses: actions/checkout@v4
@@ -31,19 +31,21 @@ jobs:
         env:
           CGO_ENABLED: 1
           REF: ${{ github.ref }}
+          ROOT: github.com/zanz1n/duvua
         run: |
-          GOARCH=amd64 go build -o bin/duvua-bot-amd64 -ldflags "-s -w -X github.com/zanz1n/duvua/config.Version=${REF:11}" cmd/bot/main.go
+          GOARCH=amd64 go build -o bin/duvua-bot-amd64 -ldflags "-s -w -X $ROOT/config.Version=${REF:11}" $ROOT/cmd/bot
           chmod 755 bin/duvua-bot-amd64
 
       - name: Build player
         env:
           CGO_ENABLED: 0
           REF: ${{ github.ref }}
+          ROOT: github.com/zanz1n/duvua
         run: |
-          GOARCH=amd64 go build -o bin/duvua-player-amd64 -ldflags "-s -w -X github.com/zanz1n/duvua/config.Version=${REF:11}" cmd/player/main.go
+          GOARCH=amd64 go build -o bin/duvua-player-amd64 -ldflags "-s -w -X $ROOT/config.Version=${REF:11}" $ROOT/cmd/player
           chmod 755 bin/duvua-player-amd64
 
-          GOARCH=arm64 go build -o bin/duvua-player-arm64 -ldflags "-s -w -X github.com/zanz1n/duvua/config.Version=${REF:11}" cmd/player/main.go
+          GOARCH=arm64 go build -o bin/duvua-player-arm64 -ldflags "-s -w -X $ROOT/config.Version=${REF:11}" $ROOT/cmd/player
           chmod 755 bin/duvua-player-arm64
 
       - name: Create checksum

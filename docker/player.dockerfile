@@ -19,7 +19,7 @@ RUN --mount=type=cache,target=/gomod-cache \
     fi; \
     go build \
     -ldflags "-s -w -X github.com/zanz1n/duvua/config.Version=${VERSION_TAG}" \
-    -o bin/duvua-player cmd/player/main.go
+    -o bin/duvua-player github.com/zanz1n/duvua/cmd/player
 
 FROM alpine:3
 
