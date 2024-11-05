@@ -34,3 +34,7 @@ build-dev-player:
 
 test:
 	go test ./... -v --race
+
+update:
+	go get -u ./...
+	go mod tidy
