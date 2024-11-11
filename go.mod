@@ -16,7 +16,7 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/sethvargo/go-envconfig v1.1.0
 	github.com/stretchr/testify v1.9.0
-	github.com/zmb3/spotify/v2 v2.4.2
+	github.com/zmb3/spotify/v2 v2.4.3
 	go.uber.org/atomic v1.11.0
 	golang.org/x/image v0.22.0
 	golang.org/x/oauth2 v0.24.0
