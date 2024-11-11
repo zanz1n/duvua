@@ -19,7 +19,7 @@ RUN --mount=type=cache,target=/gomod-cache \
     fi; \
     go build \
     -ldflags "-s -w -X github.com/zanz1n/duvua/config.Version=${VERSION_TAG}" \
-    -o bin/duvua-bot ./cmd/bot
+    -buildvcs=false -o bin/duvua-bot github.com/zanz1n/duvua/cmd/bot
 
 FROM gcr.io/distroless/cc-debian12
 
