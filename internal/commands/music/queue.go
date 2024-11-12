@@ -31,6 +31,25 @@ var queueCommandData = discordgo.ApplicationCommand{
 				discordgo.EnglishUS: "Shows all the musics that are in the queue",
 			},
 		},
+		{
+			Type:        discordgo.ApplicationCommandOptionSubCommand,
+			Name:        "remove",
+			Description: "Remove uma música da fila com base na posição",
+			DescriptionLocalizations: map[discordgo.Locale]string{
+				discordgo.EnglishUS: "Removes a music from the queue by its position",
+			},
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionInteger,
+					Name:        "position",
+					Description: "A posição da música que deseja remover",
+					DescriptionLocalizations: map[discordgo.Locale]string{
+						discordgo.EnglishUS: "The position of the music you want to remove",
+					},
+					Required: true,
+				},
+			},
+		},
 	},
 }
 
@@ -116,6 +135,14 @@ func (c *QueueCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate
 			Embeds:     embeds,
 			Components: components,
 		})
+
+	case "remove":
+		pos, err := i.GetIntegerOption("position", true)
+		if err != nil {
+			return err
+		}
+
+		return c.handleRemoveByPosition(s, i, int(pos))
 
 	default:
 		return errors.New("opção `sub-command` inválida")
@@ -237,6 +264,32 @@ func (c *QueueCommand) handleRemove(
 	}
 
 	track, err := c.c.RemoveTrack(i.GuildID, id)
+	if err != nil {
+		return err
+	}
+
+	return i.Replyf(s,
+		"Música **[%s](<%s>)** removida da fila",
+		track.Data.Name,
+		track.Data.URL,
+	)
+}
+
+func (c *QueueCommand) handleRemoveByPosition(
+	s *discordgo.Session,
+	i *manager.InteractionCreate,
+	pos int,
+) error {
+	cfg, err := c.r.GetOrDefault(i.GuildID)
+	if err != nil {
+		return err
+	}
+
+	if err = canControl(i.Member, cfg); err != nil {
+		return err
+	}
+
+	track, err := c.c.RemoveTrackByPosition(i.GuildID, pos)
 	if err != nil {
 		return err
 	}

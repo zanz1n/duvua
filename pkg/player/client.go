@@ -177,6 +177,18 @@ func (h *HttpClient) RemoveTrack(guildId string, id uuid.UUID) (*Track, error) {
 	return &resData, nil
 }
 
+func (h *HttpClient) RemoveTrackByPosition(guildId string, pos int) (*Track, error) {
+	var resData Track
+
+	url := fmt.Sprintf("guild/%s/track-pos/%d", guildId, pos)
+	_, err := h.request(http.MethodDelete, url, nil, nil, &resData)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resData, nil
+}
+
 func (h *HttpClient) request(
 	method, url string,
 	query url.Values,
