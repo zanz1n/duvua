@@ -172,7 +172,21 @@ func (h *Handler) RemoveTrack(guildId uint64, id uuid.UUID) (*player.Track, erro
 		return nil, errcodes.ErrNoActivePlayer
 	}
 
-	t, ok := p.RemoveTrack(id)
+	t, ok := p.RemoveById(id)
+	if !ok {
+		return nil, errcodes.ErrTrackNotFoundInQueue
+	}
+
+	return t, nil
+}
+
+func (h *Handler) RemoveTrackByPosition(guildId uint64, pos int) (*player.Track, error) {
+	p, ok := h.m.Get(guildId)
+	if !ok {
+		return nil, errcodes.ErrNoActivePlayer
+	}
+
+	t, ok := p.RemoveByPosition(pos)
 	if !ok {
 		return nil, errcodes.ErrTrackNotFoundInQueue
 	}

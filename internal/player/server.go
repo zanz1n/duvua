@@ -61,6 +61,8 @@ func (s *HttpServer) Route(m *http.ServeMux) {
 	m.HandleFunc("DELETE /guild/{guild_id}", s.m(s.deleteQueue))
 	// Remove track
 	m.HandleFunc("DELETE /guild/{guild_id}/track/{id}", s.m(s.deleteTrackById))
+	// Remove track by position
+	m.HandleFunc("DELETE /guild/{guild_id}/track-pos/{pos}", s.m(s.deleteTrackByPosition))
 }
 
 type handlerFunc = func(w http.ResponseWriter, r *http.Request) error
@@ -409,6 +411,30 @@ func (s *HttpServer) deleteTrackById(w http.ResponseWriter, r *http.Request) err
 	return resJson(w, track, "track removed", track != nil)
 }
 
+func (s *HttpServer) deleteTrackByPosition(w http.ResponseWriter, r *http.Request) error {
+	defer r.Body.Close()
+
+	guildId, err := getUintPathParam(r, "guild_id")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return err
+	}
+
+	pos, err := getIntPathParam(r, "pos")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return err
+	}
+
+	track, err := s.h.RemoveTrackByPosition(guildId, pos)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return err
+	}
+
+	return resJson(w, track, "track removed", track != nil)
+}
+
 func (s *HttpServer) parseReqBody(body io.Reader, v any) error {
 	buf, err := io.ReadAll(body)
 	if err != nil {
@@ -434,6 +460,20 @@ func getUuidPathParam(r *http.Request, name string) (uuid.UUID, error) {
 	v, err := uuid.Parse(pv)
 	if err != nil {
 		return uuid.Nil, errors.Newf("invalid path parameter `%s`", name)
+	}
+
+	return v, nil
+}
+
+func getIntPathParam(r *http.Request, name string) (int, error) {
+	pv := r.PathValue(name)
+	if pv == "" {
+		return 0, errors.Newf("path parameter `%s` is required", name)
+	}
+
+	v, err := strconv.Atoi(pv)
+	if err != nil {
+		return 0, errors.Newf("invalid path parameter `%s`", name)
 	}
 
 	return v, nil

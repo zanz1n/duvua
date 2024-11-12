@@ -139,7 +139,7 @@ func (p *GuildPlayer) Pool() *player.Track {
 	return p.current
 }
 
-func (p *GuildPlayer) RemoveTrack(id uuid.UUID) (*player.Track, bool) {
+func (p *GuildPlayer) RemoveById(id uuid.UUID) (*player.Track, bool) {
 	p.mu.Lock()
 
 	if p.current != nil {
@@ -166,6 +166,26 @@ func (p *GuildPlayer) RemoveTrack(id uuid.UUID) (*player.Track, bool) {
 	}
 
 	p.queue = append(p.queue[:index], p.queue[index+1:]...)
+	return &track, true
+}
+
+func (p *GuildPlayer) RemoveByPosition(pos int) (*player.Track, bool) {
+	if pos == 0 {
+		v := p.Skip()
+		return v, v != nil
+	}
+
+	pos--
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if pos >= len(p.queue) || 0 > pos {
+		return nil, false
+	}
+
+	track := p.queue[pos]
+	p.queue = append(p.queue[:pos], p.queue[pos+1:]...)
+
 	return &track, true
 }
 
