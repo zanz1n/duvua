@@ -1,0 +1,131 @@
+syntax = "proto3";
+
+package player;
+
+option go_package = "./player";
+
+import "tagger/tagger.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+
+message Track {
+  string id = 1 [ (tagger.tags) = "validate:\"required,uuid\"" ];
+  google.protobuf.Timestamp created_at = 2
+      [ (tagger.tags) = "validate:\"required\"" ];
+  fixed64 user_id = 3 [ (tagger.tags) = "validate:\"required\"" ];
+  fixed64 channel_id = 4 [ (tagger.tags) = "validate:\"required\"" ];
+
+  TrackState state = 5;
+  TrackData data = 6 [ (tagger.tags) = "validate:\"required\"" ];
+}
+
+message TrackState {
+  google.protobuf.Duration progress = 1;
+  google.protobuf.Timestamp playing_start = 2
+      [ (tagger.tags) = "validate:\"required\"" ];
+  bool looping = 3;
+}
+
+message TrackData {
+  string name = 1 [ (tagger.tags) = "validate:\"required\"" ];
+  string url = 2 [ (tagger.tags) = "validate:\"required\"" ];
+  string play_query = 3 [ (tagger.tags) = "validate:\"required\"" ];
+  string thumbnail = 4 [ (tagger.tags) = "validate:\"required\"" ];
+  google.protobuf.Duration duration = 5
+      [ (tagger.tags) = "validate:\"required\"" ];
+}
+
+message GuildIdRequest {
+  fixed64 guild_id = 1 [ (tagger.tags) = "validate:\"required\"" ];
+}
+
+message TrackIdRequest {
+  fixed64 guild_id = 1 [ (tagger.tags) = "validate:\"required\"" ];
+  string id = 2 [ (tagger.tags) = "validate:\"required,uuid\"" ];
+}
+
+message TrackResponse { Track track = 1; }
+
+message ChangedResponse { bool changed = 1; }
+
+enum PlayerError {
+  ErrAny = 0;
+  ErrTooMuchTimePaused = 1;
+  ErrVoiceConnectionClosed = 2;
+  ErrTrackSearchFailed = 3;
+  ErrTrackSearchInvalidUrl = 4;
+  ErrTrackSearchUnsuported = 5;
+  ErrTrackNotFoundInQueue = 6;
+  ErrNoActivePlayer = 7;
+  ErrSpotifyPlaylistsNotSupported = 8;
+}
+
+service Player {
+  rpc Fetch(FetchRequest) returns (FetchResponse);
+  rpc GetCurrent(GuildIdRequest) returns (TrackResponse);
+  rpc GetById(TrackIdRequest) returns (TrackResponse);
+  rpc GetAll(GetAllRequest) returns (GetAllResponse);
+
+  rpc Add(AddRequest) returns (AddResponse);
+
+  rpc Skip(GuildIdRequest) returns (TrackResponse);
+  rpc Stop(GuildIdRequest) returns (google.protobuf.Empty);
+  rpc Pause(GuildIdRequest) returns (ChangedResponse);
+  rpc Unpause(GuildIdRequest) returns (ChangedResponse);
+  rpc EnableLoop(EnableLoopRequest) returns (ChangedResponse);
+  rpc SetVolume(SetVolumeRequest) returns (ChangedResponse);
+
+  rpc Remove(TrackIdRequest) returns (TrackResponse);
+  rpc RemoveByPosition(RemoveByPositionRequest) returns (TrackResponse);
+}
+
+message FetchRequest {
+  string query = 1 [ (tagger.tags) = "validate:\"required\"" ];
+}
+
+message FetchResponse {
+  repeated TrackData data = 4 [ (tagger.tags) = "validate:\"required\"" ];
+}
+
+message GetAllRequest {
+  fixed64 guild_id = 1 [ (tagger.tags) = "validate:\"required\"" ];
+  int32 offset = 2;
+  int32 limit = 3;
+}
+
+message GetAllResponse {
+  int32 total_size = 1;
+  google.protobuf.Duration total_duration = 2;
+
+  Track playing = 3;
+  repeated Track tracks = 4;
+}
+
+message AddRequest {
+  fixed64 guild_id = 1 [ (tagger.tags) = "validate:\"required\"" ];
+  fixed64 user_id = 2 [ (tagger.tags) = "validate:\"required\"" ];
+  fixed64 channel_id = 3 [ (tagger.tags) = "validate:\"required\"" ];
+  fixed64 text_channel_id = 4 [ (tagger.tags) = "validate:\"required\"" ];
+
+  repeated TrackData data = 5 [ (tagger.tags) = "validate:\"required\"" ];
+}
+
+message AddResponse {
+  repeated Track tracks = 4 [ (tagger.tags) = "validate:\"required\"" ];
+}
+
+message EnableLoopRequest {
+  fixed64 guild_id = 1 [ (tagger.tags) = "validate:\"required\"" ];
+  bool enable = 2;
+}
+
+message SetVolumeRequest {
+  fixed64 guild_id = 1 [ (tagger.tags) = "validate:\"required\"" ];
+  int32 volume = 2 [ (tagger.tags) = "validate:\"gte=0,lte=255\"" ];
+}
+
+message RemoveByPositionRequest {
+  fixed64 guild_id = 1 [ (tagger.tags) = "validate:\"required\"" ];
+  int32 position = 2;
+}
