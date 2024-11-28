@@ -1,14 +1,16 @@
 package musiccmds
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua/internal/errors"
 	"github.com/zanz1n/duvua/internal/manager"
 	"github.com/zanz1n/duvua/internal/music"
 	"github.com/zanz1n/duvua/internal/utils"
-	"github.com/zanz1n/duvua/pkg/player"
+	"github.com/zanz1n/duvua/pkg/pb/player"
 )
 
 var playCommandData = discordgo.ApplicationCommand{
@@ -31,7 +33,7 @@ var playCommandData = discordgo.ApplicationCommand{
 	},
 }
 
-func NewPlayCommand(r music.MusicConfigRepository, client *player.HttpClient) manager.Command {
+func NewPlayCommand(r music.MusicConfigRepository, client player.PlayerClient) manager.Command {
 	if client == nil {
 		panic("NewPlayCommand() client must not be nil")
 	}
@@ -49,7 +51,7 @@ func NewPlayCommand(r music.MusicConfigRepository, client *player.HttpClient) ma
 
 type PlayCommand struct {
 	r music.MusicConfigRepository
-	c *player.HttpClient
+	c player.PlayerClient
 }
 
 func (c *PlayCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate) error {
@@ -81,26 +83,39 @@ func (c *PlayCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate)
 		return err
 	}
 
-	tracksData, err := c.c.FetchTrack(query)
-	if err != nil {
-		return err
-	}
+	ctx1, cancel1 := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel1()
 
-	tracks, err := c.c.AddTrack(i.GuildID, player.AddTrackData{
-		UserId:        i.Member.User.ID,
-		ChannelId:     vs.ChannelID,
-		TextChannelId: i.ChannelID,
-		Data:          tracksData,
+	tracksData, err := c.c.Fetch(ctx1, &player.FetchRequest{
+		Query: query,
 	})
 	if err != nil {
 		return err
 	}
 
+	ctx2, cancel2 := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel2()
+
+	tracksRes, err := c.c.Add(ctx2, &player.AddRequest{
+		GuildId:       cuint64(i.GuildID),
+		UserId:        cuint64(i.Member.User.ID),
+		ChannelId:     cuint64(vs.ChannelID),
+		TextChannelId: cuint64(i.ChannelID),
+		Data:          tracksData.Data,
+	})
+	if err != nil {
+		return err
+	}
+
+	tracks := tracksRes.Tracks
+
 	if len(tracks) == 1 {
 		track := tracks[0]
 
 		msg := fmt.Sprintf("Música **[%s](<%s>) [%s]** adicionada à fila",
-			track.Data.Name, track.Data.URL, utils.FmtDuration(track.Data.Duration),
+			track.Data.Name,
+			track.Data.Url,
+			utils.FmtDuration(track.Data.Duration.AsDuration()),
 		)
 
 		return i.Reply(s, &manager.InteractionResponse{
@@ -111,7 +126,7 @@ func (c *PlayCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate)
 						Label:    "Remover",
 						Emoji:    emoji("✖️"),
 						Style:    discordgo.DangerButton,
-						CustomID: "queue/remove/" + track.ID.String(),
+						CustomID: "queue/remove/" + track.Id,
 					},
 				},
 			}},

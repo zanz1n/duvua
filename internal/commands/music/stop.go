@@ -1,11 +1,14 @@
 package musiccmds
 
 import (
+	"context"
+	"time"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua/internal/errors"
 	"github.com/zanz1n/duvua/internal/manager"
 	"github.com/zanz1n/duvua/internal/music"
-	"github.com/zanz1n/duvua/pkg/player"
+	"github.com/zanz1n/duvua/pkg/pb/player"
 )
 
 var stopCommandData = discordgo.ApplicationCommand{
@@ -17,7 +20,7 @@ var stopCommandData = discordgo.ApplicationCommand{
 	},
 }
 
-func NewStopCommand(r music.MusicConfigRepository, client *player.HttpClient) manager.Command {
+func NewStopCommand(r music.MusicConfigRepository, client player.PlayerClient) manager.Command {
 	return manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
@@ -31,7 +34,7 @@ func NewStopCommand(r music.MusicConfigRepository, client *player.HttpClient) ma
 
 type StopCommand struct {
 	r music.MusicConfigRepository
-	c *player.HttpClient
+	c player.PlayerClient
 }
 
 func (c *StopCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate) error {
@@ -48,7 +51,13 @@ func (c *StopCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate)
 		return err
 	}
 
-	if err = c.c.Stop(i.GuildID); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	_, err = c.c.Stop(ctx, &player.GuildIdRequest{
+		GuildId: cuint64(i.GuildID),
+	})
+	if err != nil {
 		return err
 	}
 

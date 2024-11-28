@@ -28,7 +28,7 @@ import (
 	"github.com/zanz1n/duvua/internal/ticket"
 	"github.com/zanz1n/duvua/internal/utils"
 	"github.com/zanz1n/duvua/internal/welcome"
-	"github.com/zanz1n/duvua/pkg/player"
+	"github.com/zanz1n/duvua/pkg/pb/player"
 )
 
 const DuvuaBanner = `
@@ -123,6 +123,16 @@ func main() {
 		}
 	}
 
+	playerGrpc := connectToPlayerGrpc()
+	defer func() {
+		start := time.Now()
+		playerGrpc.Close()
+		slog.Info(
+			"Closed GRPC connection pool",
+			"took", time.Since(start).Round(time.Millisecond),
+		)
+	}()
+
 	welcomeGen := welcomeImageGenerator()
 	welcomeRepo := welcome.NewPostgresWelcomeRepository(db)
 	welcomeEvt := events.NewMemberAddEvent(welcomeRepo, welcomeGen)
@@ -131,7 +141,8 @@ func main() {
 	ticketConfigRepository := ticket.NewPgTicketConfigRepository(db)
 
 	musicRepository := music.NewPgMusicConfigRepository(db)
-	musicClient := player.NewHttpClient(nil, cfg.Player.ApiURL, cfg.Player.Password)
+
+	musicClient := player.NewPlayerClient(playerGrpc)
 
 	animeApi := anime.NewAnimeApi(nil)
 	translator := lang.NewGoogleTranslatorApi(nil)

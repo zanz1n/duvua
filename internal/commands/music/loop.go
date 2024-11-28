@@ -1,11 +1,14 @@
 package musiccmds
 
 import (
+	"context"
+	"time"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua/internal/errors"
 	"github.com/zanz1n/duvua/internal/manager"
 	"github.com/zanz1n/duvua/internal/music"
-	"github.com/zanz1n/duvua/pkg/player"
+	"github.com/zanz1n/duvua/pkg/pb/player"
 )
 
 var loopCommandData = discordgo.ApplicationCommand{
@@ -35,7 +38,7 @@ var loopCommandData = discordgo.ApplicationCommand{
 	},
 }
 
-func NewLoopCommand(r music.MusicConfigRepository, client *player.HttpClient) manager.Command {
+func NewLoopCommand(r music.MusicConfigRepository, client player.PlayerClient) manager.Command {
 	return manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
@@ -49,7 +52,7 @@ func NewLoopCommand(r music.MusicConfigRepository, client *player.HttpClient) ma
 
 type LoopCommand struct {
 	r music.MusicConfigRepository
-	c *player.HttpClient
+	c player.PlayerClient
 }
 
 func (c *LoopCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate) error {
@@ -75,13 +78,19 @@ func (c *LoopCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate)
 		return err
 	}
 
-	changed, err := c.c.EnableLoop(i.GuildID, enable)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	changed, err := c.c.EnableLoop(ctx, &player.EnableLoopRequest{
+		GuildId: cuint64(i.GuildID),
+		Enable:  enable,
+	})
 	if err != nil {
 		return err
 	}
 
 	msg := "Loop"
-	if !changed {
+	if !changed.Changed {
 		msg += " já estava"
 	}
 	if enable {

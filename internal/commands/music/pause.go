@@ -1,11 +1,14 @@
 package musiccmds
 
 import (
+	"context"
+	"time"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua/internal/errors"
 	"github.com/zanz1n/duvua/internal/manager"
 	"github.com/zanz1n/duvua/internal/music"
-	"github.com/zanz1n/duvua/pkg/player"
+	"github.com/zanz1n/duvua/pkg/pb/player"
 )
 
 var pauseCommandData = discordgo.ApplicationCommand{
@@ -17,7 +20,7 @@ var pauseCommandData = discordgo.ApplicationCommand{
 	},
 }
 
-func NewPauseCommand(r music.MusicConfigRepository, client *player.HttpClient) manager.Command {
+func NewPauseCommand(r music.MusicConfigRepository, client player.PlayerClient) manager.Command {
 	return manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
@@ -31,7 +34,7 @@ func NewPauseCommand(r music.MusicConfigRepository, client *player.HttpClient) m
 
 type PauseCommand struct {
 	r music.MusicConfigRepository
-	c *player.HttpClient
+	c player.PlayerClient
 }
 
 func (c *PauseCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate) error {
@@ -48,13 +51,18 @@ func (c *PauseCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate
 		return err
 	}
 
-	changed, err := c.c.Pause(i.GuildID)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	changed, err := c.c.Pause(ctx, &player.GuildIdRequest{
+		GuildId: cuint64(i.GuildID),
+	})
 	if err != nil {
 		return err
 	}
 
 	msg := "Fila"
-	if !changed {
+	if !changed.Changed {
 		msg += " já estava"
 	}
 	msg += " pausada!"

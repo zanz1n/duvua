@@ -1,18 +1,18 @@
 package musiccmds
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/google/uuid"
 	"github.com/zanz1n/duvua/internal/errors"
 	"github.com/zanz1n/duvua/internal/manager"
 	"github.com/zanz1n/duvua/internal/music"
 	"github.com/zanz1n/duvua/internal/utils"
-	"github.com/zanz1n/duvua/pkg/player"
+	"github.com/zanz1n/duvua/pkg/pb/player"
 )
 
 var queueCommandData = discordgo.ApplicationCommand{
@@ -53,7 +53,7 @@ var queueCommandData = discordgo.ApplicationCommand{
 	},
 }
 
-func NewQueueCommand(r music.MusicConfigRepository, client *player.HttpClient) manager.Command {
+func NewQueueCommand(r music.MusicConfigRepository, client player.PlayerClient) manager.Command {
 	return manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
@@ -67,7 +67,7 @@ func NewQueueCommand(r music.MusicConfigRepository, client *player.HttpClient) m
 
 type QueueCommand struct {
 	r music.MusicConfigRepository
-	c *player.HttpClient
+	c player.PlayerClient
 }
 
 func (c *QueueCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate) error {
@@ -157,12 +157,19 @@ func (c *QueueCommand) handleList(
 
 	offset, paddedOff := pageSize*page, pageSize*page
 
-	data, err := c.c.GetTracks(guildId, paddedOff, pageSize)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	data, err := c.c.GetAll(ctx, &player.GetAllRequest{
+		GuildId: cuint64(guildId),
+		Offset:  int32(paddedOff),
+		Limit:   pageSize,
+	})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if offset > data.TotalSize {
+	if offset > int(data.TotalSize) {
 		return nil, nil, errors.New("interação inválida")
 	}
 
@@ -170,9 +177,9 @@ func (c *QueueCommand) handleList(
 	totalDuration := time.Duration(0)
 
 	if page == 0 && data.Playing != nil {
-		progress := data.Playing.State.Progress.Load()
+		progress := data.Playing.State.Progress.AsDuration()
 
-		totalDuration += data.Playing.Data.Duration - progress
+		totalDuration += data.Playing.Data.Duration.AsDuration() - progress
 
 		status := "Tocando"
 		if data.Playing.State.Looping {
@@ -182,25 +189,27 @@ func (c *QueueCommand) handleList(
 			Name: fmt.Sprintf("[%s] Progresso: [%s/%s]",
 				status,
 				utils.FmtDuration(progress),
-				utils.FmtDuration(data.Playing.Data.Duration),
+				utils.FmtDuration(data.Playing.Data.Duration.AsDuration()),
 			),
 			Value: fmt.Sprintf("**[%s](%s)**",
 				data.Playing.Data.Name,
-				data.Playing.Data.URL,
+				data.Playing.Data.Url,
 			),
 		})
 	}
 
 	for i, track := range data.Tracks {
-		value := fmt.Sprintf("**[%s](%s)**", track.Data.Name, track.Data.URL)
+		dur := track.Data.Duration.AsDuration()
 
-		totalDuration += track.Data.Duration
+		value := fmt.Sprintf("**[%s](%s)**", track.Data.Name, track.Data.Url)
+
+		totalDuration += dur
 
 		fields = append(fields, &discordgo.MessageEmbedField{
 			Name: fmt.Sprintf(
 				"[%d°] Duração: [%s]",
 				offset+i+1,
-				utils.FmtDuration(track.Data.Duration),
+				utils.FmtDuration(dur),
 			),
 			Value: value,
 		})
@@ -234,7 +243,7 @@ func (c *QueueCommand) handleList(
 					Label:    "Próximo",
 					Emoji:    emoji("▶️"),
 					Style:    discordgo.PrimaryButton,
-					Disabled: pageSize*(page+1) >= data.TotalSize,
+					Disabled: pageSize*(page+1) >= int(data.TotalSize),
 					CustomID: "queue/list/" + strconv.Itoa(page+1),
 				},
 			},
@@ -247,7 +256,7 @@ func (c *QueueCommand) handleList(
 func (c *QueueCommand) handleRemove(
 	s *discordgo.Session,
 	i *manager.InteractionCreate,
-	uid string,
+	id string,
 ) error {
 	cfg, err := c.r.GetOrDefault(i.GuildID)
 	if err != nil {
@@ -258,20 +267,21 @@ func (c *QueueCommand) handleRemove(
 		return err
 	}
 
-	id, err := uuid.Parse(uid)
-	if err != nil {
-		return errors.New("id da música inválido")
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
 
-	track, err := c.c.RemoveTrack(i.GuildID, id)
+	track, err := c.c.Remove(ctx, &player.TrackIdRequest{
+		GuildId: cuint64(i.GuildID),
+		Id:      id,
+	})
 	if err != nil {
 		return err
 	}
 
 	return i.Replyf(s,
 		"Música **[%s](<%s>)** removida da fila",
-		track.Data.Name,
-		track.Data.URL,
+		track.Track.Data.Name,
+		track.Track.Data.Url,
 	)
 }
 
@@ -289,14 +299,20 @@ func (c *QueueCommand) handleRemoveByPosition(
 		return err
 	}
 
-	track, err := c.c.RemoveTrackByPosition(i.GuildID, pos)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	track, err := c.c.RemoveByPosition(ctx, &player.RemoveByPositionRequest{
+		GuildId:  cuint64(i.GuildID),
+		Position: int32(pos),
+	})
 	if err != nil {
 		return err
 	}
 
 	return i.Replyf(s,
 		"Música **[%s](<%s>)** removida da fila",
-		track.Data.Name,
-		track.Data.URL,
+		track.Track.Data.Name,
+		track.Track.Data.Url,
 	)
 }

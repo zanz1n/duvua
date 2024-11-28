@@ -2,12 +2,18 @@ package musiccmds
 
 import (
 	"slices"
+	"strconv"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua/internal/errors"
 	"github.com/zanz1n/duvua/internal/music"
 	"github.com/zanz1n/duvua/internal/utils"
 )
+
+func cuint64(s string) uint64 {
+	v, _ := strconv.ParseUint(s, 10, 0)
+	return v
+}
 
 func canPlay(m *discordgo.Member, cfg *music.MusicConfig) bool {
 	switch cfg.PlayMode {
