@@ -3,7 +3,7 @@ package platform
 import (
 	"io"
 
-	"github.com/zanz1n/duvua/pkg/player"
+	"github.com/zanz1n/duvua/pkg/pb/player"
 )
 
 type TrackSpeed int8
@@ -30,6 +30,6 @@ type Streamer interface {
 
 type Platform interface {
 	SearchString(s string) (*player.TrackData, error)
-	SearchUrl(url string) ([]player.TrackData, error)
+	SearchUrl(url string) ([]*player.TrackData, error)
 	Fetch(url string) (Streamer, error)
 }

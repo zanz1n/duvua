@@ -1,6 +1,7 @@
 package encoder
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"log/slog"
@@ -113,18 +114,18 @@ func (s *Session) start() error {
 
 	// TODO: Handle stderr
 
-	// stderr, err := ffmpeg.StderrPipe()
-	// if err != nil {
-	// 	return errors.Unexpected("stderr pipe: " + err.Error())
-	// }
-	// defer stderr.Close()
+	stderr, err := ffmpeg.StderrPipe()
+	if err != nil {
+		return errors.Unexpected("stderr pipe: " + err.Error())
+	}
+	defer stderr.Close()
 
-	// go func() {
-	// 	s := bufio.NewScanner(stderr)
-	// 	for s.Scan() {
-	// 		slog.Debug("FFMPEG: " + s.Text())
-	// 	}
-	// }()
+	go func() {
+		s := bufio.NewScanner(stderr)
+		for s.Scan() {
+			slog.Debug("FFMPEG: " + s.Text())
+		}
+	}()
 
 	s.Lock()
 

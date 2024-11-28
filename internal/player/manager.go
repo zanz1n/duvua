@@ -11,7 +11,7 @@ import (
 	"github.com/zanz1n/duvua/internal/errors"
 	"github.com/zanz1n/duvua/internal/player/errcodes"
 	"github.com/zanz1n/duvua/internal/player/platform"
-	"github.com/zanz1n/duvua/pkg/player"
+	"github.com/zanz1n/duvua/pkg/pb/player"
 )
 
 type PlayerManager struct {
@@ -166,7 +166,7 @@ LOOP:
 
 		slog.Info(
 			"Queue started track",
-			"track_id", track.ID,
+			"track_id", track.Id,
 			"guild_id", guildId,
 			"queue_size", p.Size(),
 		)
@@ -242,7 +242,7 @@ func (m *PlayerManager) playTrack(
 
 		select {
 		case vc.OpusSend <- packet:
-			track.State.Progress.Add(time.Since(readStart))
+			atomicAddDuration(track.State, time.Since(readStart))
 
 		case evt := <-p.Interrupt:
 			if evt != InterruptPause {

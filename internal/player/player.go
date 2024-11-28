@@ -7,8 +7,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/zanz1n/duvua/pkg/player"
-	uatomic "go.uber.org/atomic"
+	"github.com/zanz1n/duvua/pkg/pb/player"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type InterruptType uint8
@@ -50,7 +52,7 @@ type GuildPlayer struct {
 	loop        atomic.Bool
 	textChannel atomic.Uint64
 
-	queue   []player.Track
+	queue   []*player.Track
 	current *player.Track
 	paused  atomic.Bool
 
@@ -64,7 +66,7 @@ func newGuildPlayer(guildId uint64) *GuildPlayer {
 		GuildId:     guildId,
 		loop:        atomic.Bool{},
 		textChannel: atomic.Uint64{},
-		queue:       []player.Track{},
+		queue:       []*player.Track{},
 		current:     nil,
 		paused:      atomic.Bool{},
 		mu:          sync.Mutex{},
@@ -72,21 +74,23 @@ func newGuildPlayer(guildId uint64) *GuildPlayer {
 	}
 }
 
-func (p *GuildPlayer) GetById(id uuid.UUID) (*player.Track, bool) {
+func (p *GuildPlayer) GetById(uid uuid.UUID) (*player.Track, bool) {
+	id := uid.String()
+
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
 	if p.current != nil {
-		if p.current.ID == id {
-			c := *p.current
-			return &c, true
+		if p.current.Id == id {
+			c := proto.Clone(p.current).(*player.Track)
+			return c, true
 		}
 	}
 
 	for _, t := range p.queue {
-		if t.ID == id {
-			v := t
-			return &v, true
+		if t.Id == id {
+			v := proto.Clone(t).(*player.Track)
+			return v, true
 		}
 	}
 
@@ -113,7 +117,7 @@ func (p *GuildPlayer) IsEmpty() bool {
 	return p.Size() == 0
 }
 
-func (p *GuildPlayer) AddTrack(track player.Track) {
+func (p *GuildPlayer) AddTrack(track *player.Track) {
 	p.mu.Lock()
 	p.queue = append(p.queue, track)
 	p.mu.Unlock()
@@ -128,35 +132,37 @@ func (p *GuildPlayer) Pool() *player.Track {
 	} else {
 		track := p.queue[0]
 		p.queue = p.queue[1:]
-		p.current = &track
+		p.current = track
 
 		p.current.State = &player.TrackState{
-			Progress:     uatomic.NewDuration(0),
-			PlayingStart: time.Now(),
+			Progress:     durationpb.New(0),
+			PlayingStart: timestamppb.Now(),
 		}
 	}
 
 	return p.current
 }
 
-func (p *GuildPlayer) RemoveById(id uuid.UUID) (*player.Track, bool) {
+func (p *GuildPlayer) RemoveById(uid uuid.UUID) (*player.Track, bool) {
+	id := uid.String()
+
 	p.mu.Lock()
 
 	if p.current != nil {
-		if p.current.ID == id {
-			c := *p.current
+		if p.current.Id == id {
+			c := proto.Clone(p.current).(*player.Track)
 			p.mu.Unlock()
 
 			p.Skip()
-			return &c, true
+			return c, true
 		}
 	}
 	defer p.mu.Unlock()
 
 	index := -1
-	track := player.Track{}
+	track := (*player.Track)(nil)
 	for i, t := range p.queue {
-		if t.ID == id {
+		if t.Id == id {
 			track, index = t, i
 		}
 	}
@@ -166,7 +172,7 @@ func (p *GuildPlayer) RemoveById(id uuid.UUID) (*player.Track, bool) {
 	}
 
 	p.queue = append(p.queue[:index], p.queue[index+1:]...)
-	return &track, true
+	return track, true
 }
 
 func (p *GuildPlayer) RemoveByPosition(pos int) (*player.Track, bool) {
@@ -186,7 +192,7 @@ func (p *GuildPlayer) RemoveByPosition(pos int) (*player.Track, bool) {
 	track := p.queue[pos]
 	p.queue = append(p.queue[:pos], p.queue[pos+1:]...)
 
-	return &track, true
+	return track, true
 }
 
 func (p *GuildPlayer) QueueDuration() time.Duration {
@@ -196,13 +202,13 @@ func (p *GuildPlayer) QueueDuration() time.Duration {
 	defer p.mu.Unlock()
 
 	for _, track := range p.queue {
-		d += track.Data.Duration
+		d += track.Data.Duration.AsDuration()
 	}
 
 	if p.current != nil {
-		d += p.current.Data.Duration
+		d += p.current.Data.Duration.AsDuration()
 		if p.current.State != nil {
-			d -= p.current.State.Progress.Load()
+			d -= atomicLoadDuration(p.current.State)
 		}
 	}
 
@@ -211,13 +217,12 @@ func (p *GuildPlayer) QueueDuration() time.Duration {
 
 func (p *GuildPlayer) GetQueue(
 	offset, limit int,
-) (current *player.Track, tracks []player.Track, size int) {
+) (current *player.Track, tracks []*player.Track, size int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
 	if p.current != nil {
-		c := *p.current
-		current = &c
+		current = proto.Clone(p.current).(*player.Track)
 	}
 
 	size = len(p.queue)
@@ -230,7 +235,7 @@ func (p *GuildPlayer) GetQueue(
 		finish = offset + limit
 	}
 
-	tracks = make([]player.Track, finish-offset)
+	tracks = make([]*player.Track, finish-offset)
 	for i := range finish - offset {
 		tracks[i] = p.queue[offset+i]
 	}
@@ -267,12 +272,12 @@ func (p *GuildPlayer) Skip() *player.Track {
 		p.mu.Unlock()
 		return nil
 	}
-	c := *p.current
+	c := proto.Clone(p.current).(*player.Track)
 	p.mu.Unlock()
 
 	p.Interrupt <- InterruptSkip
 
-	return &c
+	return c
 }
 
 func (p *GuildPlayer) Stop() {

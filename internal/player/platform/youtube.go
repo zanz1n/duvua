@@ -14,7 +14,8 @@ import (
 	"github.com/kkdai/youtube/v2"
 	"github.com/zanz1n/duvua/internal/errors"
 	"github.com/zanz1n/duvua/internal/player/errcodes"
-	"github.com/zanz1n/duvua/pkg/player"
+	"github.com/zanz1n/duvua/pkg/pb/player"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 var _ Platform = &Youtube{}
@@ -85,11 +86,11 @@ func (y *Youtube) SearchString(s string) (*player.TrackData, error) {
 		return nil, errcodes.ErrTrackSearchFailed
 	}
 
-	return &data[0], nil
+	return data[0], nil
 }
 
 // SearchUrl implements Platform.
-func (y *Youtube) SearchUrl(url string) ([]player.TrackData, error) {
+func (y *Youtube) SearchUrl(url string) ([]*player.TrackData, error) {
 	if !strings.Contains(url, "&list") && !strings.Contains(url, "?list") {
 		video, err := y.c.GetVideo(url)
 		if err != nil {
@@ -101,12 +102,12 @@ func (y *Youtube) SearchUrl(url string) ([]player.TrackData, error) {
 			thumbnailUrl = thumbnail.URL
 		}
 
-		return []player.TrackData{{
+		return []*player.TrackData{{
 			Name:      video.Title,
-			URL:       "https://youtu.be/" + video.ID,
+			Url:       "https://youtu.be/" + video.ID,
 			PlayQuery: "youtube:" + video.ID,
 			Thumbnail: thumbnailUrl,
-			Duration:  video.Duration,
+			Duration:  durationpb.New(video.Duration),
 		}}, nil
 	} else {
 		playlist, err := y.c.GetPlaylist(url)
@@ -114,19 +115,19 @@ func (y *Youtube) SearchUrl(url string) ([]player.TrackData, error) {
 			return nil, errcodes.ErrTrackSearchFailed
 		}
 
-		tracks := make([]player.TrackData, len(playlist.Videos))
+		tracks := make([]*player.TrackData, len(playlist.Videos))
 		for i, video := range playlist.Videos {
 			thumbnailUrl := defaultThumbUrl
 			if thumbnail := filterYtThumbnails(video.Thumbnails); thumbnail != nil {
 				thumbnailUrl = thumbnail.URL
 			}
 
-			tracks[i] = player.TrackData{
+			tracks[i] = &player.TrackData{
 				Name:      video.Title,
-				URL:       "https://youtu.be/" + video.ID,
+				Url:       "https://youtu.be/" + video.ID,
 				PlayQuery: "youtube:" + video.ID,
 				Thumbnail: thumbnailUrl,
-				Duration:  video.Duration,
+				Duration:  durationpb.New(video.Duration),
 			}
 		}
 
@@ -202,7 +203,7 @@ func filterYtThumbnails(thumbnails []youtube.Thumbnail) *youtube.Thumbnail {
 	return nil
 }
 
-func ytParseSearchBody(r io.Reader, limit int) ([]player.TrackData, error) {
+func ytParseSearchBody(r io.Reader, limit int) ([]*player.TrackData, error) {
 	start := time.Now()
 	defer func() {
 		slog.Debug(

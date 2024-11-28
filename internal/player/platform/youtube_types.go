@@ -10,7 +10,8 @@ import (
 	"github.com/kkdai/youtube/v2"
 	"github.com/zanz1n/duvua/internal/errors"
 	"github.com/zanz1n/duvua/internal/utils"
-	"github.com/zanz1n/duvua/pkg/player"
+	"github.com/zanz1n/duvua/pkg/pb/player"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 type ytVideo struct {
@@ -43,7 +44,7 @@ type ytVideo struct {
 	// } `json:"detailedMetadataSnippets"`
 }
 
-func (v *ytVideo) Into() (player.TrackData, bool) {
+func (v *ytVideo) Into() (*player.TrackData, bool) {
 	thumbnail := defaultThumbUrl
 	if len(v.Thumbnail.Thumbnails) > 0 {
 		thumbnail = v.Thumbnail.Thumbnails[0].URL
@@ -81,12 +82,12 @@ func (v *ytVideo) Into() (player.TrackData, bool) {
 		ok = false
 	}
 
-	return player.TrackData{
+	return &player.TrackData{
 		Name:      title,
-		URL:       "https://youtu.be/" + v.VideoId,
+		Url:       "https://youtu.be/" + v.VideoId,
 		PlayQuery: "youtube:" + v.VideoId,
 		Thumbnail: thumbnail,
-		Duration:  duration,
+		Duration:  durationpb.New(duration),
 	}, ok
 }
 
@@ -139,11 +140,11 @@ type ytJsonSearchResult struct {
 	} `json:"contents"`
 }
 
-func (r *ytJsonSearchResult) Into(limit int) ([]player.TrackData, error) {
+func (r *ytJsonSearchResult) Into(limit int) ([]*player.TrackData, error) {
 	videosRaw := r.Contents.TwoColumnSearchResultsRenderer.PrimaryContents.
 		SectionListRenderer.Contents[0].ItemSectionRenderer.Contents
 
-	videos := []player.TrackData{}
+	videos := []*player.TrackData{}
 
 	for i, content := range videosRaw {
 		if len(videos) > limit {

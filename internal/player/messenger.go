@@ -9,7 +9,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua/internal/errors"
 	"github.com/zanz1n/duvua/internal/utils"
-	"github.com/zanz1n/duvua/pkg/player"
+	"github.com/zanz1n/duvua/pkg/pb/player"
 )
 
 type PlayerMessenger struct {
@@ -47,8 +47,8 @@ func (m *PlayerMessenger) onTrackStart(cid uint64, t *player.Track) error {
 	desc := fmt.Sprintf(
 		"Tocando agora **[%s](%s)**\n\n**Duração: [%s]**",
 		t.Data.Name,
-		t.Data.URL,
-		utils.FmtDuration(t.Data.Duration),
+		t.Data.Url,
+		utils.FmtDuration(t.Data.Duration.AsDuration()),
 	)
 
 	loopCustomId := "loop/on"
@@ -162,7 +162,7 @@ func (m *PlayerMessenger) onTrackFailed(cid uint64, t *player.Track) error {
 		Content: fmt.Sprintf(
 			"Não foi possível tocar a música **[%s](<%s>)**",
 			t.Data.Name,
-			t.Data.URL,
+			t.Data.Url,
 		),
 	})
 }

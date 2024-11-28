@@ -8,7 +8,7 @@ import (
 	"github.com/zanz1n/duvua/internal/errors"
 	"github.com/zanz1n/duvua/internal/player/encoder"
 	"github.com/zanz1n/duvua/internal/player/errcodes"
-	"github.com/zanz1n/duvua/pkg/player"
+	"github.com/zanz1n/duvua/pkg/pb/player"
 )
 
 type Fetcher struct {
@@ -23,7 +23,7 @@ func NewFetcher(ytf *Youtube, spf *Spotify) *Fetcher {
 	return &Fetcher{yt: ytf, sp: spf}
 }
 
-func (f *Fetcher) Search(query string) ([]player.TrackData, error) {
+func (f *Fetcher) Search(query string) ([]*player.TrackData, error) {
 	if strings.HasPrefix(query, "https://") {
 		u, err := url.Parse(query)
 		if err != nil {
@@ -48,7 +48,7 @@ func (f *Fetcher) Search(query string) ([]player.TrackData, error) {
 		return nil, err
 	}
 
-	return []player.TrackData{*track}, nil
+	return []*player.TrackData{track}, nil
 }
 
 func (f *Fetcher) Fetch(query string) (Streamer, error) {

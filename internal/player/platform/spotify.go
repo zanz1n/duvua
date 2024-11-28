@@ -11,7 +11,7 @@ import (
 
 	"github.com/zanz1n/duvua/internal/errors"
 	"github.com/zanz1n/duvua/internal/player/errcodes"
-	"github.com/zanz1n/duvua/pkg/player"
+	"github.com/zanz1n/duvua/pkg/pb/player"
 	"github.com/zmb3/spotify/v2"
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
 	"golang.org/x/oauth2/clientcredentials"
@@ -73,7 +73,7 @@ func (s *Spotify) SearchString(query string) (*player.TrackData, error) {
 }
 
 // SearchUrl implements Platform.
-func (s *Spotify) SearchUrl(uri string) ([]player.TrackData, error) {
+func (s *Spotify) SearchUrl(uri string) ([]*player.TrackData, error) {
 
 	u, err := url.Parse(uri)
 	if err != nil {
@@ -114,7 +114,7 @@ func (s *Spotify) SearchUrl(uri string) ([]player.TrackData, error) {
 			return nil, err
 		}
 
-		return []player.TrackData{*data}, nil
+		return []*player.TrackData{data}, nil
 
 	case "playlist", "album":
 		return nil, errcodes.ErrSpotifyPlaylistsNotSupported

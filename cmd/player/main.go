@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
-	"net/http"
+	"net"
 	"os"
 	"os/signal"
 	"runtime"
@@ -17,6 +17,9 @@ import (
 	"github.com/zanz1n/duvua/internal/logger"
 	"github.com/zanz1n/duvua/internal/player"
 	"github.com/zanz1n/duvua/internal/player/platform"
+	playerpb "github.com/zanz1n/duvua/pkg/pb/player"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 const DuvuaBanner = `
@@ -98,24 +101,35 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	fetcher := platform.NewFetcher(ytFetcher, spotifyFetcher)
 
+	fetcher := platform.NewFetcher(ytFetcher, spotifyFetcher)
 	manager := player.NewPlayerManager(s, fetcher)
-	handler := player.NewHandler(manager, fetcher)
 
 	defer manager.Close()
 
-	mux := http.NewServeMux()
+	server := player.NewGrpcServer(manager, fetcher)
 
-	player.NewHttpServer(handler, cfg.Player.Password).Route(mux)
+	listenAddr := fmt.Sprintf("0.0.0.0:%d", cfg.Player.ListenPort)
 
-	go func() {
-		listenAddr := fmt.Sprintf("0.0.0.0:%d", cfg.Player.ListenPort)
-		slog.Info("HTTP: Listening for http connections", "addr", listenAddr)
+	ln, err := net.Listen("tcp", listenAddr)
+	if err != nil {
+		log.Fatalf("Failed to listen grpc on `%s`: %s\n", listenAddr, err)
+	}
 
-		if err := http.ListenAndServe(listenAddr, mux); err != nil {
-			log.Fatalln("Failed to listen http:", err)
-		}
+	slog.Info("GRPC: Listening for grpc connections", "addr", listenAddr)
+
+	grpcServer := grpc.NewServer()
+	playerpb.RegisterPlayerServer(grpcServer, server)
+	reflection.Register(grpcServer)
+
+	go grpcServer.Serve(ln)
+	defer func() {
+		start := time.Now()
+		grpcServer.GracefulStop()
+		slog.Info(
+			"Closed grpc server gracefully",
+			"took", time.Since(start).Round(time.Millisecond),
+		)
 	}()
 
 	readyStart := time.Now()
@@ -123,7 +137,7 @@ func main() {
 		slog.Info(
 			"Discord session ready",
 			"username", s.State.User.Username+"#"+s.State.User.Discriminator,
-			"took", time.Since(readyStart),
+			"took", time.Since(readyStart).Round(time.Millisecond),
 		)
 	})
 
@@ -140,7 +154,10 @@ func main() {
 				"error", e,
 			)
 		} else {
-			slog.Info("Closed discordgo session", "took", time.Since(start))
+			slog.Info(
+				"Closed discordgo session",
+				"took", time.Since(start).Round(time.Millisecond),
+			)
 		}
 	}()
 

@@ -1,565 +1,260 @@
 package player
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
+	"context"
 	"log/slog"
-	"net/http"
-	"strconv"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/zanz1n/duvua/internal/errors"
 	"github.com/zanz1n/duvua/internal/player/errcodes"
-	"github.com/zanz1n/duvua/pkg/player"
+	"github.com/zanz1n/duvua/internal/player/platform"
+	"github.com/zanz1n/duvua/pkg/pb/player"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-var NILD = (*struct{})(nil)
-
-type HttpServer struct {
-	h        *Handler
-	authKey  string
-	validate *validator.Validate
+type GrpcServer struct {
+	m *PlayerManager
+	f *platform.Fetcher
+	player.UnimplementedPlayerServer
 }
 
-func NewHttpServer(h *Handler, authKey string) *HttpServer {
-	return &HttpServer{
-		h:        h,
-		authKey:  authKey,
-		validate: validator.New(),
-	}
+func NewGrpcServer(manager *PlayerManager, f *platform.Fetcher) *GrpcServer {
+	return &GrpcServer{m: manager, f: f}
 }
 
-func (s *HttpServer) Route(m *http.ServeMux) {
-	// Search for track
-	m.HandleFunc("GET /track/search", s.m(s.getTrack))
+// Add implements player.PlayerServer.
+func (s *GrpcServer) Add(
+	ctx context.Context,
+	req *player.AddRequest,
+) (*player.AddResponse, error) {
+	p := s.m.GetOrCreate(req.GuildId, req.ChannelId)
 
-	// Get current playing track
-	m.HandleFunc("GET /guild/{guild_id}/track", s.m(s.getCurrentTrack))
-	// Get specific track of the queue
-	m.HandleFunc("GET /guild/{guild_id}/track/{id}", s.m(s.getTrackById))
-	// Get the entire queue
-	m.HandleFunc("GET /guild/{guild_id}/tracks", s.m(s.getAllTracks))
-
-	// Add a track to the queue
-	m.HandleFunc("POST /guild/{guild_id}/track", s.m(s.postTrack))
-
-	// Skip track
-	m.HandleFunc("PUT /guild/{guild_id}/skip", s.m(s.putSkipTrack))
-	// Pause queue
-	m.HandleFunc("PUT /guild/{guild_id}/pause", s.m(s.putPauseQueue))
-	// Unpause queue
-	m.HandleFunc("PUT /guild/{guild_id}/unpause", s.m(s.putUnpauseQueue))
-	// Enable/disable track loop
-	m.HandleFunc("PUT /guild/{guild_id}/loop", s.m(s.putSetQueueLoop))
-	// Set queue volume
-	m.HandleFunc("PUT /guild/{guild_id}/volume", s.m(s.putSetQueueVolume))
-
-	// Stop
-	m.HandleFunc("DELETE /guild/{guild_id}", s.m(s.deleteQueue))
-	// Remove track
-	m.HandleFunc("DELETE /guild/{guild_id}/track/{id}", s.m(s.deleteTrackById))
-	// Remove track by position
-	m.HandleFunc("DELETE /guild/{guild_id}/track-pos/{pos}", s.m(s.deleteTrackByPosition))
-}
-
-type handlerFunc = func(w http.ResponseWriter, r *http.Request) error
-
-func (s *HttpServer) m(h handlerFunc) http.HandlerFunc {
-	return s.loggerMiddleware(
-		s.errorMiddleware(
-			s.catchPanicMiddleware(
-				s.authMiddleware(h),
-			),
-		),
-	)
-}
-
-func (s *HttpServer) authMiddleware(h handlerFunc) handlerFunc {
-	if s.authKey != "" {
-		ak := "passwd:" + s.authKey
-
-		return func(w http.ResponseWriter, r *http.Request) error {
-			authH := r.Header.Get("Authorization")
-			if authH != ak {
-				w.WriteHeader(http.StatusUnauthorized)
-				return errors.New("auth required with `Authorization` header")
-			}
-
-			return h(w, r)
+	tracks := make([]*player.Track, len(req.Data))
+	for i, track := range req.Data {
+		track := &player.Track{
+			Id:        uuid.NewString(),
+			CreatedAt: timestamppb.Now(),
+			UserId:    req.UserId,
+			ChannelId: req.ChannelId,
+			State:     nil,
+			Data:      track,
 		}
-	}
-	return h
-}
+		p.AddTrack(track)
 
-func (s *HttpServer) catchPanicMiddleware(h handlerFunc) handlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) error {
-		defer func() {
-			if err := recover(); err != nil {
-				slog.Error(
-					"PANIC: Catched while handling http request",
-					"error", err,
-				)
+		tracks[i] = track
 
-				w.WriteHeader(http.StatusInternalServerError)
-				handleErrRes(w, err)
-			}
-		}()
-
-		return h(w, r)
-	}
-}
-
-func (s *HttpServer) errorMiddleware(h handlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := h(w, r); err != nil {
-			handleErrRes(w, err)
-		}
-	}
-}
-
-func (s *HttpServer) loggerMiddleware(h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		w2 := wrapResponseWriter(w)
-		h(w2, r)
 		slog.Info(
-			"HTTP: Incomming request",
-			"method", r.Method,
-			"path", r.URL.Path,
-			"status_code", w2.Status(),
-			"took", time.Since(start).Round(10*time.Microsecond),
-		)
-	}
-}
-
-func (s *HttpServer) getTrack(w http.ResponseWriter, r *http.Request) error {
-	defer r.Body.Close()
-
-	q := r.URL.Query()
-	query := q.Get("query")
-	if query == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		return errors.New("query parameter `query` is necessary")
-	}
-
-	data, err := s.h.FetchTrack(query)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return err
-	}
-
-	return resJson(w, data, "success", false)
-}
-
-func (s *HttpServer) getCurrentTrack(w http.ResponseWriter, r *http.Request) error {
-	defer r.Body.Close()
-
-	guildId, err := getUintPathParam(r, "guild_id")
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
-	}
-
-	track, err := s.h.GetPlayingTrack(guildId)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return err
-	}
-
-	return resJson(w, track, "track found", false)
-}
-
-func (s *HttpServer) getTrackById(w http.ResponseWriter, r *http.Request) error {
-	defer r.Body.Close()
-
-	guildId, err := getUintPathParam(r, "guild_id")
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
-	}
-
-	trackId, err := getUuidPathParam(r, "id")
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
-	}
-
-	track, err := s.h.GetTrackById(guildId, trackId)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return err
-	}
-
-	return resJson(w, track, "found track", false)
-}
-
-func (s *HttpServer) getAllTracks(w http.ResponseWriter, r *http.Request) error {
-	defer r.Body.Close()
-
-	guildId, err := getUintPathParam(r, "guild_id")
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
-	}
-
-	q := r.URL.Query()
-
-	offset, err := strconv.Atoi(q.Get("offset"))
-	if err != nil {
-		return errors.Newf("invalid query string arg `offset`")
-	}
-
-	limit, err := strconv.Atoi(q.Get("limit"))
-	if err != nil {
-		return errors.Newf("invalid query string arg `limit`")
-	}
-
-	tracks, err := s.h.GetTracks(guildId, offset, limit)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return err
-	}
-
-	msg := fmt.Sprintf("%d tracks returned", len(tracks.Tracks))
-	return resJson(w, tracks, msg, false)
-}
-
-func (s *HttpServer) postTrack(w http.ResponseWriter, r *http.Request) error {
-	defer r.Body.Close()
-
-	guildId, err := getUintPathParam(r, "guild_id")
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
-	}
-
-	var data player.AddTrackData
-	if err = s.parseReqBody(r.Body, &data); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
-	}
-
-	track, err := s.h.AddTrack(guildId, data)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
-	}
-
-	return resJson(w, track, "added track to queue", true)
-}
-
-func (s *HttpServer) putSkipTrack(w http.ResponseWriter, r *http.Request) error {
-	defer r.Body.Close()
-
-	guildId, err := getUintPathParam(r, "guild_id")
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
-	}
-
-	track, err := s.h.Skip(guildId)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return err
-	}
-	return resJson(w, track, "skipped track", track != nil)
-}
-
-func (s *HttpServer) putPauseQueue(w http.ResponseWriter, r *http.Request) error {
-	defer r.Body.Close()
-
-	guildId, err := getUintPathParam(r, "guild_id")
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
-	}
-
-	changed, err := s.h.Pause(guildId)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return err
-	}
-
-	return resJson(w, NILD, "paused queue", changed)
-}
-
-func (s *HttpServer) putUnpauseQueue(w http.ResponseWriter, r *http.Request) error {
-	defer r.Body.Close()
-
-	guildId, err := getUintPathParam(r, "guild_id")
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
-	}
-
-	changed, err := s.h.Unpause(guildId)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return err
-	}
-
-	return resJson(w, NILD, "unpaused queue", changed)
-}
-
-func (s *HttpServer) putSetQueueLoop(w http.ResponseWriter, r *http.Request) error {
-	defer r.Body.Close()
-
-	guildId, err := getUintPathParam(r, "guild_id")
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
-	}
-
-	q := r.URL.Query()
-	enable, err := strconv.ParseBool(q.Get("enable"))
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return errors.New(
-			"query parameter `enable` must be a valid bool",
+			"Added track to queue",
+			"guild_id", req.GuildId,
+			"user_id", req.UserId,
+			"url", track.Data.PlayQuery,
+			"duration", track.Data.Duration.AsDuration().Round(time.Millisecond),
 		)
 	}
 
-	changed, err := s.h.EnableLoop(guildId, enable)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return err
-	}
+	p.SetMessageChannel(req.TextChannelId)
 
-	msg := "loop "
-	if !changed {
-		msg += "already "
-	}
-	if enable {
-		msg += "enabled"
-	} else {
-		msg += "disabled"
-	}
-
-	return resJson(w, NILD, msg, changed)
+	return &player.AddResponse{Tracks: tracks}, nil
 }
 
-func (s *HttpServer) putSetQueueVolume(w http.ResponseWriter, r *http.Request) error {
-	defer r.Body.Close()
-
-	guildId, err := getUintPathParam(r, "guild_id")
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
+// EnableLoop implements player.PlayerServer.
+func (s *GrpcServer) EnableLoop(
+	ctx context.Context,
+	req *player.EnableLoopRequest,
+) (*player.ChangedResponse, error) {
+	p, ok := s.m.Get(req.GuildId)
+	if !ok {
+		return nil, errcodes.ErrNoActivePlayer
 	}
 
-	q := r.URL.Query()
-	volume, err := strconv.Atoi(q.Get("volume"))
-	if err != nil || 0 > volume || volume > 255 {
-		w.WriteHeader(http.StatusBadRequest)
-		return errors.New(
-			"query parameter `volume` must be a valid uint8",
-		)
+	is := p.IsLooping()
+	if is == req.Enable {
+		return &player.ChangedResponse{Changed: false}, nil
 	}
 
-	newVolume := uint8(volume)
-	beforeVolume, err := s.h.SetVolume(guildId, newVolume)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return err
-	}
+	p.SetLoop(req.Enable)
 
-	msg := fmt.Sprintf("volume set from %d to %d", beforeVolume, volume)
-	return resJson(w, NILD, msg, beforeVolume != newVolume)
+	return &player.ChangedResponse{Changed: false}, nil
 }
 
-func (s *HttpServer) deleteQueue(w http.ResponseWriter, r *http.Request) error {
-	defer r.Body.Close()
-
-	guildId, err := getUintPathParam(r, "guild_id")
+// Fetch implements player.PlayerServer.
+func (s *GrpcServer) Fetch(
+	ctx context.Context,
+	req *player.FetchRequest,
+) (*player.FetchResponse, error) {
+	data, err := s.f.Search(req.Query)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
+		return nil, err
 	}
 
-	if err = s.h.Stop(guildId); err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return err
-	}
-
-	return resJson(w, NILD, "queue stopped and deleted", true)
+	return &player.FetchResponse{Data: data}, nil
 }
 
-func (s *HttpServer) deleteTrackById(w http.ResponseWriter, r *http.Request) error {
-	defer r.Body.Close()
-
-	guildId, err := getUintPathParam(r, "guild_id")
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
+// GetAll implements player.PlayerServer.
+func (s *GrpcServer) GetAll(
+	ctx context.Context,
+	req *player.GetAllRequest,
+) (*player.GetAllResponse, error) {
+	p, ok := s.m.Get(req.GuildId)
+	if !ok {
+		return nil, errcodes.ErrNoActivePlayer
 	}
 
-	trackId, err := getUuidPathParam(r, "id")
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
-	}
+	d := p.QueueDuration()
+	playing, tracks, totalsize := p.GetQueue(int(req.Offset), int(req.Limit))
 
-	track, err := s.h.RemoveTrack(guildId, trackId)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return err
-	}
-
-	return resJson(w, track, "track removed", track != nil)
+	return &player.GetAllResponse{
+		TotalSize:     int32(totalsize),
+		TotalDuration: durationpb.New(d),
+		Playing:       playing,
+		Tracks:        tracks,
+	}, nil
 }
 
-func (s *HttpServer) deleteTrackByPosition(w http.ResponseWriter, r *http.Request) error {
-	defer r.Body.Close()
-
-	guildId, err := getUintPathParam(r, "guild_id")
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
+// GetById implements player.PlayerServer.
+func (s *GrpcServer) GetById(
+	ctx context.Context,
+	req *player.TrackIdRequest,
+) (*player.TrackResponse, error) {
+	p, ok := s.m.Get(req.GuildId)
+	if !ok {
+		return nil, errcodes.ErrNoActivePlayer
 	}
 
-	pos, err := getIntPathParam(r, "pos")
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
+	id, _ := uuid.Parse(req.Id)
+	track, ok := p.GetById(id)
+	if !ok {
+		return nil, errcodes.ErrTrackNotFoundInQueue
 	}
 
-	track, err := s.h.RemoveTrackByPosition(guildId, pos)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return err
-	}
-
-	return resJson(w, track, "track removed", track != nil)
+	return &player.TrackResponse{Track: track}, nil
 }
 
-func (s *HttpServer) parseReqBody(body io.Reader, v any) error {
-	buf, err := io.ReadAll(body)
-	if err != nil {
-		return errors.New("failed to read request body")
+// GetCurrent implements player.PlayerServer.
+func (s *GrpcServer) GetCurrent(
+	ctx context.Context,
+	req *player.GuildIdRequest,
+) (*player.TrackResponse, error) {
+	p, ok := s.m.Get(req.GuildId)
+	if !ok {
+		return nil, errcodes.ErrNoActivePlayer
 	}
 
-	if err = json.Unmarshal(buf, v); err != nil {
-		return errors.New("failed to unmarshal request body: " + err.Error())
-	}
-	if err = s.validate.Struct(v); err != nil {
-		return errors.New("invalid request body: " + err.Error())
+	track, ok := p.GetCurrent()
+	if !ok {
+		return nil, errcodes.ErrTrackNotFoundInQueue
 	}
 
-	return nil
+	return &player.TrackResponse{Track: track}, nil
 }
 
-func getUuidPathParam(r *http.Request, name string) (uuid.UUID, error) {
-	pv := r.PathValue(name)
-	if pv == "" {
-		return uuid.Nil, errors.Newf("path parameter `%s` is required", name)
+// Pause implements player.PlayerServer.
+func (s *GrpcServer) Pause(
+	ctx context.Context,
+	req *player.GuildIdRequest,
+) (*player.ChangedResponse, error) {
+	p, ok := s.m.Get(req.GuildId)
+	if !ok {
+		return nil, errcodes.ErrNoActivePlayer
 	}
 
-	v, err := uuid.Parse(pv)
-	if err != nil {
-		return uuid.Nil, errors.Newf("invalid path parameter `%s`", name)
-	}
+	changed := p.Pause()
 
-	return v, nil
+	return &player.ChangedResponse{Changed: changed}, nil
 }
 
-func getIntPathParam(r *http.Request, name string) (int, error) {
-	pv := r.PathValue(name)
-	if pv == "" {
-		return 0, errors.Newf("path parameter `%s` is required", name)
+// Remove implements player.PlayerServer.
+func (s *GrpcServer) Remove(
+	ctx context.Context,
+	req *player.TrackIdRequest,
+) (*player.TrackResponse, error) {
+	p, ok := s.m.Get(req.GuildId)
+	if !ok {
+		return nil, errcodes.ErrNoActivePlayer
 	}
 
-	v, err := strconv.Atoi(pv)
-	if err != nil {
-		return 0, errors.Newf("invalid path parameter `%s`", name)
+	id, _ := uuid.Parse(req.Id)
+	track, ok := p.RemoveById(id)
+	if !ok {
+		return nil, errcodes.ErrTrackNotFoundInQueue
 	}
 
-	return v, nil
+	return &player.TrackResponse{Track: track}, nil
 }
 
-func getUintPathParam(r *http.Request, name string) (uint64, error) {
-	pv := r.PathValue(name)
-	if pv == "" {
-		return 0, errors.Newf("path parameter `%s` is required", name)
+// RemoveByPosition implements player.PlayerServer.
+func (s *GrpcServer) RemoveByPosition(
+	ctx context.Context,
+	req *player.RemoveByPositionRequest,
+) (*player.TrackResponse, error) {
+	p, ok := s.m.Get(req.GuildId)
+	if !ok {
+		return nil, errcodes.ErrNoActivePlayer
 	}
 
-	v, err := strconv.ParseUint(pv, 10, 0)
-	if err != nil {
-		return 0, errors.Newf("invalid path parameter `%s`", name)
+	track, ok := p.RemoveByPosition(int(req.Position))
+	if !ok {
+		return nil, errcodes.ErrTrackNotFoundInQueue
 	}
 
-	return v, nil
+	return &player.TrackResponse{Track: track}, nil
 }
 
-func handleErrRes(w http.ResponseWriter, err any) {
-	const DefaultErr = `{"error":"something went wrong","error_code":0}`
-
-	type errStruct struct {
-		Error     string `json:"error"`
-		ErrorCode int    `json:"error_code"`
-	}
-
-	es := errStruct{Error: fmt.Sprint(err)}
-	if e, ok := err.(error); ok {
-		es.ErrorCode = int(errcodes.ErrToErrCode(e))
-	}
-
-	w.Header().Add("Content-Type", "application/json")
-
-	buf, err := json.Marshal(es)
-	if err != nil {
-		w.Write([]byte(DefaultErr))
-	} else {
-		w.Write(buf)
-	}
+// SetVolume implements player.PlayerServer.
+func (s *GrpcServer) SetVolume(
+	ctx context.Context,
+	req *player.SetVolumeRequest,
+) (*player.ChangedResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "unimplemented")
 }
 
-func resJson[T any](w http.ResponseWriter, data T, message string, changed bool) error {
-	type dataBody[T any] struct {
-		Message string `json:"message"`
-		Changed bool   `json:"changed"`
-		Data    T      `json:"data"`
+// Skip implements player.PlayerServer.
+func (s *GrpcServer) Skip(
+	ctx context.Context,
+	req *player.GuildIdRequest,
+) (*player.TrackResponse, error) {
+	p, ok := s.m.Get(req.GuildId)
+	if !ok {
+		return nil, errcodes.ErrNoActivePlayer
 	}
 
-	b, err := json.Marshal(dataBody[T]{
-		Message: message,
-		Data:    data,
-		Changed: changed,
-	})
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return errors.Unexpected("failed to marshal response: " + err.Error())
+	track := p.Skip()
+	if track == nil {
+		return nil, errcodes.ErrNoActivePlayer
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Header().Add("Content-Type", "application/json")
-	w.Write(b)
-
-	return nil
+	return &player.TrackResponse{Track: track}, nil
 }
 
-type responseWriter struct {
-	http.ResponseWriter
-	status      int
-	wroteHeader bool
-}
-
-func wrapResponseWriter(w http.ResponseWriter) *responseWriter {
-	return &responseWriter{ResponseWriter: w}
-}
-
-func (rw *responseWriter) Status() int {
-	return rw.status
-}
-
-func (rw *responseWriter) WriteHeader(code int) {
-	if rw.wroteHeader {
-		return
+// Stop implements player.PlayerServer.
+func (s *GrpcServer) Stop(
+	ctx context.Context,
+	req *player.GuildIdRequest,
+) (*emptypb.Empty, error) {
+	p, ok := s.m.Get(req.GuildId)
+	if !ok {
+		return nil, errcodes.ErrNoActivePlayer
 	}
 
-	rw.status = code
-	rw.ResponseWriter.WriteHeader(code)
-	rw.wroteHeader = true
+	p.Stop()
+	return &emptypb.Empty{}, nil
+}
+
+// Unpause implements player.PlayerServer.
+func (s *GrpcServer) Unpause(
+	ctx context.Context,
+	req *player.GuildIdRequest,
+) (*player.ChangedResponse, error) {
+	p, ok := s.m.Get(req.GuildId)
+	if !ok {
+		return nil, errcodes.ErrNoActivePlayer
+	}
+
+	changed := p.Unpause()
+
+	return &player.ChangedResponse{Changed: changed}, nil
 }
