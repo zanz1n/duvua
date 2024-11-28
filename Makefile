@@ -1,6 +1,6 @@
 .PHONY: default
 
-default: build build-dev
+default: check build build-dev
 
 run: build-dev-bot
 	./bin/duvua-bot-debug --migrate
@@ -35,6 +35,18 @@ build-dev-player:
 test:
 	go test ./... -v --race
 
+check: generate test
+
 update:
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	go install github.com/srikrsna/protoc-gen-gotag@latest
 	go get -u ./...
 	go mod tidy
+
+generate:
+	protoc -I $(shell go env GOMODCACHE)/github.com/srikrsna/protoc-gen-gotag@* \
+		-I . --go_out=./pkg/pb --go-grpc_out=./pkg/pb ./api/proto/*/*.proto
+	
+	protoc -I $(shell go env GOMODCACHE)/github.com/srikrsna/protoc-gen-gotag@* \
+		-I . --gotag_out=outdir="./pkg/pb":. ./api/proto/*/*.proto
