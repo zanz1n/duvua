@@ -14,6 +14,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua/config"
+	"github.com/zanz1n/duvua/internal/grpcutils"
 	"github.com/zanz1n/duvua/internal/logger"
 	"github.com/zanz1n/duvua/internal/player"
 	"github.com/zanz1n/duvua/internal/player/platform"
@@ -69,12 +70,12 @@ func init() {
 }
 
 func init() {
-	config := config.GetConfig()
+	cfg := config.GetConfig()
 	if *debug {
-		config.LogLevel = slog.LevelDebug
+		cfg.LogLevel = slog.LevelDebug
 	}
 
-	slog.SetLogLoggerLevel(config.LogLevel)
+	slog.SetLogLoggerLevel(cfg.LogLevel)
 
 	endCh = make(chan os.Signal, 1)
 	signal.Notify(endCh, syscall.SIGINT, syscall.SIGTERM)
@@ -118,7 +119,11 @@ func main() {
 
 	slog.Info("GRPC: Listening for grpc connections", "addr", listenAddr)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(grpcutils.AllUnaryServerInterceptors()...),
+		grpc.ChainStreamInterceptor(grpcutils.AllStreamServerInterceptors()...),
+	)
+
 	playerpb.RegisterPlayerServer(grpcServer, server)
 	reflection.Register(grpcServer)
 
