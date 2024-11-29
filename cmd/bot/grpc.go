@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/zanz1n/duvua/config"
+	"github.com/zanz1n/duvua/internal/grpcutils"
 	"github.com/zanz1n/duvua/pkg/grpcpool"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
@@ -24,7 +25,10 @@ func connectToPlayerGrpc() *grpcpool.Pool {
 			Backoff: backoff.DefaultConfig,
 		}),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithChainUnaryInterceptor(grpcutils.AllUnaryClientInterceptors()...),
+		grpc.WithChainStreamInterceptor(grpcutils.AllStreamClientInterceptors()...),
 	)
+
 	if err != nil {
 		log.Fatalln("Failed to connect to player grpc server:", err)
 	}

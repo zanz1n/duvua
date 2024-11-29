@@ -20,22 +20,22 @@ var (
 	errSpotifyPlaylistsNotSupported = errors.New("playlists e álbuns do spotify não são suportados")
 )
 
-func ConvertError(err error) error {
-	msg := err.Error()
+func ConvertError(msg string) error {
 	num, _, ok := strings.Cut(msg, ": ")
 	if !ok {
-		return err
+		return nil
 	}
 
 	i, err2 := strconv.Atoi(num)
 	if err2 != nil {
-		return err
+		return nil
 	}
 
 	newErr := CodeToErr(PlayerError(i))
 	if newErr == nil {
-		return err
+		return nil
 	}
+
 	return newErr
 }
 

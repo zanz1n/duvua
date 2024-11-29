@@ -98,3 +98,51 @@ func LoggerStreamServerInterceptor(
 
 	return err
 }
+
+func LoggerUnaryClientInterceptor(
+	ctx context.Context,
+	method string,
+	req, reply any,
+	cc *grpc.ClientConn,
+	invoker grpc.UnaryInvoker,
+	opts ...grpc.CallOption,
+) (err error) {
+	start := time.Now()
+
+	err = invoker(ctx, method, req, reply, cc)
+	if err == nil {
+		slog.Info(
+			"GRPC: Invoked unary call",
+			"method", method,
+			"code", codes.OK,
+			"took", time.Since(start).Round(time.Microsecond),
+		)
+	}
+
+	return
+}
+
+func LoggerStreamClientInterceptor(
+	ctx context.Context,
+	desc *grpc.StreamDesc,
+	cc *grpc.ClientConn,
+	method string,
+	streamer grpc.Streamer,
+	opts ...grpc.CallOption,
+) (stream grpc.ClientStream, err error) {
+	start := time.Now()
+
+	stream, err = streamer(ctx, desc, cc, method, opts...)
+	if err == nil {
+		slog.Info(
+			"GRPC: Invoked stream call",
+			"method", method,
+			"server_stream", desc.ServerStreams,
+			"client_stream", desc.ClientStreams,
+			"code", codes.OK,
+			"took", time.Since(start).Round(time.Microsecond),
+		)
+	}
+
+	return
+}
