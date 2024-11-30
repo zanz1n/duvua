@@ -167,5 +167,5 @@ func main() {
 	}()
 
 	sig := <-endCh
-	log.Printf("Received signal %s: closing bot ...\n", sig.String())
+	log.Printf("Received signal %s: closing player ...\n", sig.String())
 }
