@@ -3,7 +3,7 @@ FROM golang:1 AS builder
 ARG VERSION=""
 
 WORKDIR /build
-ENV CGO_ENABLED=1
+ENV CGO_ENABLED=0
 
 RUN go env -w GOCACHE=/go-cache
 RUN go env -w GOMODCACHE=/gomod-cache
