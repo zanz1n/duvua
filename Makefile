@@ -63,3 +63,16 @@ generate:
 	
 	protoc -I $(shell go env GOMODCACHE)/github.com/srikrsna/protoc-gen-gotag@* \
 		-I . --gotag_out=outdir="./pkg/pb":. ./api/proto/*/*.proto
+
+compose-up:
+	docker compose pull
+	docker compose build --parallel
+	docker compose up -d
+	docker compose logs -f
+
+compose-down:
+	docker compose down
+
+compose-clean:
+	docker compose down
+	sudo rm -rf .docker-volumes	
