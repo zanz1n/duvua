@@ -29,12 +29,15 @@ jobs:
 
       - name: Build bot
         env:
-          CGO_ENABLED: 1
+          CGO_ENABLED: 0
           REF: ${{ github.ref }}
           ROOT: github.com/zanz1n/duvua
         run: |
           GOARCH=amd64 go build -o bin/duvua-bot-amd64 -ldflags "-s -w -X $ROOT/config.Version=${REF:11}" $ROOT/cmd/bot
           chmod 755 bin/duvua-bot-amd64
+
+          GOARCH=arm64 go build -o bin/duvua-bot-arm64 -ldflags "-s -w -X $ROOT/config.Version=${REF:11}" $ROOT/cmd/bot
+          chmod 755 bin/duvua-bot-arm64
 
       - name: Build player
         env:
@@ -50,7 +53,7 @@ jobs:
 
       - name: Build davinci
         env:
-          CGO_ENABLED: 0
+          CGO_ENABLED: 1
           REF: ${{ github.ref }}
           ROOT: github.com/zanz1n/duvua
         run: |
@@ -60,11 +63,12 @@ jobs:
       - name: Create checksum
         run: |
           SUM1=`cd bin && sha256sum duvua-bot-amd64`
-          SUM2=`cd bin && sha256sum duvua-player-amd64`
-          SUM3=`cd bin && sha256sum duvua-player-arm64`
-          SUM4=`cd bin && sha256sum duvua-davinci-amd64`
-          echo -e "\n#### SHA256 Checksum\n\`\`\`\n$SUM1\n$SUM2\n$SUM3\n$SUM4\n\`\`\`\n" >> ./RELEASE_CHANGELOG
-          echo -e "$SUM1\n$SUM2\n$SUM3\n$SUM4" > checksums.txt
+          SUM2=`cd bin && sha256sum duvua-bot-arm64`
+          SUM3=`cd bin && sha256sum duvua-player-amd64`
+          SUM4=`cd bin && sha256sum duvua-player-arm64`
+          SUM5=`cd bin && sha256sum duvua-davinci-amd64`
+          echo -e "\n#### SHA256 Checksum\n\`\`\`\n$SUM1\n$SUM2\n$SUM3\n$SUM4\n$SUM5\n\`\`\`\n" >> ./RELEASE_CHANGELOG
+          echo -e "$SUM1\n$SUM2\n$SUM3\n$SUM4\n$SUM5" > checksums.txt
 
       - name: Create release
         id: create_release
@@ -84,6 +88,16 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: bin/duvua-bot-amd64
           asset_name: duvua-bot-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload bot arm64 binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: bin/duvua-bot-arm64
+          asset_name: duvua-bot-arm64
           asset_content_type: application/octet-stream
 
       - name: Upload player amd64 binary
