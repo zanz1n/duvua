@@ -16,31 +16,47 @@ x-common:
   player: &player-env
     PLAYER_LISTEN_PORT: 8080
     PLAYER_PASSWORD: ""
-    PLAYER_URL: "player:8080"
+    PLAYER_URL: player:8080
 
     SPOTIFY_CLIENT_ID: ""
     SPOTIFY_CLIENT_SECRET: ""
 
+  davinci: &davinci-env
+    WELCOMER_LISTEN_PORT: 8080
+    PLAYER_PASSWORD: ""
+    WELCOMER_URL: davinci:8080
+
 services:
   bot:
     image: ghcr.io/zanz1n/duvua-bot:latest
-    command: ["--migrate"]
+    command: ["--migrate", "--no-banner"]
     restart: always
     links:
       - player
       - postgres
 
     environment:
-      <<: [*bot-env, *postgres-env, *player-env]
+      <<: [*bot-env, *postgres-env, *player-env, *davinci-env]
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
 
   player:
     image: ghcr.io/zanz1n/duvua-player:latest
+    command: ["--no-banner"]
     restart: always
 
     environment:
-      <<: [*bot-env, *postgres-env, *player-env]
+      <<: [*bot-env, *postgres-env, *player-env, *davinci-env]
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+
+  davinci:
+    image: ghcr.io/zanz1n/duvua-davinci:latest
+    command: ["--no-banner"]
+    restart: always
+
+    environment:
+      <<: [*bot-env, *postgres-env, *player-env, *davinci-env]
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
 
