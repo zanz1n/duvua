@@ -35,6 +35,9 @@ type PostgresConfig struct {
 }
 
 type WelcomerConfig struct {
+	ApiURL       string  `env:"URL, required"`
+	ListenPort   uint16  `env:"LISTEN_PORT, default=8080"`
+	Password     string  `env:"PASSWORD"`
 	ImageQuality float32 `env:"IMAGE_QUALITY, default=80.0"`
 }
 

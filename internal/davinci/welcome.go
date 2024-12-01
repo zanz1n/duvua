@@ -1,4 +1,4 @@
-package welcome
+package davinci
 
 import (
 	"image"
@@ -6,7 +6,6 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"io"
-	"io/fs"
 
 	"github.com/chai2010/webp"
 	"github.com/golang/freetype"
@@ -15,55 +14,28 @@ import (
 	"golang.org/x/image/font"
 )
 
-func DecodeImage(r io.Reader) (image.Image, error) {
-	im, _, err := image.Decode(r)
-	return im, err
+var _ Generator = &WelcomeGenerator{}
+
+type WelcomeGenerator struct {
+	template image.Image
+	ttf      *truetype.Font
+	quality  float32
 }
 
-func LoadFont(fs fs.FS, name string) (*truetype.Font, error) {
-	fontFile, err := fs.Open(name)
-	if err != nil {
-		return nil, err
-	}
-	defer fontFile.Close()
-
-	fontBuf, err := io.ReadAll(fontFile)
-	if err != nil {
-		return nil, err
-	}
-
-	return freetype.ParseFont(fontBuf)
-}
-
-func LoadTemplate(fs fs.FS, name string) (image.Image, error) {
-	imgBuf, err := fs.Open(name)
-	if err != nil {
-		return nil, err
-	}
-	defer imgBuf.Close()
-
-	return DecodeImage(imgBuf)
-}
-
-func NewImageGenerator(
+func NewWelcomeGenerator(
 	template image.Image,
 	ttf *truetype.Font,
 	quality float32,
-) *ImageGenerator {
-	return &ImageGenerator{
+) *WelcomeGenerator {
+	return &WelcomeGenerator{
 		template: template,
 		ttf:      ttf,
 		quality:  quality,
 	}
 }
 
-type ImageGenerator struct {
-	template image.Image
-	ttf      *truetype.Font
-	quality  float32
-}
-
-func (g *ImageGenerator) Generate(avatar io.Reader, name, message string) ([]byte, error) {
+// Generate implements Generator.
+func (g *WelcomeGenerator) Generate(avatar io.Reader, name, message string) (*EncodedImage, error) {
 	fgColor := color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}
 
 	avatarImg, _, err := image.Decode(avatar)
@@ -118,5 +90,9 @@ func (g *ImageGenerator) Generate(avatar io.Reader, name, message string) ([]byt
 		return nil, err
 	}
 
-	return b, nil
+	return &EncodedImage{
+		Buf:         b,
+		Extension:   "webp",
+		ContentType: "image/webp",
+	}, nil
 }

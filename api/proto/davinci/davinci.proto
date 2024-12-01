@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package davinci;
+
+option go_package = "./davinci";
+
+import "tagger/tagger.proto";
+import "google/protobuf/empty.proto";
+
+message ImageSendData {
+  fixed64 channel_id = 1 [ (tagger.tags) = "validate:\"required\"" ];
+  string message = 2;
+  string file_name = 3 [ (tagger.tags) = "validate:\"required\"" ];
+}
+
+service Davinci {
+  rpc SendWelcome(WelcomeRequest) returns (google.protobuf.Empty);
+}
+
+message WelcomeRequest {
+  string username = 1;
+  string image_url = 2;
+  string greeting_text = 3;
+  ImageSendData data = 4 [ (tagger.tags) = "validate:\"required\"" ];
+}
