@@ -19,6 +19,7 @@ func connectToPlayerGrpc() (*grpcpool.Pool, func()) {
 
 	cfg := config.GetConfig()
 
+	passwd := cfg.Player.Password
 	pool, err := grpcpool.New(
 		10,
 		cfg.Player.ApiURL,
@@ -27,10 +28,10 @@ func connectToPlayerGrpc() (*grpcpool.Pool, func()) {
 		}),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithChainUnaryInterceptor(
-			grpcutils.AllUnaryClientInterceptors(playerpb.ConvertError)...,
+			grpcutils.AllUnaryClientInterceptors(playerpb.ConvertError, passwd)...,
 		),
 		grpc.WithChainStreamInterceptor(
-			grpcutils.AllStreamClientInterceptors(playerpb.ConvertError)...,
+			grpcutils.AllStreamClientInterceptors(playerpb.ConvertError, passwd)...,
 		),
 	)
 
@@ -58,6 +59,7 @@ func connectToDavinciGrpc() (*grpcpool.Pool, func()) {
 
 	cfg := config.GetConfig()
 
+	passwd := cfg.Welcomer.Password
 	pool, err := grpcpool.New(
 		10,
 		cfg.Welcomer.ApiURL,
@@ -66,10 +68,10 @@ func connectToDavinciGrpc() (*grpcpool.Pool, func()) {
 		}),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithChainUnaryInterceptor(
-			grpcutils.AllUnaryClientInterceptors(nilErrConverter)...,
+			grpcutils.AllUnaryClientInterceptors(nilErrConverter, passwd)...,
 		),
 		grpc.WithChainStreamInterceptor(
-			grpcutils.AllStreamClientInterceptors(nilErrConverter)...,
+			grpcutils.AllStreamClientInterceptors(nilErrConverter, passwd)...,
 		),
 	)
 

@@ -2,31 +2,37 @@ package grpcutils
 
 import "google.golang.org/grpc"
 
-func AllUnaryClientInterceptors(errf func(s string) error) []grpc.UnaryClientInterceptor {
+type errh = func(s string) error
+
+func AllUnaryClientInterceptors(errf errh, passwd string) []grpc.UnaryClientInterceptor {
 	return []grpc.UnaryClientInterceptor{
 		LoggerUnaryClientInterceptor,
 		ErrorUnaryClientInterceptor(errf),
+		AuthUnaryClientInterceptor(passwd),
 	}
 }
 
-func AllStreamClientInterceptors(errf func(s string) error) []grpc.StreamClientInterceptor {
+func AllStreamClientInterceptors(errf errh, passwd string) []grpc.StreamClientInterceptor {
 	return []grpc.StreamClientInterceptor{
 		LoggerStreamClientInterceptor,
 		ErrorStreamClientInterceptor(errf),
+		AuthStreamClientInterceptor(passwd),
 	}
 }
 
-func AllUnaryServerInterceptors() []grpc.UnaryServerInterceptor {
+func AllUnaryServerInterceptors(passwd string) []grpc.UnaryServerInterceptor {
 	return []grpc.UnaryServerInterceptor{
 		LoggerUnaryServerInterceptor,
 		RecoverUnaryServerInterceptor,
+		AuthUnaryServerInterceptor(passwd),
 		ValidateServerUnaryInterceptor,
 	}
 }
 
-func AllStreamServerInterceptors() []grpc.StreamServerInterceptor {
+func AllStreamServerInterceptors(passwd string) []grpc.StreamServerInterceptor {
 	return []grpc.StreamServerInterceptor{
 		LoggerStreamServerInterceptor,
 		RecoverStreamServerInterceptor,
+		AuthStreamServerInterceptor(passwd),
 	}
 }

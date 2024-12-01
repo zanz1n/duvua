@@ -119,9 +119,10 @@ func main() {
 
 	slog.Info("GRPC: Listening for grpc connections", "addr", listenAddr)
 
+	passwd := cfg.Player.Password
 	grpcServer := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(grpcutils.AllUnaryServerInterceptors()...),
-		grpc.ChainStreamInterceptor(grpcutils.AllStreamServerInterceptors()...),
+		grpc.ChainUnaryInterceptor(grpcutils.AllUnaryServerInterceptors(passwd)...),
+		grpc.ChainStreamInterceptor(grpcutils.AllStreamServerInterceptors(passwd)...),
 	)
 
 	playerpb.RegisterPlayerServer(grpcServer, server)
