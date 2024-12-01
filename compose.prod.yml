@@ -23,7 +23,7 @@ x-common:
 
   davinci: &davinci-env
     WELCOMER_LISTEN_PORT: 8080
-    PLAYER_PASSWORD: ""
+    WELCOMER_PASSWORD: ""
     WELCOMER_URL: davinci:8080
 
 services:
@@ -33,6 +33,7 @@ services:
     restart: always
     links:
       - player
+      - davinci
       - postgres
 
     environment:
