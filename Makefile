@@ -8,7 +8,10 @@ run: build-dev-bot
 run-player: build-dev-player
 	./bin/duvua-player-debug
 
-build: build-bot build-player
+run-davinci: build-dev-davinci
+	./bin/duvua-davinci-debug
+
+build: build-bot build-player build-davinci
 
 build-bot:
 	go build \
@@ -20,7 +23,12 @@ build-player:
 		-ldflags "-s -w -X github.com/zanz1n/duvua/config.Version=release-$(shell git rev-parse --short HEAD)" \
 		-o bin/duvua-player github.com/zanz1n/duvua/cmd/player
 
-build-dev: build-dev-bot build-dev-player
+build-davinci:
+	go build \
+		-ldflags "-s -w -X github.com/zanz1n/duvua/config.Version=release-$(shell git rev-parse --short HEAD)" \
+		-o bin/duvua-davinci github.com/zanz1n/duvua/cmd/davinci
+
+build-dev: build-dev-bot build-dev-player build-dev-davinci
 
 build-dev-bot:
 	go build \
@@ -31,6 +39,11 @@ build-dev-player:
 	go build \
 		-ldflags "-X github.com/zanz1n/duvua/config.Version=debug-$(shell git rev-parse --short HEAD)" \
 		-o bin/duvua-player-debug github.com/zanz1n/duvua/cmd/player
+
+build-dev-davinci:
+	go build \
+		-ldflags "-X github.com/zanz1n/duvua/config.Version=debug-$(shell git rev-parse --short HEAD)" \
+		-o bin/duvua-davinci-debug github.com/zanz1n/duvua/cmd/davinci
 
 test:
 	go test ./... -v --race
