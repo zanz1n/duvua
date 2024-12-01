@@ -20,7 +20,7 @@ func ErrorUnaryClientInterceptor(f func(s string) error) grpc.UnaryClientInterce
 	) (err error) {
 		start := time.Now()
 
-		err = invoker(ctx, method, req, reply, cc)
+		err = invoker(ctx, method, req, reply, cc, opts...)
 		if err != nil {
 			s := status.Convert(err)
 			desc := s.Message()

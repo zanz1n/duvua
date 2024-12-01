@@ -109,7 +109,7 @@ func LoggerUnaryClientInterceptor(
 ) (err error) {
 	start := time.Now()
 
-	err = invoker(ctx, method, req, reply, cc)
+	err = invoker(ctx, method, req, reply, cc, opts...)
 	if err == nil {
 		slog.Info(
 			"GRPC: Invoked unary call",
