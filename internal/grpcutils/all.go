@@ -2,17 +2,17 @@ package grpcutils
 
 import "google.golang.org/grpc"
 
-func AllUnaryClientInterceptors() []grpc.UnaryClientInterceptor {
+func AllUnaryClientInterceptors(errf func(s string) error) []grpc.UnaryClientInterceptor {
 	return []grpc.UnaryClientInterceptor{
 		LoggerUnaryClientInterceptor,
-		ErrorUnaryClientInterceptor,
+		ErrorUnaryClientInterceptor(errf),
 	}
 }
 
-func AllStreamClientInterceptors() []grpc.StreamClientInterceptor {
+func AllStreamClientInterceptors(errf func(s string) error) []grpc.StreamClientInterceptor {
 	return []grpc.StreamClientInterceptor{
 		LoggerStreamClientInterceptor,
-		ErrorStreamClientInterceptor,
+		ErrorStreamClientInterceptor(errf),
 	}
 }
 

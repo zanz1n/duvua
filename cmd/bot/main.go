@@ -28,6 +28,7 @@ import (
 	"github.com/zanz1n/duvua/internal/ticket"
 	"github.com/zanz1n/duvua/internal/utils"
 	"github.com/zanz1n/duvua/internal/welcome"
+	"github.com/zanz1n/duvua/pkg/pb/davinci"
 	"github.com/zanz1n/duvua/pkg/pb/player"
 )
 
@@ -123,19 +124,15 @@ func main() {
 		}
 	}
 
-	playerGrpc := connectToPlayerGrpc()
-	defer func() {
-		start := time.Now()
-		playerGrpc.Close()
-		slog.Info(
-			"Closed GRPC connection pool",
-			"took", time.Since(start).Round(time.Millisecond),
-		)
-	}()
+	playerGrpc, playerCancel := connectToPlayerGrpc()
+	defer playerCancel()
 
-	welcomeGen := welcomeImageGenerator()
+	davinciGrpc, davinciCancel := connectToDavinciGrpc()
+	defer davinciCancel()
+
 	welcomeRepo := welcome.NewPostgresWelcomeRepository(db)
-	welcomeEvt := events.NewMemberAddEvent(welcomeRepo, welcomeGen)
+	davinciClient := davinci.NewDavinciClient(davinciGrpc)
+	welcomeEvt := events.NewMemberAddEvent(welcomeRepo, davinciClient)
 
 	ticketRepository := ticket.NewPgTicketRepository(db)
 	ticketConfigRepository := ticket.NewPgTicketConfigRepository(db)

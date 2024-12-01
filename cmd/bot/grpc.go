@@ -8,12 +8,13 @@ import (
 	"github.com/zanz1n/duvua/config"
 	"github.com/zanz1n/duvua/internal/grpcutils"
 	"github.com/zanz1n/duvua/pkg/grpcpool"
+	playerpb "github.com/zanz1n/duvua/pkg/pb/player"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func connectToPlayerGrpc() *grpcpool.Pool {
+func connectToPlayerGrpc() (*grpcpool.Pool, func()) {
 	start := time.Now()
 
 	cfg := config.GetConfig()
@@ -25,8 +26,12 @@ func connectToPlayerGrpc() *grpcpool.Pool {
 			Backoff: backoff.DefaultConfig,
 		}),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithChainUnaryInterceptor(grpcutils.AllUnaryClientInterceptors()...),
-		grpc.WithChainStreamInterceptor(grpcutils.AllStreamClientInterceptors()...),
+		grpc.WithChainUnaryInterceptor(
+			grpcutils.AllUnaryClientInterceptors(playerpb.ConvertError)...,
+		),
+		grpc.WithChainStreamInterceptor(
+			grpcutils.AllStreamClientInterceptors(playerpb.ConvertError)...,
+		),
 	)
 
 	if err != nil {
@@ -38,5 +43,12 @@ func connectToPlayerGrpc() *grpcpool.Pool {
 		"took", time.Since(start).Round(time.Millisecond),
 	)
 
-	return pool
+	return pool, func() {
+		start := time.Now()
+		pool.Close()
+		slog.Info(
+			"Closed GRPC player connection pool",
+			"took", time.Since(start).Round(time.Millisecond),
+		)
+	}
 }
