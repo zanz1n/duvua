@@ -5,9 +5,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua/internal/errors"
@@ -50,13 +52,29 @@ func (s *GrpcServer) SendWelcome(
 	}
 	defer r.Close()
 
+	generateStart := time.Now()
 	img, err := s.wg.Generate(r, req.Username, req.GreetingText)
+	took := time.Since(generateStart).Round(time.Microsecond)
 	if err != nil {
+		slog.Error(
+			"Welcome: Failed to generate image",
+			"type", img.Extension,
+			"username", req.Username,
+			"took", took,
+			"error", err,
+		)
+
 		return nil, status.Error(
 			codes.Internal,
 			"failed to generate image: "+err.Error(),
 		)
 	}
+	slog.Info(
+		"Welcome: Genrated image",
+		"type", img.Extension,
+		"username", req.Username,
+		"took", took,
+	)
 
 	if err = s.sendMessage(req.Data, img); err != nil {
 		return nil, status.Error(
