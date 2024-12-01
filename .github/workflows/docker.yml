@@ -47,6 +47,18 @@ jobs:
             type=ref,event=tag
             type=ref,event=branch
 
+      - name: Davinci docker image metadata
+        id: docker_davinci_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}-davinci
+          flavor: |
+            latest=false
+          tags: |
+            type=raw,value=latest,enable=${{ github.event_name == 'release' && github.event.action == 'published' && github.event.release.prerelease == false }}
+            type=ref,event=tag
+            type=ref,event=branch
+
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -73,7 +85,7 @@ jobs:
           context: .
           file: ./docker/bot.dockerfile
           push: true
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           build-args: |
             VERSION=${{ steps.build_info.outputs.version_tag }}
           labels: ${{ steps.docker_bot_meta.outputs.labels }}
@@ -119,5 +131,33 @@ jobs:
             VERSION=dev-${{ steps.build_info.outputs.short_sha }}
           labels: ${{ steps.docker_player_meta.outputs.labels }}
           tags: ${{ steps.docker_player_meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and Push davinci (tag)
+        uses: docker/build-push-action@v5
+        if: github.event_name == 'release' && github.event.action == 'published'
+        with:
+          context: .
+          file: ./docker/davinci.dockerfile
+          push: true
+          platforms: linux/amd64
+          build-args: |
+            VERSION=${{ steps.build_info.outputs.version_tag }}
+          labels: ${{ steps.docker_davinci_meta.outputs.labels }}
+          tags: ${{ steps.docker_davinci_meta.outputs.tags }}
+
+      - name: Build and Push davinci (main)
+        uses: docker/build-push-action@v5
+        if: github.event_name == 'push' && contains(github.ref, 'main')
+        with:
+          context: .
+          file: ./docker/davinci.dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          platforms: linux/amd64
+          build-args: |
+            VERSION=dev-${{ steps.build_info.outputs.short_sha }}
+          labels: ${{ steps.docker_davinci_meta.outputs.labels }}
+          tags: ${{ steps.docker_davinci_meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

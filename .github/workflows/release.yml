@@ -36,6 +36,9 @@ jobs:
           GOARCH=amd64 go build -o bin/duvua-bot-amd64 -ldflags "-s -w -X $ROOT/config.Version=${REF:11}" $ROOT/cmd/bot
           chmod 755 bin/duvua-bot-amd64
 
+          GOARCH=arm64 go build -o bin/duvua-bot-arm64 -ldflags "-s -w -X $ROOT/config.Version=${REF:11}" $ROOT/cmd/bot
+          chmod 755 bin/duvua-bot-arm64
+
       - name: Build player
         env:
           CGO_ENABLED: 0
@@ -48,13 +51,24 @@ jobs:
           GOARCH=arm64 go build -o bin/duvua-player-arm64 -ldflags "-s -w -X $ROOT/config.Version=${REF:11}" $ROOT/cmd/player
           chmod 755 bin/duvua-player-arm64
 
+      - name: Build davinci
+        env:
+          CGO_ENABLED: 0
+          REF: ${{ github.ref }}
+          ROOT: github.com/zanz1n/duvua
+        run: |
+          GOARCH=amd64 go build -o bin/duvua-davinci-amd64 -ldflags "-s -w -X $ROOT/config.Version=${REF:11}" $ROOT/cmd/davinci
+          chmod 755 bin/duvua-davinci-amd64
+
       - name: Create checksum
         run: |
           SUM1=`cd bin && sha256sum duvua-bot-amd64`
-          SUM2=`cd bin && sha256sum duvua-player-amd64`
-          SUM3=`cd bin && sha256sum duvua-player-arm64`
-          echo -e "\n#### SHA256 Checksum\n\`\`\`\n$SUM1\n$SUM2\n$SUM3\n\`\`\`\n" >> ./RELEASE_CHANGELOG
-          echo -e "$SUM1\n$SUM2\n$SUM3" > checksums.txt
+          SUM2=`cd bin && sha256sum duvua-bot-arm64`
+          SUM3=`cd bin && sha256sum duvua-player-amd64`
+          SUM4=`cd bin && sha256sum duvua-player-arm64`
+          SUM5=`cd bin && sha256sum duvua-davinci-amd64`
+          echo -e "\n#### SHA256 Checksum\n\`\`\`\n$SUM1\n$SUM2\n$SUM3\n$SUM4\n$SUM5\n\`\`\`\n" >> ./RELEASE_CHANGELOG
+          echo -e "$SUM1\n$SUM2\n$SUM3\nSUM4\nSUM5" > checksums.txt
 
       - name: Create release
         id: create_release

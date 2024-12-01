@@ -50,7 +50,7 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: 1
+          CGO_ENABLED: 0
         run: |
           make build-bot
           make build-dev-bot
@@ -63,6 +63,15 @@ jobs:
         run: |
           make build-player
           make build-dev-player
+
+      - name: Build davinci
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 1
+        run: |
+          make build-davinci
+          make build-dev-davinci
 
       - name: Test
         env:
