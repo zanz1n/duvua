@@ -2,6 +2,7 @@ package grpcutils
 
 import (
 	"context"
+	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -27,7 +28,7 @@ func AuthUnaryServerInterceptor(passwd string) grpc.UnaryServerInterceptor {
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (any, error) {
-		if passwd != "" {
+		if passwd != "" && !strings.HasPrefix(info.FullMethod, "/grpc.reflection") {
 			auth := metadata.ValueFromIncomingContext(ctx, "authorization")
 			if len(auth) != 1 {
 				return nil, errMissingAuthorization
@@ -50,7 +51,7 @@ func AuthStreamServerInterceptor(passwd string) grpc.StreamServerInterceptor {
 		info *grpc.StreamServerInfo,
 		handler grpc.StreamHandler,
 	) error {
-		if passwd != "" {
+		if passwd != "" && !strings.HasPrefix(info.FullMethod, "/grpc.reflection") {
 			auth := metadata.ValueFromIncomingContext(ss.Context(), "authorization")
 			if len(auth) != 1 {
 				return errMissingAuthorization
@@ -75,15 +76,11 @@ func AuthUnaryClientInterceptor(passwd string) grpc.UnaryClientInterceptor {
 		invoker grpc.UnaryInvoker,
 		opts ...grpc.CallOption,
 	) error {
-		if passwd != "" {
-			head := grpc.Header(&metadata.MD{
-				"authorization": []string{passwd},
-			})
-
-			return invoker(ctx, method, req, reply, cc, head)
+		if passwd != "" && !strings.HasPrefix(method, "/grpc.reflection") {
+			ctx = metadata.AppendToOutgoingContext(ctx, "authorization", passwd)
 		}
 
-		return invoker(ctx, method, req, reply, cc)
+		return invoker(ctx, method, req, reply, cc, opts...)
 	}
 }
 
@@ -96,14 +93,10 @@ func AuthStreamClientInterceptor(passwd string) grpc.StreamClientInterceptor {
 		streamer grpc.Streamer,
 		opts ...grpc.CallOption,
 	) (grpc.ClientStream, error) {
-		if passwd != "" {
-			head := grpc.Header(&metadata.MD{
-				"authorization": []string{passwd},
-			})
-
-			return streamer(ctx, desc, cc, method, head)
+		if passwd != "" && !strings.HasPrefix(method, "/grpc.reflection") {
+			ctx = metadata.AppendToOutgoingContext(ctx, "authorization", passwd)
 		}
 
-		return streamer(ctx, desc, cc, method)
+		return streamer(ctx, desc, cc, method, opts...)
 	}
 }
