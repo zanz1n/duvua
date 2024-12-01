@@ -1,32 +1,29 @@
 package events
 
 import (
-	"bytes"
+	"context"
 	"fmt"
-	"io"
 	"log/slog"
-	"math/rand"
-	"mime"
-	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua/internal/errors"
 	"github.com/zanz1n/duvua/internal/welcome"
-	staticembed "github.com/zanz1n/duvua/static"
+	"github.com/zanz1n/duvua/pkg/pb/davinci"
 )
 
 type MemberAddEvent struct {
-	r   welcome.WelcomeRepository
-	gen *welcome.ImageGenerator
+	r welcome.WelcomeRepository
+	c davinci.DavinciClient
 }
 
 func NewMemberAddEvent(
 	r welcome.WelcomeRepository,
-	gen *welcome.ImageGenerator,
+	c davinci.DavinciClient,
 ) *MemberAddEvent {
-	return &MemberAddEvent{r: r, gen: gen}
+	return &MemberAddEvent{r: r, c: c}
 }
 
 func (e *MemberAddEvent) Trigger(s *discordgo.Session, member *discordgo.Member) error {
@@ -79,32 +76,8 @@ func (e *MemberAddEvent) Trigger(s *discordgo.Session, member *discordgo.Member)
 			}},
 		}
 	case welcome.WelcomeTypeImage:
-		var username string
-		if member.User.GlobalName != "" {
-			username = member.User.GlobalName
-		} else {
-			username = member.User.Username
-		}
+		return e.handleImage(member, *w.ChannelId, msg)
 
-		disc := member.User.Discriminator
-		if disc != "" && disc != "0" && disc != "0000" {
-			username += "#" + member.User.Discriminator
-		}
-		msg = strings.ReplaceAll(msg, "{{USER}}", username)
-
-		img, err := e.generateImage(s, member, username, msg)
-		if err != nil {
-			return err
-		}
-
-		data = discordgo.MessageSend{
-			Content: "<@" + member.User.ID + ">",
-			Files: []*discordgo.File{{
-				Name:        fmt.Sprintf("%s-%s-welcome.png", member.GuildID, member.User.ID),
-				ContentType: "image/webp",
-				Reader:      img,
-			}},
-		}
 	default:
 		slog.Error(
 			"Welcome has an invalid type",
@@ -129,53 +102,6 @@ func (e *MemberAddEvent) Trigger(s *discordgo.Session, member *discordgo.Member)
 	}
 
 	return nil
-}
-
-func (e *MemberAddEvent) fetchAvatar(s *discordgo.Session, member *discordgo.Member) (io.ReadCloser, error) {
-	var url string
-	if member.Avatar != "" {
-		url = discordgo.EndpointGuildMemberAvatar(member.GuildID, member.User.ID, member.Avatar)
-	} else if member.User.Avatar != "" {
-		url = discordgo.EndpointUserAvatar(member.User.ID, member.User.Avatar)
-	} else {
-		path := fmt.Sprintf("avatar/default-%v.png", rand.Intn(6))
-		return staticembed.Assets.Open(path)
-	}
-
-	res, err := s.Client.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	mt, _, _ := mime.ParseMediaType(res.Header.Get("Content-Type"))
-
-	if res.StatusCode != http.StatusOK {
-		return nil, errors.Unexpected("fetch avatar: unexpected status code")
-	} else if mt != "image/png" {
-		return nil, errors.Unexpectedf("fetch avatar: unexpected image mime type `%s`", mt)
-	}
-
-	return res.Body, nil
-}
-
-func (e *MemberAddEvent) generateImage(
-	s *discordgo.Session,
-	member *discordgo.Member,
-	username, msg string,
-) (io.Reader, error) {
-	av, err := e.fetchAvatar(s, member)
-	if err != nil {
-		return nil, err
-	}
-	defer av.Close()
-
-	start := time.Now()
-	buf, err := e.gen.Generate(av, username, msg)
-	if err != nil {
-		return nil, errors.Unexpected("generate image: " + err.Error())
-	}
-	slog.Info("Generated welcome image", "took", time.Since(start))
-
-	return bytes.NewReader(buf), err
 }
 
 func (e *MemberAddEvent) Handle(s *discordgo.Session, member *discordgo.GuildMemberAdd) {
@@ -204,4 +130,46 @@ func (e *MemberAddEvent) Handle(s *discordgo.Session, member *discordgo.GuildMem
 			"took", time.Since(start),
 		)
 	}
+}
+
+func (e *MemberAddEvent) handleImage(member *discordgo.Member, channelId, msg string) error {
+	var username string
+	if member.User.GlobalName != "" {
+		username = member.User.GlobalName
+	} else {
+		username = member.User.Username
+	}
+
+	var avatarUrl string
+	if member.Avatar != "" {
+		avatarUrl = discordgo.EndpointGuildMemberAvatar(member.GuildID, member.User.ID, member.Avatar)
+	} else if member.User.Avatar != "" {
+		avatarUrl = discordgo.EndpointUserAvatar(member.User.ID, member.User.Avatar)
+	}
+
+	disc := member.User.Discriminator
+	if disc != "" && disc != "0" && disc != "0000" {
+		username += "#" + member.User.Discriminator
+	}
+	msg = strings.ReplaceAll(msg, "{{USER}}", username)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	_, err := e.c.SendWelcome(ctx, &davinci.WelcomeRequest{
+		Username:     username,
+		ImageUrl:     avatarUrl,
+		GreetingText: msg,
+		Data: &davinci.ImageSendData{
+			ChannelId: cuint64(channelId),
+			Message:   "<@" + member.User.ID + ">",
+			FileName:  fmt.Sprintf("%s-%s-welcome", member.GuildID, member.User.ID),
+		},
+	})
+	return err
+}
+
+func cuint64(s string) uint64 {
+	v, _ := strconv.ParseUint(s, 10, 0)
+	return v
 }

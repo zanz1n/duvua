@@ -52,3 +52,46 @@ func connectToPlayerGrpc() (*grpcpool.Pool, func()) {
 		)
 	}
 }
+
+func connectToDavinciGrpc() (*grpcpool.Pool, func()) {
+	start := time.Now()
+
+	cfg := config.GetConfig()
+
+	pool, err := grpcpool.New(
+		10,
+		cfg.Welcomer.ApiURL,
+		grpc.WithConnectParams(grpc.ConnectParams{
+			Backoff: backoff.DefaultConfig,
+		}),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithChainUnaryInterceptor(
+			grpcutils.AllUnaryClientInterceptors(nilErrConverter)...,
+		),
+		grpc.WithChainStreamInterceptor(
+			grpcutils.AllStreamClientInterceptors(nilErrConverter)...,
+		),
+	)
+
+	if err != nil {
+		log.Fatalln("Failed to connect to davinci grpc server:", err)
+	}
+
+	slog.Info(
+		"Connected to davinci GRPC server",
+		"took", time.Since(start).Round(time.Millisecond),
+	)
+
+	return pool, func() {
+		start := time.Now()
+		pool.Close()
+		slog.Info(
+			"Closed GRPC davinci connection pool",
+			"took", time.Since(start).Round(time.Millisecond),
+		)
+	}
+}
+
+func nilErrConverter(msg string) error {
+	return nil
+}
