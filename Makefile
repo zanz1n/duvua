@@ -113,3 +113,12 @@ compose-down:
 compose-clean:
 	docker compose down
 	sudo rm -rf .docker-volumes	
+
+debug:
+	@echo DEBUG = $(DEBUG)
+	@echo DIR = $(DIR)
+	@echo BINNAME = $(PREFIX)%-$(OS)-$(ARCH)$(SUFIX)
+	@echo GOMODPATH = $(GOMODPATH)
+	@echo VERSION = $(VERSION)
+	@echo BINS = $(BINS)
+	@echo LDFLAGS = $(LDFLAGS)
