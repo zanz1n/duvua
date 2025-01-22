@@ -53,7 +53,7 @@ jobs:
           CGO_ENABLED: 0
         run: |
           make build-bot
-          make build-dev-bot
+          make DEBUG=0 build-bot
 
       - name: Build player
         env:
@@ -62,7 +62,7 @@ jobs:
           CGO_ENABLED: 0
         run: |
           make build-player
-          make build-dev-player
+          make DEBUG=0 build-player
 
       - name: Build davinci
         env:
@@ -71,7 +71,7 @@ jobs:
           CGO_ENABLED: 1
         run: |
           make build-davinci
-          make build-dev-davinci
+          make DEBUG=0 build-davinci
 
       - name: Test
         env:
