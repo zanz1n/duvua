@@ -79,7 +79,7 @@ endif
 gen-checksums: $(DIR)
 	checksum=""; \
 	for filename in $(DIR)/*; do \
-		checksum+=$$(sha256sum $$filename); \
+		checksum+=$$(cd $(DIR) && sha256sum $${filename#"$(DIR)/"}); \
 		checksum+="\n"; \
 	done; \
 	echo -e "\n#### SHA256 Checksum\n\`\`\`\n$$checksum\`\`\`" >> ./RELEASE_CHANGELOG; \
