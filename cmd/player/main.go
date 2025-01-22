@@ -59,6 +59,12 @@ func init() {
 			config.Version,
 			runtime.Version(),
 		)
+	} else {
+		slog.Info(
+			"Running player",
+			"version", config.Version,
+			"go", runtime.Version(),
+		)
 	}
 }
 

@@ -56,6 +56,12 @@ func init() {
 			config.Version,
 			runtime.Version(),
 		)
+	} else {
+		slog.Info(
+			"Running davinci",
+			"version", config.Version,
+			"go", runtime.Version(),
+		)
 	}
 }
 
