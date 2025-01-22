@@ -1,6 +1,10 @@
+ifneq ($(wildcard .env),)
+include .env
+endif
+
 SHELL := /usr/bin/env bash -o errexit -o pipefail -o nounset
 
-DEBUG ?= 1
+DEBUG ?= 0
 
 PREFIX ?= duvua-
 SUFIX ?=
@@ -101,17 +105,30 @@ generate:
 	protoc -I $(shell $(GO) env GOMODCACHE)/github.com/srikrsna/protoc-gen-gotag@* \
 		-I . --gotag_out=outdir="./pkg/pb":. ./api/proto/*/*.proto
 
+fmt:
+	go fmt ./...
+
+docker-%:
+	docker buildx build -f docker/$*.dockerfile -t duvua-$* \
+	--build-arg VERSION=$(VERSION) --build-arg DEBUG=$(DEBUG) .
+
+ifneq ($(shell which docker-compose),)
+DOCKER_COMPOSE := docker-compose
+else
+DOCKER_COMPOSE := docker compose
+endif
+
 compose-up:
-	docker compose pull
-	docker compose build --parallel
-	docker compose up -d
-	docker compose logs -f
+	$(DOCKER_COMPOSE) pull
+	$(DOCKER_COMPOSE) build --parallel
+	$(DOCKER_COMPOSE) up -d
+	$(DOCKER_COMPOSE) logs -f
 
 compose-down:
-	docker compose down
+	$(DOCKER_COMPOSE) down
 
 compose-clean:
-	docker compose down
+	$(DOCKER_COMPOSE) down
 	sudo rm -rf .docker-volumes	
 
 debug:
