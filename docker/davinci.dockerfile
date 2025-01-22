@@ -6,6 +6,7 @@ ARG DEBUG=0
 WORKDIR /build
 ENV CGO_ENABLED=1
 ENV OUTPUT=/build/bin/duvua-davinci
+ENV GOFLAGS=-buildvcs=false
 
 RUN go env -w GOCACHE=/go-cache
 RUN go env -w GOMODCACHE=/gomod-cache
