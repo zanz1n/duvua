@@ -1,67 +1,103 @@
-.PHONY: default
+SHELL := /usr/bin/env bash -o errexit -o pipefail -o nounset
 
-default: check build build-dev
+DEBUG ?= 1
 
-run: build-dev-bot
-	./bin/duvua-bot-debug --migrate
+PREFIX ?= duvua-
+SUFIX ?=
 
-run-player: build-dev-player
-	./bin/duvua-player-debug
+BINS = bot davinci player
+DIR ?= bin
 
-run-davinci: build-dev-davinci
-	./bin/duvua-davinci-debug
+GO ?= go
 
-build: build-bot build-player build-davinci
+VERSION ?= release-$(shell git rev-parse HEAD | head -c8)
 
-build-bot:
-	go build \
-		-ldflags "-s -w -X github.com/zanz1n/duvua/config.Version=release-$(shell git rev-parse --short HEAD)" \
-		-o bin/duvua-bot github.com/zanz1n/duvua/cmd/bot
+LDFLAGS := -X github.com/zanz1n/duvua/config.Version=$(VERSION)
 
-build-player:
-	go build \
-		-ldflags "-s -w -X github.com/zanz1n/duvua/config.Version=release-$(shell git rev-parse --short HEAD)" \
-		-o bin/duvua-player github.com/zanz1n/duvua/cmd/player
+ifeq ($(DEBUG), 1)
+SUFIX += -debug
+else
+LDFLAGS += -s -w
+endif
 
-build-davinci:
-	go build \
-		-ldflags "-s -w -X github.com/zanz1n/duvua/config.Version=release-$(shell git rev-parse --short HEAD)" \
-		-o bin/duvua-davinci github.com/zanz1n/duvua/cmd/davinci
+OS := $(if $(GOOS),$(GOOS),$(shell GOTOOLCHAIN=local $(GO) env GOOS))
+ARCH := $(if $(GOARCH),$(GOARCH),$(shell GOTOOLCHAIN=local $(GO) env GOARCH))
 
-build-dev: build-dev-bot build-dev-player build-dev-davinci
+ifeq ($(OS), windows)
+SUFIX += .exe
+endif
 
-build-dev-bot:
-	go build \
-		-ldflags "-X github.com/zanz1n/duvua/config.Version=debug-$(shell git rev-parse --short HEAD)" \
-		-o bin/duvua-bot-debug github.com/zanz1n/duvua/cmd/bot
+default: check all
 
-build-dev-player:
-	go build \
-		-ldflags "-X github.com/zanz1n/duvua/config.Version=debug-$(shell git rev-parse --short HEAD)" \
-		-o bin/duvua-player-debug github.com/zanz1n/duvua/cmd/player
+all: $(addprefix build-, $(BINS))
 
-build-dev-davinci:
-	go build \
-		-ldflags "-X github.com/zanz1n/duvua/config.Version=debug-$(shell git rev-parse --short HEAD)" \
-		-o bin/duvua-davinci-debug github.com/zanz1n/duvua/cmd/davinci
+run-%: build-%
+ifneq ($(OS), $(shell GOTOOLCHAIN=local $(GO) env GOOS))
+	$(error when running GOOS must be equal to the current os)
+else ifneq ($(ARCH), $(shell GOTOOLCHAIN=local $(GO) env GOARCH))
+	$(error when running GOARCH must be equal to the current cpu arch)
+else ifneq ($(OUTPUT),)
+	$(OUTPUT)
+else
+	$(DIR)/$(PREFIX)$*-$(OS)-$(ARCH)$(SUFIX)
+endif
+
+build-%: $(DIR)
+ifneq ($(OUTPUT),) 
+	GOOS=$(OS) GOARCH=$(ARCH) $(GO) build -ldflags "$(LDFLAGS)" \
+	-o $(OUTPUT) ./cmd/$*
+else
+	GOOS=$(OS) GOARCH=$(ARCH) $(GO) build -ldflags "$(LDFLAGS)" \
+	-o $(DIR)/$(PREFIX)$*-$(OS)-$(ARCH)$(SUFIX) ./cmd/$*
+endif
+ifneq ($(POST_BUILD_CHMOD),)
+	chmod $(POST_BUILD_CHMOD) $(DIR)/$(PREFIX)$*-$(OS)-$(ARCH)$(SUFIX)
+endif
+
+$(DIR):
+	mkdir $(DIR)
+
+TESTFLAGS = -v -race
+
+ifeq ($(SHORTTESTS), 1)
+TESTFLAGS += -short
+endif
+
+ifeq ($(NOTESTCACHE), 1)
+TESTFLAGS += -count=1
+endif
 
 test:
-	go test ./... -v --race
+ifneq ($(SKIPTESTS), 1)
+	$(GO) test ./... $(TESTFLAGS)
+else
+    $(warning skipped tests)
+endif
+
+.SILENT: gen-checksums
+gen-checksums: $(DIR)
+	checksum=""; \
+	for filename in $(DIR)/*; do \
+		checksum+=$$(sha256sum $$filename); \
+		checksum+="\n"; \
+	done; \
+	echo -e "\n#### SHA256 Checksum\n\`\`\`\n$$checksum\`\`\`" >> ./RELEASE_CHANGELOG; \
+    echo -e "$$checksum" > checksums.txt;
 
 check: generate test
 
 update:
-	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-	go install github.com/srikrsna/protoc-gen-gotag@latest
-	go get -u ./...
-	go mod tidy
+	$(GO) install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	$(GO) install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	$(GO) install github.com/srikrsna/protoc-gen-gotag@latest
+	$(GO) get -u ./...
+	$(GO) mod tidy
 
 generate:
-	protoc -I $(shell go env GOMODCACHE)/github.com/srikrsna/protoc-gen-gotag@* \
+	protoc -I $(shell $(GO) env GOMODCACHE)/github.com/srikrsna/protoc-gen-gotag@* \
 		-I . --go_out=./pkg/pb --go-grpc_out=./pkg/pb ./api/proto/*/*.proto
 	
-	protoc -I $(shell go env GOMODCACHE)/github.com/srikrsna/protoc-gen-gotag@* \
+	protoc -I $(shell $(GO) env GOMODCACHE)/github.com/srikrsna/protoc-gen-gotag@* \
 		-I . --gotag_out=outdir="./pkg/pb":. ./api/proto/*/*.proto
 
 compose-up:
