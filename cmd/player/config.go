@@ -8,7 +8,7 @@ import (
 )
 
 type Config struct {
-	LogLevel slog.Level           `env:"LOG_LEVEL, default=0"`
+	LogLevel slog.Level           `env:"LOG_LEVEL, default=info"`
 	Discord  config.DiscordConfig `env:", prefix=DISCORD_"`
 	Player   config.PlayerConfig  `env:", prefix=PLAYER_"`
 	Spotify  config.SpotifyConfig `env:", prefix=SPOTIFY_"`

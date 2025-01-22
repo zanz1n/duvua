@@ -8,7 +8,7 @@ import (
 )
 
 type Config struct {
-	LogLevel slog.Level            `env:"LOG_LEVEL, default=0"`
+	LogLevel slog.Level            `env:"LOG_LEVEL, default=info"`
 	Discord  config.DiscordConfig  `env:", prefix=DISCORD_"`
 	Postgres config.PostgresConfig `env:", prefix=POSTGRES_"`
 	Welcomer config.WelcomerConfig `env:", prefix=WELCOMER_"`
