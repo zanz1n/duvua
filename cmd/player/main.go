@@ -17,6 +17,7 @@ import (
 	"github.com/zanz1n/duvua/internal/grpcutils"
 	"github.com/zanz1n/duvua/internal/logger"
 	"github.com/zanz1n/duvua/internal/player"
+	"github.com/zanz1n/duvua/internal/player/encoder"
 	"github.com/zanz1n/duvua/internal/player/platform"
 	playerpb "github.com/zanz1n/duvua/pkg/pb/player"
 	"google.golang.org/grpc"
@@ -76,7 +77,7 @@ func init() {
 }
 
 func init() {
-	cfg := config.GetConfig()
+	cfg := GetConfig()
 	if *debug {
 		cfg.LogLevel = slog.LevelDebug
 	}
@@ -88,7 +89,9 @@ func init() {
 }
 
 func main() {
-	cfg := config.GetConfig()
+	cfg := GetConfig()
+
+	encoder.InitDefault(cfg.Player.FFmpegExec)
 
 	s, err := discordgo.New("Bot " + cfg.Discord.Token)
 	if err != nil {

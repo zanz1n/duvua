@@ -73,7 +73,7 @@ func init() {
 }
 
 func init() {
-	cfg := config.GetConfig()
+	cfg := GetConfig()
 	if *debug {
 		cfg.LogLevel = slog.LevelDebug
 	}
@@ -85,7 +85,7 @@ func init() {
 }
 
 func main() {
-	cfg := config.GetConfig()
+	cfg := GetConfig()
 
 	template, err := davinci.LoadTemplate(staticembed.Assets, "welcomer.png")
 	if err != nil {

@@ -13,13 +13,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jackc/pgx/v5/tracelog"
-	"github.com/zanz1n/duvua/config"
 	"github.com/zanz1n/duvua/internal/logger"
 	embedsql "github.com/zanz1n/duvua/sql"
 )
 
 func connectToPostgres() *sql.DB {
-	cfg := config.GetConfig()
+	cfg := GetConfig()
 
 	pgxConfig, err := pgxpool.ParseConfig(cfg.Postgres.IntoUri())
 	if err != nil {
@@ -55,7 +54,7 @@ func connectToPostgres() *sql.DB {
 
 func execMigration(db *sql.DB) error {
 	start := time.Now()
-	cfg := config.GetConfig()
+	cfg := GetConfig()
 
 	source, err := iofs.New(embedsql.Migrations, "migrations")
 	if err != nil {

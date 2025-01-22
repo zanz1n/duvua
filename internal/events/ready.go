@@ -5,17 +5,17 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/zanz1n/duvua/config"
 	"github.com/zanz1n/duvua/internal/manager"
 	"github.com/zanz1n/duvua/internal/utils"
 )
 
 type ReadyEvent struct {
-	m     *manager.Manager
-	start time.Time
+	m       *manager.Manager
+	start   time.Time
+	guildId string
 }
 
-func NewReadyEvent(m *manager.Manager) *ReadyEvent {
+func NewReadyEvent(m *manager.Manager, guildId string) *ReadyEvent {
 	return &ReadyEvent{m: m, start: time.Now()}
 }
 
@@ -26,7 +26,7 @@ func (re *ReadyEvent) Handle(s *discordgo.Session, ready *discordgo.Ready) {
 		"took", time.Since(re.start),
 	)
 
-	re.m.PostCommands(s, config.GetConfig().Discord.Guild)
+	re.m.PostCommands(s, re.guildId)
 
 	utils.SetStatus(s, utils.StatusTypeIdle)
 }

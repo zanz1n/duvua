@@ -7,7 +7,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua/internal/errors"
-	"github.com/zanz1n/duvua/internal/utils"
 )
 
 type Manager struct {
@@ -48,9 +47,17 @@ func (m *Manager) handleCommand(
 		}
 
 		if i.Replied() {
-			_, err = s.InteractionResponseEdit(i.Interaction, utils.BasicResponseEdit(errorRes))
+			_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+				Content: &errorRes,
+			})
 		} else {
-			err = s.InteractionRespond(i.Interaction, utils.BasicEphemeralResponse(errorRes))
+			err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Flags:   discordgo.MessageFlagsEphemeral,
+					Content: errorRes,
+				},
+			})
 		}
 
 		if err != nil {
@@ -202,17 +209,12 @@ func (m *Manager) GetDataByCategory(accepts CommandAccept, category CommandCateg
 	return arr
 }
 
-func (m *Manager) PostCommands(s *discordgo.Session, guildId *string) {
+func (m *Manager) PostCommands(s *discordgo.Session, guildId string) {
 	start := time.Now()
 
 	arr := m.GetData(CommandAccept{Slash: true, Button: false})
 
-	gId := ""
-	if guildId != nil {
-		gId = *guildId
-	}
-
-	created, err := s.ApplicationCommandBulkOverwrite(s.State.User.ID, gId, arr)
+	created, err := s.ApplicationCommandBulkOverwrite(s.State.User.ID, guildId, arr)
 	if err != nil {
 		slog.Error(
 			"Something went wrong while posting commands",

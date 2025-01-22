@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/zanz1n/duvua/config"
 	"github.com/zanz1n/duvua/internal/grpcutils"
 	"github.com/zanz1n/duvua/pkg/grpcpool"
 	playerpb "github.com/zanz1n/duvua/pkg/pb/player"
@@ -17,7 +16,7 @@ import (
 func connectToPlayerGrpc() (*grpcpool.Pool, func()) {
 	start := time.Now()
 
-	cfg := config.GetConfig()
+	cfg := GetConfig()
 
 	passwd := cfg.Player.Password
 	pool, err := grpcpool.New(
@@ -57,7 +56,7 @@ func connectToPlayerGrpc() (*grpcpool.Pool, func()) {
 func connectToDavinciGrpc() (*grpcpool.Pool, func()) {
 	start := time.Now()
 
-	cfg := config.GetConfig()
+	cfg := GetConfig()
 
 	passwd := cfg.Welcomer.Password
 	pool, err := grpcpool.New(

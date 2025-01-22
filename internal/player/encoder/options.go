@@ -2,8 +2,6 @@ package encoder
 
 import (
 	"fmt"
-
-	"github.com/zanz1n/duvua/config"
 )
 
 var DefaultEncodeOptions = &EncodeOptions{
@@ -20,10 +18,9 @@ var DefaultEncodeOptions = &EncodeOptions{
 	FFmpegPath:       "ffmpeg",
 }
 
-func init() {
-	cfg := config.GetConfig()
-	if cfg.Player.FFmpegExec != "" {
-		DefaultEncodeOptions.FFmpegPath = cfg.Player.FFmpegExec
+func InitDefault(ffmpegExec string) {
+	if ffmpegExec != "" {
+		DefaultEncodeOptions.FFmpegPath = ffmpegExec
 	}
 }
 

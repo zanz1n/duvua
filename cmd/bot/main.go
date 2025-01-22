@@ -85,7 +85,7 @@ func init() {
 }
 
 func init() {
-	config := config.GetConfig()
+	config := GetConfig()
 	if *debug {
 		config.LogLevel = slog.LevelDebug
 	}
@@ -97,7 +97,7 @@ func init() {
 }
 
 func main() {
-	cfg := config.GetConfig()
+	cfg := GetConfig()
 
 	s, err := discordgo.New("Bot " + cfg.Discord.Token)
 	if err != nil {
@@ -178,7 +178,7 @@ func main() {
 	m.Add(musiccmds.NewUnpauseCommand(musicRepository, musicClient))
 
 	m.AutoHandle(s)
-	s.AddHandlerOnce(events.NewReadyEvent(m).Handle)
+	s.AddHandlerOnce(events.NewReadyEvent(m, cfg.Discord.Guild).Handle)
 	s.AddHandler(welcomeEvt.Handle)
 	s.AddHandler(events.NewChannelDeleteEvent(ticketRepository).Handle)
 

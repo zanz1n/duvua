@@ -2,22 +2,11 @@ package config
 
 import (
 	"fmt"
-	"log/slog"
 )
-
-type Config struct {
-	LogLevel slog.Level     `env:"LOG_LEVEL, default=0"`
-	Discord  DiscordConfig  `env:", prefix=DISCORD_"`
-	Postgres PostgresConfig `env:", prefix=POSTGRES_"`
-	Welcomer WelcomerConfig `env:", prefix=WELCOMER_"`
-	Player   PlayerConfig   `env:", prefix=PLAYER_"`
-	Spotify  SpotifyConfig  `env:", prefix=SPOTIFY_"`
-}
 
 type DiscordConfig struct {
 	Token string `env:"TOKEN, required"`
-	// Nullable
-	Guild *string `env:"GUILD, noinit"`
+	Guild string `env:"GUILD"`
 }
 
 type PostgresConfig struct {
