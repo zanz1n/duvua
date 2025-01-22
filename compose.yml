@@ -51,7 +51,7 @@ services:
     restart: always
 
     environment:
-      <<: [*bot-env, *postgres-env, *player-env, *davinci-env]
+      <<: [*bot-env, *player-env]
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
 
@@ -63,7 +63,7 @@ services:
     restart: always
 
     environment:
-      <<: [*bot-env, *postgres-env, *player-env, *davinci-env]
+      <<: [*bot-env, *davinci-env]
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
 
