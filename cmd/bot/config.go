@@ -1,14 +1,10 @@
 package main
 
 import (
-	"context"
-	"log"
 	"log/slog"
-	"time"
 
-	"github.com/joho/godotenv"
-	"github.com/sethvargo/go-envconfig"
 	"github.com/zanz1n/duvua/config"
+	"github.com/zanz1n/duvua/internal/utils"
 )
 
 type Config struct {
@@ -19,25 +15,12 @@ type Config struct {
 	Player   config.PlayerConfig   `env:", prefix=PLAYER_"`
 }
 
-var configInstance *Config = nil
+var configInstance = utils.NewLazyConfig[Config]()
 
 func GetConfig() *Config {
-	if configInstance == nil {
-		if err := InitConfig(); err != nil {
-			log.Fatalln("Failed to init bot configuration:", err)
-		}
-	}
-
-	return configInstance
+	return configInstance.Get()
 }
 
 func InitConfig() error {
-	godotenv.Load()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	configInstance = &Config{}
-
-	return envconfig.Process(ctx, configInstance)
+	return configInstance.Init()
 }
