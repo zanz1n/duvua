@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -34,49 +33,8 @@ func AvatarUrlFromInteraction(i *discordgo.Interaction, size string) string {
 	return avatarUrl
 }
 
-func GetSubCommandGroup(
-	opts []*discordgo.ApplicationCommandInteractionDataOption,
-) *discordgo.ApplicationCommandInteractionDataOption {
-	for _, opt := range opts {
-		if opt.Type == discordgo.ApplicationCommandOptionSubCommandGroup {
-			return opt
-		}
-	}
-
-	return nil
-}
-
-func GetSubCommand(
-	opts []*discordgo.ApplicationCommandInteractionDataOption,
-) *discordgo.ApplicationCommandInteractionDataOption {
-	for _, opt := range opts {
-		if opt.Type == discordgo.ApplicationCommandOptionSubCommand {
-			return opt
-		}
-	}
-
-	return nil
-}
-
 func HasPerm(memberPerm int64, target int64) bool {
 	return memberPerm&target == target
-}
-
-func BasicEphemeralResponse(format string, args ...any) *discordgo.InteractionResponse {
-	return &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Flags:   discordgo.MessageFlagsEphemeral,
-			Content: fmt.Sprintf(format, args...),
-		},
-	}
-}
-
-func BasicResponseEdit(format string, args ...any) *discordgo.WebhookEdit {
-	fmt := fmt.Sprintf(format, args...)
-	return &discordgo.WebhookEdit{
-		Content: &fmt,
-	}
 }
 
 type StatusType uint8
