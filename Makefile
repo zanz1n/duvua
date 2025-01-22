@@ -12,7 +12,8 @@ GO ?= go
 
 VERSION ?= release-$(shell git rev-parse HEAD | head -c8)
 
-LDFLAGS := -X github.com/zanz1n/duvua/config.Version=$(VERSION)
+GOMODPATH := github.com/zanz1n/duvua
+LDFLAGS := -X $(GOMODPATH)/config.Version=$(VERSION)
 
 ifeq ($(DEBUG), 1)
 SUFIX += -debug
@@ -45,10 +46,10 @@ endif
 build-%: $(DIR)
 ifneq ($(OUTPUT),) 
 	GOOS=$(OS) GOARCH=$(ARCH) $(GO) build -ldflags "$(LDFLAGS)" \
-	-o $(OUTPUT) ./cmd/$*
+	-o $(OUTPUT) $(GOMODPATH)/cmd/$*
 else
 	GOOS=$(OS) GOARCH=$(ARCH) $(GO) build -ldflags "$(LDFLAGS)" \
-	-o $(DIR)/$(PREFIX)$*-$(OS)-$(ARCH)$(SUFIX) ./cmd/$*
+	-o $(DIR)/$(PREFIX)$*-$(OS)-$(ARCH)$(SUFIX) $(GOMODPATH)/cmd/$*
 endif
 ifneq ($(POST_BUILD_CHMOD),)
 	chmod $(POST_BUILD_CHMOD) $(DIR)/$(PREFIX)$*-$(OS)-$(ARCH)$(SUFIX)
