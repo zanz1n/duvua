@@ -52,8 +52,8 @@ type Welcome struct {
 	Enabled   bool
 	ChannelId *string
 	// The message template
-	Message   string
-	Kind      WelcomeType
+	Message string
+	Kind    WelcomeType
 }
 
 func atoi(s string) (int64, error) {
