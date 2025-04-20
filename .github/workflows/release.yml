@@ -27,9 +27,7 @@ jobs:
         run: git lfs checkout
 
       - name: Download packages
-        run: |
-          go mod download
-          make deps
+        run: go mod download
 
       - name: Build bot
         env:
@@ -83,9 +81,7 @@ jobs:
         run: git lfs checkout
 
       - name: Download packages
-        run: |
-          go mod download
-          make deps
+        run: go mod download
 
       - name: Build bot
         env:
@@ -118,8 +114,8 @@ jobs:
           path: ./bin/*
           retention-days: 1
 
-  release:
-    name: Release
+  publish:
+    name: Publish
     runs-on: ubuntu-24.04
 
     steps:
