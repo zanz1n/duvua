@@ -48,7 +48,7 @@ else
 endif
 
 build-%: $(DIR)
-ifneq ($(OUTPUT),) 
+ifneq ($(OUTPUT),)
 	GOOS=$(OS) GOARCH=$(ARCH) $(GO) build -ldflags "$(LDFLAGS)" \
 	-o $(OUTPUT) $(GOMODPATH)/cmd/$*
 else
@@ -95,13 +95,14 @@ update:
 	$(GO) install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 	$(GO) install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 	$(GO) install github.com/srikrsna/protoc-gen-gotag@latest
+	$(GO) mod tidy
 	$(GO) get -u ./...
 	$(GO) mod tidy
 
 generate:
 	protoc -I $(shell $(GO) env GOMODCACHE)/github.com/srikrsna/protoc-gen-gotag@* \
 		-I . --go_out=./pkg/pb --go-grpc_out=./pkg/pb ./api/proto/*/*.proto
-	
+
 	protoc -I $(shell $(GO) env GOMODCACHE)/github.com/srikrsna/protoc-gen-gotag@* \
 		-I . --gotag_out=outdir="./pkg/pb":. ./api/proto/*/*.proto
 
@@ -129,7 +130,7 @@ compose-down:
 
 compose-clean:
 	$(DOCKER_COMPOSE) down
-	sudo rm -rf .docker-volumes	
+	sudo rm -rf .docker-volumes
 
 debug:
 	@echo DEBUG = $(DEBUG)
