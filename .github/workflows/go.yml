@@ -14,28 +14,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.24"
-
       - name: Code checkout
         uses: actions/checkout@v4
         with:
           lfs: true
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache: true
+          cache-dependency-path: "**/go.sum"
+
       - name: Checkout LFS objects
         run: git lfs checkout
-
-      - name: Setup Go cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-golang-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-golang-
 
       - name: Download packages
         run: go mod download
