@@ -19,8 +19,8 @@ type PostgresConfig struct {
 
 	Database string `env:"DB, required"`
 
-	MaxConns int32 `env:"MAX_CONNS, default=32"`
-	MinConns int32 `env:"MIN_CONNS, default=3"`
+	MaxConns int `env:"MAX_CONNS, default=32"`
+	MinConns int `env:"MIN_CONNS, default=1"`
 }
 
 type WelcomerConfig struct {
