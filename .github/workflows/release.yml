@@ -56,7 +56,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: amd64-bins-${{ github.ref }}
+          name: amd64-bins
           path: ./bin/*
           retention-days: 1
 
@@ -110,7 +110,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: arm64-bins-${{ github.ref }}
+          name: arm64-bins
           path: ./bin/*
           retention-days: 1
 
@@ -133,14 +133,14 @@ jobs:
       - name: Download artifacts (amd64)
         uses: actions/download-artifact@v4
         with:
-          name: amd64-bins-${{ github.ref }}
+          name: amd64-bins
           path: ./bin
           merge-multiple: true
 
       - name: Download artifacts (arm64)
         uses: actions/download-artifact@v4
         with:
-          name: arm64-bins-${{ github.ref }}
+          name: arm64-bins
           path: ./bin
           merge-multiple: true
 
