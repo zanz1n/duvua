@@ -6,16 +6,123 @@ on:
       - "v*"
 
 jobs:
-  build:
-    name: Release
-    runs-on: ubuntu-24.04-arm
+  build_amd64:
+    name: Build (amd64)
+    runs-on: ubuntu-24.04
 
     steps:
+      - name: Code checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: ${{ matrix.go }}
+          # cache: true
+          # cache-dependency-path: "**/go.sum"
 
+      - name: Checkout LFS objects
+        run: git lfs checkout
+
+      - name: Download packages
+        run: |
+          go mod download
+          make deps
+
+      - name: Build bot
+        env:
+          CGO_ENABLED: 0
+          REF: ${{ github.ref }}
+          POST_BUILD_CHMOD: 755
+          DEBUG: 0
+        run: make VERSION=${REF:11} GOARCH=amd64 build-bot
+
+      - name: Build player
+        env:
+          CGO_ENABLED: 0
+          REF: ${{ github.ref }}
+          POST_BUILD_CHMOD: 755
+          DEBUG: 0
+        run: make VERSION=${REF:11} GOARCH=amd64 build-player
+
+      - name: Build davinci
+        env:
+          CGO_ENABLED: 1
+          REF: ${{ github.ref }}
+          POST_BUILD_CHMOD: 755
+          DEBUG: 0
+        run: make VERSION=${REF:11} GOARCH=amd64 build-davinci
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: amd64-bins-${{ github.ref }}
+          path: ./bin/*
+          retention-days: 1
+
+  build_arm64:
+    name: Build (arm64)
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          # cache: true
+          # cache-dependency-path: "**/go.sum"
+
+      - name: Checkout LFS objects
+        run: git lfs checkout
+
+      - name: Download packages
+        run: |
+          go mod download
+          make deps
+
+      - name: Build bot
+        env:
+          CGO_ENABLED: 0
+          REF: ${{ github.ref }}
+          POST_BUILD_CHMOD: 755
+          DEBUG: 0
+        run: make VERSION=${REF:11} GOARCH=arm64 build-bot
+
+      - name: Build player
+        env:
+          CGO_ENABLED: 0
+          REF: ${{ github.ref }}
+          POST_BUILD_CHMOD: 755
+          DEBUG: 0
+        run: make VERSION=${REF:11} GOARCH=arm64 build-player
+
+      - name: Build davinci
+        env:
+          CGO_ENABLED: 1
+          REF: ${{ github.ref }}
+          POST_BUILD_CHMOD: 755
+          DEBUG: 0
+        run: make VERSION=${REF:11} GOARCH=arm64 build-davinci
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: arm64-bins-${{ github.ref }}
+          path: ./bin/*
+          retention-days: 1
+
+  release:
+    name: Release
+    runs-on: ubuntu-24.04
+
+    steps:
       - name: Code checkout
         uses: actions/checkout@v4
         with:
@@ -24,38 +131,19 @@ jobs:
       - name: Checkout LFS objects
         run: git lfs checkout
 
-      - name: Download packages
-        run: go mod download
+      - name: Download artifacts (amd64)
+        uses: actions/download-artifact@v4
+        with:
+          name: amd64-bins-${{ github.ref }}
+          path: ./bin
+          merge-multiple: true
 
-      - name: Build bot
-        env:
-          CGO_ENABLED: 0
-          REF: ${{ github.ref }}
-          POST_BUILD_CHMOD: 755
-          DEBUG: 0
-        run: |
-          make VERSION=${REF:11} GOARCH=amd64 build-bot
-          make VERSION=${REF:11} GOARCH=arm64 build-bot
-
-      - name: Build player
-        env:
-          CGO_ENABLED: 0
-          REF: ${{ github.ref }}
-          POST_BUILD_CHMOD: 755
-          DEBUG: 0
-        run: |
-          make VERSION=${REF:11} GOARCH=amd64 build-player
-          make VERSION=${REF:11} GOARCH=arm64 build-player
-
-      - name: Build davinci
-        env:
-          CGO_ENABLED: 1
-          REF: ${{ github.ref }}
-          POST_BUILD_CHMOD: 755
-          DEBUG: 0
-        run: |
-          make VERSION=${REF:11} GOARCH=amd64 build-davinci
-          make VERSION=${REF:11} GOARCH=arm64 build-davinci
+      - name: Download artifacts (arm64)
+        uses: actions/download-artifact@v4
+        with:
+          name: arm64-bins-${{ github.ref }}
+          path: ./bin
+          merge-multiple: true
 
       - name: Create checksum
         run: make gen-checksums
