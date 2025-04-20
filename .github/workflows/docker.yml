@@ -141,7 +141,7 @@ jobs:
           context: .
           file: ./docker/davinci.dockerfile
           push: true
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           build-args: |
             VERSION=${{ steps.build_info.outputs.version_tag }}
           labels: ${{ steps.docker_davinci_meta.outputs.labels }}

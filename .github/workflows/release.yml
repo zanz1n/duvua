@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     name: Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-arm
 
     steps:
       - name: Set up Go
@@ -53,7 +53,9 @@ jobs:
           REF: ${{ github.ref }}
           POST_BUILD_CHMOD: 755
           DEBUG: 0
-        run: make VERSION=${REF:11} GOARCH=amd64 build-davinci
+        run: |
+          make VERSION=${REF:11} GOARCH=amd64 build-davinci
+          make VERSION=${REF:11} GOARCH=arm64 build-davinci
 
       - name: Create checksum
         run: make gen-checksums
@@ -73,3 +75,4 @@ jobs:
             bin/duvua-player-linux-amd64
             bin/duvua-player-linux-arm64
             bin/duvua-davinci-linux-amd64
+            bin/duvua-davinci-linux-arm64
