@@ -37,8 +37,8 @@ FROM img-${IMAGE}
 
 ARG SERVICE
 
-COPY --from=builder /build/bin/duvua-${SERVICE} /usr/bin/duvua-${SERVICE}
+COPY --from=builder /build/bin/duvua-${SERVICE} /usr/bin/service
 
-ENTRYPOINT [ "/usr/bin/duvua-${SERVICE}" ]
+ENTRYPOINT [ "/usr/bin/service" ]
 
 EXPOSE 8080
