@@ -83,11 +83,12 @@ jobs:
         if: github.event_name == 'release' && github.event.action == 'published'
         with:
           context: .
-          file: ./docker/bot.dockerfile
+          file: ./Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           build-args: |
             VERSION=${{ steps.build_info.outputs.version_tag }}
+            SERVICE=bot
           labels: ${{ steps.docker_bot_meta.outputs.labels }}
           tags: ${{ steps.docker_bot_meta.outputs.tags }}
 
@@ -96,11 +97,12 @@ jobs:
         if: github.event_name == 'push' && contains(github.ref, 'main')
         with:
           context: .
-          file: ./docker/bot.dockerfile
+          file: ./Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64
           build-args: |
             VERSION=dev-${{ steps.build_info.outputs.short_sha }}
+            SERVICE=bot
           labels: ${{ steps.docker_bot_meta.outputs.labels }}
           tags: ${{ steps.docker_bot_meta.outputs.tags }}
           cache-from: type=gha
@@ -111,11 +113,13 @@ jobs:
         if: github.event_name == 'release' && github.event.action == 'published'
         with:
           context: .
-          file: ./docker/player.dockerfile
+          file: ./Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           build-args: |
             VERSION=${{ steps.build_info.outputs.version_tag }}
+            SERVICE=player
+            IMAGE=ffmpeg
           labels: ${{ steps.docker_player_meta.outputs.labels }}
           tags: ${{ steps.docker_player_meta.outputs.tags }}
 
@@ -124,11 +128,13 @@ jobs:
         if: github.event_name == 'push' && contains(github.ref, 'main')
         with:
           context: .
-          file: ./docker/player.dockerfile
+          file: ./Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64
           build-args: |
             VERSION=dev-${{ steps.build_info.outputs.short_sha }}
+            SERVICE=player
+            IMAGE=ffmpeg
           labels: ${{ steps.docker_player_meta.outputs.labels }}
           tags: ${{ steps.docker_player_meta.outputs.tags }}
           cache-from: type=gha
@@ -139,11 +145,13 @@ jobs:
         if: github.event_name == 'release' && github.event.action == 'published'
         with:
           context: .
-          file: ./docker/davinci.dockerfile
+          file: ./Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           build-args: |
             VERSION=${{ steps.build_info.outputs.version_tag }}
+            SERVICE=davinci
+            CGO_ENABLED=1
           labels: ${{ steps.docker_davinci_meta.outputs.labels }}
           tags: ${{ steps.docker_davinci_meta.outputs.tags }}
 
@@ -152,11 +160,13 @@ jobs:
         if: github.event_name == 'push' && contains(github.ref, 'main')
         with:
           context: .
-          file: ./docker/davinci.dockerfile
+          file: ./Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64
           build-args: |
             VERSION=dev-${{ steps.build_info.outputs.short_sha }}
+            SERVICE=davinci
+            CGO_ENABLED=1
           labels: ${{ steps.docker_davinci_meta.outputs.labels }}
           tags: ${{ steps.docker_davinci_meta.outputs.tags }}
           cache-from: type=gha
