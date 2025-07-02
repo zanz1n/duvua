@@ -131,8 +131,11 @@ const (
 		"`/welcome set-channel` para definir o canal de texto."
 )
 
-func NewWelcomeCommand(r welcome.WelcomeRepository, ev *events.MemberAddEvent) manager.Command {
-	return manager.Command{
+func NewWelcomeCommand(
+	r welcome.WelcomeRepository,
+	ev *events.MemberAddEvent,
+) *manager.Command {
+	return &manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
 			Button: false,

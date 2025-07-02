@@ -20,8 +20,8 @@ var stopCommandData = discordgo.ApplicationCommand{
 	},
 }
 
-func NewStopCommand(r music.MusicConfigRepository, client player.PlayerClient) manager.Command {
-	return manager.Command{
+func NewStopCommand(r music.MusicConfigRepository, client player.PlayerClient) *manager.Command {
+	return &manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
 			Button: true,

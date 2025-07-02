@@ -56,8 +56,8 @@ var clearCommandData = discordgo.ApplicationCommand{
 	},
 }
 
-func NewClearCommand() manager.Command {
-	return manager.Command{
+func NewClearCommand() *manager.Command {
+	return &manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
 			Button: false,

@@ -41,8 +41,8 @@ var shipCommandData = discordgo.ApplicationCommand{
 	},
 }
 
-func NewShipCommand() manager.Command {
-	return manager.Command{
+func NewShipCommand() *manager.Command {
+	return &manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
 			Button: false,

@@ -32,8 +32,8 @@ var animeCommandData = discordgo.ApplicationCommand{
 	}},
 }
 
-func NewAnimeCommand(a *anime.AnimeApi, t lang.Translator) manager.Command {
-	return manager.Command{
+func NewAnimeCommand(a *anime.AnimeApi, t lang.Translator) *manager.Command {
+	return &manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
 			Button: true,
@@ -64,6 +64,15 @@ func (c *AnimeCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate
 		return err
 	}
 
+	description := fmt.Sprintf("ID: %d", a.ID)
+
+	if a.Attributes.YoutubeVideoId != "" {
+		description += fmt.Sprintf(
+			"\nTrailer: https://youtu.be/%s",
+			a.Attributes.YoutubeVideoId,
+		)
+	}
+
 	embed := discordgo.MessageEmbed{
 		Type:   discordgo.EmbedTypeArticle,
 		Title:  a.Attributes.CanonicalTitle,
@@ -73,11 +82,7 @@ func (c *AnimeCommand) Handle(s *discordgo.Session, i *manager.InteractionCreate
 			Width:  int(a.Attributes.PosterImage.Meta.Dimensions.Small.Width),
 			Height: int(a.Attributes.PosterImage.Meta.Dimensions.Small.Height),
 		},
-		Description: fmt.Sprintf(
-			"ID: %d\nTrailer: https://youtu.be/%s",
-			a.ID,
-			a.Attributes.YoutubeVideoId,
-		),
+		Description: description,
 		Fields: []*discordgo.MessageEmbedField{
 			{
 				Name:   "📺 Tipo",

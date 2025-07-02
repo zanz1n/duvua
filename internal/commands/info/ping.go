@@ -18,8 +18,8 @@ var pingCommandData = discordgo.ApplicationCommand{
 	},
 }
 
-func NewPingCommand() manager.Command {
-	return manager.Command{
+func NewPingCommand() *manager.Command {
+	return &manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
 			Button: false,

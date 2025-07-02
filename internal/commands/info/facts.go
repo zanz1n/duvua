@@ -60,8 +60,8 @@ var factsCommandData = discordgo.ApplicationCommand{
 	},
 }
 
-func NewFactsCommand() manager.Command {
-	return manager.Command{
+func NewFactsCommand() *manager.Command {
+	return &manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
 			Button: false,

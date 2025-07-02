@@ -33,12 +33,12 @@ var playCommandData = discordgo.ApplicationCommand{
 	},
 }
 
-func NewPlayCommand(r music.MusicConfigRepository, client player.PlayerClient) manager.Command {
+func NewPlayCommand(r music.MusicConfigRepository, client player.PlayerClient) *manager.Command {
 	if client == nil {
 		panic("NewPlayCommand() client must not be nil")
 	}
 
-	return manager.Command{
+	return &manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
 			Button: false,

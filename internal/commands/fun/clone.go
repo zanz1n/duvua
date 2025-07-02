@@ -41,8 +41,8 @@ var cloneCommandData = discordgo.ApplicationCommand{
 	},
 }
 
-func NewCloneCommand() manager.Command {
-	return manager.Command{
+func NewCloneCommand() *manager.Command {
+	return &manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
 			Button: false,

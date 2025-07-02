@@ -134,8 +134,8 @@ var musicadminCommandData = discordgo.ApplicationCommand{
 	},
 }
 
-func NewMusicAdminCommand(r music.MusicConfigRepository) manager.Command {
-	return manager.Command{
+func NewMusicAdminCommand(r music.MusicConfigRepository) *manager.Command {
+	return &manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
 			Button: false,

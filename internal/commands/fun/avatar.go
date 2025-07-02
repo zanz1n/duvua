@@ -25,8 +25,8 @@ var avatarCommandData = discordgo.ApplicationCommand{
 	},
 }
 
-func NewAvatarCommand() manager.Command {
-	return manager.Command{
+func NewAvatarCommand() *manager.Command {
+	return &manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
 			Button: false,

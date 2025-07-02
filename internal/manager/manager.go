@@ -10,18 +10,22 @@ import (
 )
 
 type Manager struct {
-	cmds          map[string]Command
+	cmds          map[string]*Command
 	buttonHandler InteractionHandler
 }
 
 func NewManager() *Manager {
 	return &Manager{
-		cmds:          make(map[string]Command),
+		cmds:          make(map[string]*Command),
 		buttonHandler: &DefaultInteractionHandler{},
 	}
 }
 
-func (m *Manager) Add(cmd Command) {
+func (m *Manager) Add(cmd *Command) {
+	if cmd == nil {
+		panic("(*Manager).Add(*Command) cmd must not be nil")
+	}
+
 	m.cmds[cmd.Data.Name] = cmd
 }
 
@@ -119,12 +123,14 @@ func (m *Manager) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	var (
 		name string
-		cmd  Command
+		cmd  *Command
 		ok   bool = false
 		btnH bool = false
 	)
-	if i.Type == discordgo.InteractionApplicationCommand ||
-		i.Type == discordgo.InteractionApplicationCommandAutocomplete {
+
+	switch i.Type {
+	case discordgo.InteractionApplicationCommand,
+		discordgo.InteractionApplicationCommandAutocomplete:
 		name = i.ApplicationCommandData().Name
 
 		if cmd, ok = m.cmds[name]; ok {
@@ -134,7 +140,8 @@ func (m *Manager) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		} else {
 			return
 		}
-	} else if i.Type == discordgo.InteractionMessageComponent {
+
+	case discordgo.InteractionMessageComponent:
 		name = i.MessageComponentData().CustomID
 
 		if strings.Contains(name, "/") {
@@ -168,7 +175,7 @@ func (m *Manager) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	m.handleCommand(s, interaction, startTime, &cmd)
+	m.handleCommand(s, interaction, startTime, cmd)
 }
 
 func (m *Manager) AutoHandle(s *discordgo.Session) {

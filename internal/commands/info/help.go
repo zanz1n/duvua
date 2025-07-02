@@ -18,8 +18,8 @@ var helpCommandData = discordgo.ApplicationCommand{
 	},
 }
 
-func NewHelpCommand(m *manager.Manager) manager.Command {
-	return manager.Command{
+func NewHelpCommand(m *manager.Manager) *manager.Command {
+	return &manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
 			Button: true,

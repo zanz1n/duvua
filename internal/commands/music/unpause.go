@@ -20,8 +20,8 @@ var unpauseCommandData = discordgo.ApplicationCommand{
 	},
 }
 
-func NewUnpauseCommand(r music.MusicConfigRepository, client player.PlayerClient) manager.Command {
-	return manager.Command{
+func NewUnpauseCommand(r music.MusicConfigRepository, client player.PlayerClient) *manager.Command {
+	return &manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
 			Button: true,

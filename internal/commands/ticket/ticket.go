@@ -68,8 +68,8 @@ var ticketCommandData = discordgo.ApplicationCommand{
 func NewTicketCommand(
 	r ticket.TicketRepository,
 	configR ticket.TicketConfigRepository,
-) manager.Command {
-	return manager.Command{
+) *manager.Command {
+	return &manager.Command{
 		Accepts: manager.CommandAccept{
 			Slash:  true,
 			Button: true,
