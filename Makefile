@@ -11,6 +11,7 @@ SUFIX ?=
 
 BINS = bot davinci player
 DIR ?= bin
+TMP ?= tmp
 
 GO ?= go
 
@@ -32,7 +33,7 @@ ifeq ($(OS), windows)
 SUFIX += .exe
 endif
 
-default: check all
+default: test all
 
 all: $(addprefix build-, $(BINS))
 
@@ -47,7 +48,7 @@ else
 	$(DIR)/$(PREFIX)$*-$(OS)-$(ARCH)$(SUFIX)
 endif
 
-build-%: $(DIR)
+build-%: $(DIR) generate
 ifneq ($(OUTPUT),)
 	GOOS=$(OS) GOARCH=$(ARCH) $(GO) build -ldflags "$(LDFLAGS)" \
 	-o $(OUTPUT) $(GOMODPATH)/cmd/$*
@@ -72,7 +73,7 @@ ifeq ($(NOTESTCACHE), 1)
 TESTFLAGS += -count=1
 endif
 
-test:
+test: generate
 ifneq ($(SKIPTESTS), 1)
 	$(GO) test ./... $(TESTFLAGS)
 else
@@ -89,22 +90,48 @@ gen-checksums: $(DIR)
 	echo -e "\n#### SHA256 Checksum\n\`\`\`\n$$checksum\`\`\`" >> ./RELEASE_CHANGELOG; \
     echo -e "$$checksum" > checksums.txt;
 
-check: generate test
-
-update:
+deps:
 	$(GO) install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 	$(GO) install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 	$(GO) install github.com/srikrsna/protoc-gen-gotag@latest
+
+update: deps
 	$(GO) mod tidy
 	$(GO) get -u ./...
 	$(GO) mod tidy
 
-generate:
-	protoc -I $(shell $(GO) env GOMODCACHE)/github.com/srikrsna/protoc-gen-gotag@* \
-		-I . --go_out=./pkg/pb --go-grpc_out=./pkg/pb ./api/proto/*/*.proto
+NATIVE_OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
+NATIVE_ARCH := $(shell uname -m)
 
-	protoc -I $(shell $(GO) env GOMODCACHE)/github.com/srikrsna/protoc-gen-gotag@* \
-		-I . --gotag_out=outdir="./pkg/pb":. ./api/proto/*/*.proto
+PROTOC := $(TMP)/protoc-$(NATIVE_OS)-$(NATIVE_ARCH)
+
+generate: $(PROTOC) deps
+	$(PROTOC)/bin/protoc \
+	    -I $(shell $(GO) env GOMODCACHE)/github.com/srikrsna/protoc-gen-gotag@* \
+	    -I . --go_out=./pkg/pb --go-grpc_out=./pkg/pb ./api/proto/*/*.proto \
+		-I $(PROTOC)/include
+
+	$(PROTOC)/bin/protoc \
+		-I $(shell $(GO) env GOMODCACHE)/github.com/srikrsna/protoc-gen-gotag@* \
+	    -I . --gotag_out=outdir="./pkg/pb":. ./api/proto/*/*.proto \
+		-I $(PROTOC)/include
+
+$(PROTOC):
+	$(info Downloading protoc)
+
+	mkdir -p $(PROTOC)
+
+	LATEST=$$(curl \
+	--silent "https://api.github.com/repos/protocolbuffers/protobuf/releases/latest" | \
+	grep '"tag_name":' | \
+	sed -E 's/.*"([^"]+)".*/\1/'); \
+	curl -fsSL -o $(PROTOC).zip \
+	https://github.com/protocolbuffers/protobuf/releases/download/$$LATEST/protoc-$${LATEST:1}-$(NATIVE_OS)-$(NATIVE_ARCH).zip;
+
+	rm -rf $(PROTOC)
+
+	unzip -q $(PROTOC).zip -d $(PROTOC)
+	rm -f $(PROTOC).zip
 
 fmt:
 	go fmt ./...

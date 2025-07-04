@@ -13,7 +13,15 @@ RUN apk add --no-cache ffmpeg
 FROM gcr.io/distroless/cc-debian12 AS img-raw-cc1
 FROM gcr.io/distroless/static-debian12 AS img-raw-cc0
 
-FROM golang:1 AS builder
+FROM golang:bookworm AS img-golang
+
+RUN go env -w GOCACHE=/go-cache
+RUN go env -w GOMODCACHE=/gomod-cache
+
+RUN apt-get update -y
+RUN apt-get install -y unzip
+
+FROM img-golang AS builder
 
 ARG CGO_ENABLED
 ARG VERSION
@@ -23,9 +31,6 @@ ARG SERVICE
 WORKDIR /build
 ENV OUTPUT=/build/bin/duvua-${SERVICE}
 ENV GOFLAGS=-buildvcs=false
-
-RUN go env -w GOCACHE=/go-cache
-RUN go env -w GOMODCACHE=/gomod-cache
 
 COPY . .
 
