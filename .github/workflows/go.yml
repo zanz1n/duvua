@@ -38,7 +38,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
         run: |
-          make build-bot
+          make DEBUG=1 build-bot
           make DEBUG=0 build-bot
 
       - name: Build player
@@ -47,7 +47,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
         run: |
-          make build-player
+          make DEBUG=1 build-player
           make DEBUG=0 build-player
 
       - name: Build davinci
@@ -56,7 +56,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 1
         run: |
-          make build-davinci
+          make DEBUG=1 build-davinci
           make DEBUG=0 build-davinci
 
       - name: Test
