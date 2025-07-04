@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -75,12 +76,34 @@ func init() {
 			"go", runtime.Version(),
 		)
 	}
-}
 
-func init() {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	if *jsonLogs {
 		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stderr, nil)))
+	}
+}
+
+func init() {
+	args := flag.Args()
+	if len(args) == 0 {
+		return
+	} else if len(args) > 1 {
+		log.Fatalln(
+			"More than one argument provided:",
+			strings.Join(args, ", "),
+		)
+	}
+	arg := args[0]
+
+	switch arg {
+	case "run", "start":
+
+	case "clean":
+		runClean()
+		defer os.Exit(0)
+
+	default:
+		log.Fatalln("Invalid argument:", arg)
 	}
 }
 
