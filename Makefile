@@ -103,6 +103,10 @@ update: deps
 NATIVE_OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 NATIVE_ARCH := $(shell uname -m)
 
+ifeq ($(NATIVE_ARCH), "aarch64")
+NATIVE_ARCH = aarch_64
+endif
+
 PROTOC := $(TMP)/protoc-$(NATIVE_OS)-$(NATIVE_ARCH)
 
 generate: $(PROTOC) deps
