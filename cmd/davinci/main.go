@@ -14,7 +14,7 @@ import (
 
 	"github.com/zanz1n/duvua/config"
 	"github.com/zanz1n/duvua/internal/davinci"
-	"github.com/zanz1n/duvua/internal/grpcutils"
+	"github.com/zanz1n/duvua/internal/utils/grpcutils"
 	davincipb "github.com/zanz1n/duvua/pkg/pb/davinci"
 	staticembed "github.com/zanz1n/duvua/static"
 	"google.golang.org/grpc"

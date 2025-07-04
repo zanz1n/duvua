@@ -13,21 +13,16 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/zanz1n/duvua/commands"
 	"github.com/zanz1n/duvua/config"
+	"github.com/zanz1n/duvua/events"
 	"github.com/zanz1n/duvua/internal/anime"
-	configcmds "github.com/zanz1n/duvua/internal/commands/config"
-	funcmds "github.com/zanz1n/duvua/internal/commands/fun"
-	infocmds "github.com/zanz1n/duvua/internal/commands/info"
-	modcmds "github.com/zanz1n/duvua/internal/commands/moderation"
-	musiccmds "github.com/zanz1n/duvua/internal/commands/music"
-	ticketcmds "github.com/zanz1n/duvua/internal/commands/ticket"
-	"github.com/zanz1n/duvua/internal/events"
 	"github.com/zanz1n/duvua/internal/lang"
-	"github.com/zanz1n/duvua/internal/logger"
 	"github.com/zanz1n/duvua/internal/manager"
 	"github.com/zanz1n/duvua/internal/music"
 	"github.com/zanz1n/duvua/internal/ticket"
 	"github.com/zanz1n/duvua/internal/utils"
+	"github.com/zanz1n/duvua/internal/utils/logger"
 	"github.com/zanz1n/duvua/internal/welcome"
 	"github.com/zanz1n/duvua/pkg/pb/davinci"
 	"github.com/zanz1n/duvua/pkg/pb/player"
@@ -175,30 +170,16 @@ func main() {
 
 	m := manager.NewManager()
 
-	m.Add(configcmds.NewWelcomeCommand(welcomeRepo, welcomeEvt))
-
-	m.Add(funcmds.NewAvatarCommand())
-	m.Add(funcmds.NewCloneCommand())
-	m.Add(funcmds.NewShipCommand())
-
-	m.Add(infocmds.NewFactsCommand())
-	m.Add(infocmds.NewHelpCommand(m))
-	m.Add(infocmds.NewPingCommand())
-	m.Add(infocmds.NewAnimeCommand(animeApi, translator))
-
-	m.Add(modcmds.NewClearCommand())
-
-	m.Add(ticketcmds.NewTicketAdminCommand(ticketRepository, ticketConfigRepository))
-	m.Add(ticketcmds.NewTicketCommand(ticketRepository, ticketConfigRepository))
-
-	m.Add(musiccmds.NewMusicAdminCommand(musicRepository))
-	m.Add(musiccmds.NewPlayCommand(musicRepository, musicClient))
-	m.Add(musiccmds.NewSkipCommand(musicRepository, musicClient))
-	m.Add(musiccmds.NewStopCommand(musicRepository, musicClient))
-	m.Add(musiccmds.NewQueueCommand(musicRepository, musicClient))
-	m.Add(musiccmds.NewLoopCommand(musicRepository, musicClient))
-	m.Add(musiccmds.NewPauseCommand(musicRepository, musicClient))
-	m.Add(musiccmds.NewUnpauseCommand(musicRepository, musicClient))
+	commands.Wire(m,
+		welcomeRepo,
+		welcomeEvt,
+		animeApi,
+		translator,
+		ticketRepository,
+		ticketConfigRepository,
+		musicRepository,
+		musicClient,
+	)
 
 	m.AutoHandle(s)
 	s.AddHandlerOnce(events.NewReadyEvent(m, cfg.Discord.Guild).Handle)

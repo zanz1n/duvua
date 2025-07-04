@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/zanz1n/duvua/internal/grpcutils"
-	"github.com/zanz1n/duvua/pkg/grpcpool"
+	"github.com/zanz1n/duvua/internal/utils/grpcpool"
+	"github.com/zanz1n/duvua/internal/utils/grpcutils"
 	playerpb "github.com/zanz1n/duvua/pkg/pb/player"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"

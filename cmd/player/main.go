@@ -14,11 +14,11 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/zanz1n/duvua/config"
-	"github.com/zanz1n/duvua/internal/grpcutils"
-	"github.com/zanz1n/duvua/internal/logger"
 	"github.com/zanz1n/duvua/internal/player"
 	"github.com/zanz1n/duvua/internal/player/encoder"
 	"github.com/zanz1n/duvua/internal/player/platform"
+	"github.com/zanz1n/duvua/internal/utils/grpcutils"
+	"github.com/zanz1n/duvua/internal/utils/logger"
 	playerpb "github.com/zanz1n/duvua/pkg/pb/player"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

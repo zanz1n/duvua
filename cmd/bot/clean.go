@@ -9,7 +9,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/sethvargo/go-envconfig"
 	"github.com/zanz1n/duvua/config"
-	"github.com/zanz1n/duvua/internal/logger"
+	"github.com/zanz1n/duvua/internal/utils/logger"
 )
 
 func runClean() {

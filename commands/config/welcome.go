@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/zanz1n/duvua/events"
 	"github.com/zanz1n/duvua/internal/errors"
-	"github.com/zanz1n/duvua/internal/events"
 	"github.com/zanz1n/duvua/internal/manager"
 	"github.com/zanz1n/duvua/internal/utils"
 	"github.com/zanz1n/duvua/internal/welcome"
