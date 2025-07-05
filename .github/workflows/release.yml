@@ -19,7 +19,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go }}
+          go-version: "1.24"
           # cache: true
           # cache-dependency-path: "**/go.sum"
 
@@ -73,7 +73,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go }}
+          go-version: "1.24"
           # cache: true
           # cache-dependency-path: "**/go.sum"
 
@@ -153,7 +153,6 @@ jobs:
         with:
           draft: true
           prerelease: ${{ contains(github.ref, 'rc') || contains(github.ref, 'beta') || contains(github.ref, 'alpha') }}
-          body_path: ./RELEASE_CHANGELOG
           files: |
             checksums.txt
             LICENSE
