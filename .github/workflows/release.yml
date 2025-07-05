@@ -157,9 +157,9 @@ jobs:
           files: |
             checksums.txt
             LICENSE
-            bin/duvua-bot-linux-amd64
-            bin/duvua-bot-linux-arm64
-            bin/duvua-player-linux-amd64
-            bin/duvua-player-linux-arm64
-            bin/duvua-davinci-linux-amd64
-            bin/duvua-davinci-linux-arm64
+            bin/duvua-bot-linux-x86_64
+            bin/duvua-bot-linux-aarch64
+            bin/duvua-player-linux-x86_64
+            bin/duvua-player-linux-aarch64
+            bin/duvua-davinci-linux-x86_64
+            bin/duvua-davinci-linux-aarch64

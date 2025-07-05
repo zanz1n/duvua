@@ -29,6 +29,12 @@ endif
 OS := $(if $(GOOS),$(GOOS),$(shell GOTOOLCHAIN=local $(GO) env GOOS))
 ARCH := $(if $(GOARCH),$(GOARCH),$(shell GOTOOLCHAIN=local $(GO) env GOARCH))
 
+ifeq ($(ARCH), amd64)
+UNAME_ARCH := x86_64
+else ifeq ($(ARCH), arm64)
+UNAME_ARCH := aarch64
+endif
+
 ifeq ($(OS), windows)
 SUFIX += .exe
 endif
@@ -45,7 +51,7 @@ else ifneq ($(ARCH), $(shell GOTOOLCHAIN=local $(GO) env GOARCH))
 else ifneq ($(OUTPUT),)
 	$(OUTPUT)
 else
-	$(DIR)/$(PREFIX)$*-$(OS)-$(ARCH)$(SUFIX)
+	$(DIR)/$(PREFIX)$*-$(OS)-$(UNAME_ARCH)$(SUFIX)
 endif
 
 build-%: $(DIR) generate
@@ -54,10 +60,10 @@ ifneq ($(OUTPUT),)
 	-o $(OUTPUT) $(GOMODPATH)/cmd/$*
 else
 	GOOS=$(OS) GOARCH=$(ARCH) $(GO) build -ldflags "$(LDFLAGS)" \
-	-o $(DIR)/$(PREFIX)$*-$(OS)-$(ARCH)$(SUFIX) $(GOMODPATH)/cmd/$*
+	-o $(DIR)/$(PREFIX)$*-$(OS)-$(UNAME_ARCH)$(SUFIX) $(GOMODPATH)/cmd/$*
 endif
 ifneq ($(POST_BUILD_CHMOD),)
-	chmod $(POST_BUILD_CHMOD) $(DIR)/$(PREFIX)$*-$(OS)-$(ARCH)$(SUFIX)
+	chmod $(POST_BUILD_CHMOD) $(DIR)/$(PREFIX)$*-$(OS)-$(UNAME_ARCH)$(SUFIX)
 endif
 
 $(DIR):
@@ -103,8 +109,10 @@ update: deps
 NATIVE_OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 NATIVE_ARCH := $(shell uname -m)
 
-ifeq ($(NATIVE_ARCH), "aarch64")
-NATIVE_ARCH := aarch_64
+ifeq ($(NATIVE_ARCH), aarch64)
+PROTOC_ARCH := aarch_64
+else
+PROTOC_ARCH := $(NATIVE_ARCH)
 endif
 
 PROTOC := $(TMP)/protoc-$(NATIVE_OS)-$(NATIVE_ARCH)
@@ -130,7 +138,7 @@ $(PROTOC):
 	grep '"tag_name":' | \
 	sed -E 's/.*"([^"]+)".*/\1/'); \
 	curl -fsSL -o $(PROTOC).zip \
-	https://github.com/protocolbuffers/protobuf/releases/download/$$LATEST/protoc-$${LATEST:1}-$(NATIVE_OS)-$(NATIVE_ARCH).zip;
+	https://github.com/protocolbuffers/protobuf/releases/download/$$LATEST/protoc-$${LATEST:1}-$(NATIVE_OS)-$(PROTOC_ARCH).zip;
 
 	rm -rf $(PROTOC)
 
@@ -166,7 +174,9 @@ compose-clean:
 debug:
 	@echo DEBUG = $(DEBUG)
 	@echo DIR = $(DIR)
-	@echo BINNAME = $(PREFIX)%-$(OS)-$(ARCH)$(SUFIX)
+	@echo NATIVE_ARCH = $(UNAME_ARCH)
+	@echo NATIVE_OS = $(NATIVE_OS)
+	@echo BINNAME = $(PREFIX)%-$(OS)-$(UNAME_ARCH)$(SUFIX)
 	@echo GOMODPATH = $(GOMODPATH)
 	@echo VERSION = $(VERSION)
 	@echo BINS = $(BINS)
